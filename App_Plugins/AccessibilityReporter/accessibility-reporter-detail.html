@@ -1,0 +1,46 @@
+
+<div ng-controller="My.AccessibilityReporterDetail as vm">
+    <div class="umb-editor-header" style="display: flex; align-items: center;">
+        <div class="umb-editor-header__name-and-description" style="flex: 1 1 auto;">
+            <h1 class="umb-panel-header-name">{{model.result.help}} <uui-tag color="default" look="outline" style="margin: 0 5px;">{{model.result.nodes.length}}</uui-tag></h1>
+        </div>
+    </div>
+    <div class="umb-editor-container umb-panel-body umb-scrollable row-fluid">
+        <div class="umb-pane">
+
+            <div class="umb-group-panel" ng-repeat="issue in model.result.nodes">
+                <uui-box headline="Issue {{$index + 1}}">
+
+                    <uui-tag slot="headline" color="{{impactToTag(model.result.impact)}}" look="primary" style="margin-left: 10px;">{{model.result.impact}}</uui-tag>
+
+                    <h3 style="font-size: 16px; font-weight: 700; margin-top: 0;">Issue</h3>
+                    <p>{{model.result.description}}</p>
+
+                    <h3 style="font-size: 16px; font-weight: 700;">Location</h3>
+                    <pre class="code">{{issue.target[0]}}</pre>
+                    
+                    <h3 style="font-size: 16px; font-weight: 700;">HTML Source</h3>
+                    <pre class="code">{{issue.html}}</pre>
+
+                    <h3 style="font-size: 16px; font-weight: 700;">How to solve</h3>
+                    <p>{{issue.failureSummary}}</p>
+
+                </uui-box>
+            </div>
+
+        </div>
+    </div>
+
+    <umb-editor-footer ng-if="model.infiniteMode">
+
+        <umb-editor-footer-content-right>
+            <umb-button type="button"
+                        button-style="link"
+                        label-key="general_close"
+                        shortcut="esc"
+                        action="model.close()">
+            </umb-button>
+        </umb-editor-footer-content-right>
+
+    </umb-editor-footer>
+</div>

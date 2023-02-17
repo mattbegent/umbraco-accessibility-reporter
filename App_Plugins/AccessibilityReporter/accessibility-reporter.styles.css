@@ -1,0 +1,69 @@
+.c-accordion-header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+}
+
+.c-detail-button {
+    pointer-events: none;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+}
+
+.c-table__container {
+    overflow-x: auto;
+}
+
+.c-summary {
+    text-align: center;
+}
+
+.c-summary__container {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    max-width: 600px;
+    overflow-x: auto;
+}
+
+.c-summary__circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #d42054;
+    height: 75px;
+    width: 75px;
+    border-radius: 100%;
+    margin: 0 auto 10px auto;
+    font-weight: 700;
+    font-size: 24px;
+}
+
+.c-summary--passed .c-summary__circle {
+    border-color: #25aa60;
+}
+
+.c-summary--incomplete .c-summary__circle {
+    border-color: #1b264f;
+}
+
+.c-summary--not-applicable .c-summary__circle {
+    border-color: #000;
+}
+
+.c-summary__title {
+    text-align: center;
+    font-weight: 700;
+}
