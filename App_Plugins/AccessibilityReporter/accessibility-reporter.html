@@ -7,8 +7,8 @@
 
         <div ng-if="pageState === 'loaded'">
 
-            <uui-box headline="Accessibility Audit Results" style="margin-bottom: 20px;">
-                <p>Audit results for {{testUrl}}. Test ran at {{testDateTime}} using {{results.testEngine.name}} {{results.testEngine.version}}.</p>
+            <uui-box headline="Accessibility audit results for {{testUrl}}" style="margin-bottom: 20px;">
+                <p>Test ran at {{testDateTime}} using {{results.testEngine.name}} v{{results.testEngine.version}}.</p>
                 <div class="c-summary__container">
                     <div class="c-summary c-summary--issues">
                         <div class="c-summary__circle">
@@ -28,17 +28,11 @@
                         </div>
                         <span class="c-summary__title">Incomplete</span>
                     </div>
-                    <div class="c-summary c-summary--not-applicable">
-                        <div class="c-summary__circle">
-                            {{totalInapplicable()}}
-                        </div>
-                        <span class="c-summary__title">Not Applicable</span>
-                    </div>
                 </div>
             </uui-box>
 
             <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleViolations()">
+                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleViolations()" aria-expanded="{{violationsOpen === true}}" id="violationsAccordion">
                     <h5 class="c-accordion-header__title">Issues</h5>
                     <div ng-if="results.violations.length">
                         <uui-tag color="danger" look="outline" style="margin: 0 5px;">{{totalIssues()}}</uui-tag>
@@ -46,7 +40,7 @@
                         <uui-symbol-expand ng-if="violationsOpen" open></uui-symbol-expand>
                     </div>
                 </button>
-                <div ng-if="results.violations.length">
+                <div ng-if="results.violations.length" role="region" aria-labelledby="violationsAccordion">
                     <p>All these failures need looking at to improve the accessibility of this page.</p>
                     <div class="c-table__container">
                         <uui-table ng-if="violationsOpen">
@@ -71,6 +65,7 @@
                                 <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
                                 <uui-table-cell>
                                     <button type="button" class="c-detail-button">
+                                        <span class="sr-only">View details about {{result.help}}</span>
                                         <uui-icon-registry-essential>
                                             <uui-icon name="see"></uui-icon>
                                         </uui-icon-registry-essential>
@@ -86,14 +81,14 @@
             </uui-box>
 
             <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="togglePasses()">
+                <button type="button" slot="headline" class="c-accordion-header" ng-click="togglePasses()" aria-expanded="{{passesOpen === true}}" id="passesAccordion">
                     <h5 class="c-accordion-header__title">Passed Audits</h5>
                     <uui-tag color="positive" look="outline" style="margin: 0 5px;">{{results.passes.length}}</uui-tag>
                     <uui-symbol-expand ng-if="!passesOpen"></uui-symbol-expand>
                     <uui-symbol-expand ng-if="passesOpen" open></uui-symbol-expand>
                 </button>
                 <p>All these tests passed - super work!</p>
-                <div class="c-table__container">
+                <div class="c-table__container" role="region" aria-labelledby="passesAccordion">
                     <uui-table ng-if="passesOpen">
                         <uui-table-head>
                             <uui-table-head-cell>Impact</uui-table-head-cell>
@@ -119,7 +114,7 @@
             </uui-box>
 
             <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleIncomplete()">
+                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleIncomplete()" aria-expanded="{{incompleteOpen === true}}" id="incompleteAccordion">
                     <h5 class="c-accordion-header__title">Incomplete Audits</h5>
                     <div ng-if="results.incomplete.length">
                         <uui-tag color="default" look="outline" style="margin: 0 5px;">{{results.incomplete.length}}</uui-tag>
@@ -127,7 +122,7 @@
                         <uui-symbol-expand ng-if="incompleteOpen" open></uui-symbol-expand>
                     </div>
                 </button>
-                <div ng-if="results.incomplete.length">
+                <div ng-if="results.incomplete.length" role="region" aria-labelledby="incompleteAccordion">
                     <p>These tests could not be definitively passed or failed. Please manually review these tests.</p>
                     <div class="c-table__container">
                         <uui-table ng-if="incompleteOpen">
@@ -145,6 +140,7 @@
                                 <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
                                 <uui-table-cell>
                                     <button type="button" class="c-detail-button">
+                                        <span class="sr-only">View details about {{result.help}}</span>
                                         <uui-icon-registry-essential>
                                             <uui-icon name="see"></uui-icon>
                                         </uui-icon-registry-essential>
@@ -157,30 +153,6 @@
                 <div ng-if="!results.incomplete.length">
                     <p>All automated tests ran successfully.</p>
                 </div>
-            </uui-box>
-
-            <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleInapplicable()">
-                    <h5 class="c-accordion-header__title">Not Applicable Audits</h5>
-                    <uui-tag color="default" look="outline" style="margin: 0 5px;">{{results.inapplicable.length}}</uui-tag>
-                    <uui-symbol-expand ng-if="!inapplicableOpen"></uui-symbol-expand>
-                    <uui-symbol-expand ng-if="inapplicableOpen" open></uui-symbol-expand>
-                </button>
-                <p>These tests were not applicable to the current page.</p>
-                <div class="c-table__container">
-                    <uui-table ng-if="inapplicableOpen">
-                        <uui-table-head>
-                            <uui-table-head-cell>Impact</uui-table-head-cell>
-                            <uui-table-head-cell>Title</uui-table-head-cell>
-                            <uui-table-head-cell>Description</uui-table-head-cell> 
-                        </uui-table-head>
-                        <uui-table-row ng-repeat="result in results.inapplicable">
-                            <uui-table-cell><uui-tag color="default" look="primary">na</uui-tag></uui-table-cell>
-                            <uui-table-cell>{{result.help}}</uui-table-cell>
-                            <uui-table-cell>{{result.description}}</uui-table-cell>
-                        </uui-table-row>
-                    </uui-table>
-                </div> 
             </uui-box>
 
             <uui-box headline="Manual Audits">

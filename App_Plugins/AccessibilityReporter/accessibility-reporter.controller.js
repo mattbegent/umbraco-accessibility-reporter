@@ -5,7 +5,6 @@ angular.module("umbraco")
         $scope.testUrl = getCurrentLivePageURL(editorState.current.urls); // can also use contentResource.getNiceUrl
         $scope.violationsOpen = true;
         $scope.passesOpen = false;
-        $scope.inapplicableOpen = false;
         $scope.incompleteOpen = false;
         var impacts = ["minor","moderate","serious","critical"];
 
@@ -95,13 +94,6 @@ angular.module("umbraco")
             return $scope.results.incomplete.length.toString();
         };
 
-        $scope.totalInapplicable = function() {
-            if(!$scope.results) {
-                return 0;
-            }
-            return $scope.results.inapplicable.length.toString();
-        };
-
         $scope.impactToTag = function(impact) {
             switch(impact) {
                 case "serious":
@@ -111,7 +103,7 @@ angular.module("umbraco")
                     return "warning";
                 default:
                   return "default";
-              };
+            };
         };
 
         $scope.toggleViolations = function() {
@@ -120,10 +112,6 @@ angular.module("umbraco")
 
         $scope.togglePasses = function() {
             $scope.passesOpen  = !$scope.passesOpen;
-        };
-
-        $scope.toggleInapplicable = function() {
-            $scope.inapplicableOpen  = !$scope.inapplicableOpen;
         };
 
         $scope.toggleIncomplete = function() {

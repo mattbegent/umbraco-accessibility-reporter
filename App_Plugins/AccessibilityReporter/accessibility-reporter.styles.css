@@ -59,10 +59,6 @@
     border-color: #1b264f;
 }
 
-.c-summary--not-applicable .c-summary__circle {
-    border-color: #000;
-}
-
 .c-summary__title {
     text-align: center;
     font-weight: 700;

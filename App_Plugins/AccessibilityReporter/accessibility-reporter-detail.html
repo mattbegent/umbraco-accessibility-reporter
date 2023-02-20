@@ -13,16 +13,16 @@
 
                     <uui-tag slot="headline" color="{{impactToTag(model.result.impact)}}" look="primary" style="margin-left: 10px;">{{model.result.impact}}</uui-tag>
 
-                    <h3 style="font-size: 16px; font-weight: 700; margin-top: 0;">Issue</h3>
-                    <p>{{model.result.description}}</p>
+                    <!-- <h3 style="font-size: 16px; font-weight: 700; margin-top: 0;">Issue</h3>
+                    <p>{{model.result.description}}</p> -->
 
-                    <h3 style="font-size: 16px; font-weight: 700;">Location</h3>
+                    <h3 style="font-size: 16px; font-weight: 700; margin-top: 0;">Location</h3>
                     <pre class="code">{{issue.target[0]}}</pre>
                     
                     <h3 style="font-size: 16px; font-weight: 700;">HTML Source</h3>
                     <pre class="code">{{issue.html}}</pre>
 
-                    <h3 style="font-size: 16px; font-weight: 700;">How to solve</h3>
+                    <h3 style="font-size: 16px; font-weight: 700;">Why this failed</h3>
                     <p>{{issue.failureSummary}}</p>
 
                 </uui-box>
