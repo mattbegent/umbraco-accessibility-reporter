@@ -20,6 +20,16 @@
     font-size: inherit;
     font-weight: inherit;
     font-size: inherit;
+    white-space: nowrap;
+}
+
+.c-detail-button__group {
+    display: flex; 
+    align-items: center;
+}
+
+.c-detail-button__text {
+    margin-left: 5px;
 }
 
 .c-table__container {
@@ -61,5 +71,10 @@
 
 .c-summary__title {
     text-align: center;
+    font-weight: 700;
+}
+
+.c-detail__title {
+    font-size: 16px; 
     font-weight: 700;
 }
