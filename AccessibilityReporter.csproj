@@ -3,11 +3,14 @@
     <TargetFramework>net7.0</TargetFramework>
     <ContentTargetFolders>.</ContentTargetFolders>
     <Product>AccessibilityReporter</Product>
-    <PackageId>AccessibilityReporter</PackageId>
+    <PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
     <Title>AccessibilityReporter</Title>
-    <Description>...</Description>
-    <PackageTags>umbraco plugin package</PackageTags>
+    <Description>Accessibility Reporter for Umbraco is a content app that helps you make sure that your website is accessible to all.</Description>
+    <PackageTags>Accessibility; WCAG; Umbraco; Content App;</PackageTags>
     <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,5 +21,12 @@
   <ItemGroup>
     <Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
     <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 </Project>
