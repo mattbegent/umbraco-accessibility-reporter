@@ -19,11 +19,11 @@
     "RelatedPackages": [],
     "Screenshots": [
       {
-        "ImageUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/screenshots/results.png",
+        "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/results.png",
         "Caption": "Dashboard of accessibility audit results"
       },
       {
-        "ImageUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/screenshots/detail.png",
+        "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/detail.png",
         "Caption": "Detailed view showing accessibility issues and how to fix them"
       }
     ],
