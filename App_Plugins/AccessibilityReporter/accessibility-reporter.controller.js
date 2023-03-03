@@ -1,8 +1,8 @@
 angular.module("umbraco")
-    .controller("My.AccessibilityReporterApp", function ($scope, editorState, AccessibilityReporterApiService, editorService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, contentResource, AccessibilityReporterApiService, editorService) {
 
         $scope.pageState = "loading";
-        $scope.testUrl = getCurrentLivePageURL(editorState.current.urls); // can also use contentResource.getNiceUrl
+        $scope.testUrl = "";
         $scope.violationsOpen = true;
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
@@ -12,17 +12,19 @@ angular.module("umbraco")
             return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
         }
 
-        function getCurrentLivePageURL(possibleUrls) {
+        function getHostnameFromString(url) {
+            return new URL(url).hostname;
+        }
+
+        function getHostname(possibleUrls) {
             for(var i=0; i < possibleUrls.length; i++){
                 var possibleCurrentUrl = possibleUrls[i].text;
-
                 if(isAbsoluteURL(possibleCurrentUrl)) {
-                    return possibleCurrentUrl;
+                    return getHostnameFromString(possibleCurrentUrl);
                 }
             }
-
             // fallback if hostnames not set assume current host
-            return location.protocol + '//' + location.host + possibleUrls[0].text;
+            return location.hostname;
         }
         
         function sortIssues(a, b) {
@@ -48,7 +50,16 @@ angular.module("umbraco")
         }
 
         // TODO: If a local page we could fall back to grabbing and sending html instead maybe?
-        AccessibilityReporterApiService.getIssues($scope.testUrl) // $scope.testUrl
+        contentResource.getNiceUrl(editorState.current.id).then(function (data) {
+            if (isAbsoluteURL(data)) {
+                $scope.testUrl = data;
+            } else {
+                var potentialHostDomain = getHostname(editorState.current.urls);
+                $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
+            }
+        }).then(function () {
+            return AccessibilityReporterApiService.getIssues($scope.testUrl);
+        })
         .then(function (response) {
             if (response) {
                 $scope.results = sortResponse(response);

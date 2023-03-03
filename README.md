@@ -18,7 +18,7 @@ You can install Accessibility Reporter using Nuget `https://www.nuget.org/packag
 
 ## Limitations
 
-The accessibility report runs on the current page URL you are editing. This means that if the URL is not publicly available, or the front-end of website is on a different domain it will not return results.
+The accessibility report runs on the current page URL you are editing. This means that if the URL is not publicly available, or the front-end of website is on a different domain it will not return results, unless you set the domain in Culture and Hostnames.
 
 Automated accessibility testing is no substitute for manual testing and testing using real users. In a [UK government blog article](https://accessibility.blog.gov.uk/2017/02/24/what-we-found-when-we-tested-tools-on-the-worlds-least-accessible-webpage/) they created a test page with 143 accessibility issues on it and the best automated tool only discovered 37% of the issues. However, automated accessibility testing does help to find common issues and technical failures.
 
