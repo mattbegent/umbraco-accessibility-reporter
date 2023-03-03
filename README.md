@@ -25,4 +25,4 @@ Automated accessibility testing is no substitute for manual testing and testing 
 ## Roadmap
 
 - Work out a nice way of running the report for Umbraco setups where Umbraco is on a different domain to the front-end of the website.
-- Localization - if any speaks any languages other than English it would be super to get some help.
+- Localization - if anyone speaks any languages other than English it would be super to get some help.
