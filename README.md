@@ -1,6 +1,6 @@
-<img src="logos/logo.png" alt="Accessibility Reporter logo" height="64" width="64" align="right">
-
 # Accessibility Reporter For Umbraco
+
+![Accessibility Reporter logo](logos/logo64.png)
 
 ## What is it?
 
