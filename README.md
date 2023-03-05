@@ -1,6 +1,6 @@
 # Accessibility Reporter For Umbraco
 
-![Accessibility Reporter logo](logos/logo64.png)
+![Accessibility Reporter logo](https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/logos/logo64.png)
 
 ## What is it?
 
