@@ -1,3 +1,5 @@
+<img src="logos/logo.png" alt="Accessibility Reporter logo" height="64" width="64" align="right">
+
 # Accessibility Reporter For Umbraco
 
 ## What is it?
@@ -25,6 +27,7 @@ Automated accessibility testing is no substitute for manual testing and testing 
 ## Roadmap
 
 - Work out a nice way of running the report for Umbraco setups where Umbraco is on a different domain to the front-end of the website.
+- Add options so that users can choose what WCAG level to run the tests against.
 - Localization - if anyone speaks any languages other than English it would be super to get some help.
 
 ## License

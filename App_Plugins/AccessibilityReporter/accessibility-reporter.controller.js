@@ -1,5 +1,5 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, contentResource, AccessibilityReporterApiService, editorService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService) {
 
         $scope.pageState = "loading";
         $scope.testUrl = "";
@@ -57,8 +57,13 @@ angular.module("umbraco")
                 var potentialHostDomain = getHostname(editorState.current.urls);
                 $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
             }
-        }).then(function () {
-            return AccessibilityReporterApiService.getIssues($scope.testUrl);
+        })
+        .then(function() {
+            return userService.getCurrentUser();
+        })
+        .then(function (user) {
+            var userLocale = user && user.locale ? user.locale : undefined;
+            return AccessibilityReporterApiService.getIssues($scope.testUrl, userLocale);
         })
         .then(function (response) {
             if (response) {
@@ -71,7 +76,7 @@ angular.module("umbraco")
             }
             $scope.pageState = "loaded";
         },
-        function (err) {
+        function (error) {
             $scope.pageState = "errored";
         });
     
