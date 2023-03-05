@@ -26,3 +26,9 @@ Automated accessibility testing is no substitute for manual testing and testing 
 
 - Work out a nice way of running the report for Umbraco setups where Umbraco is on a different domain to the front-end of the website.
 - Localization - if anyone speaks any languages other than English it would be super to get some help.
+
+## License
+
+Copyright © [Matt Begent](https://mattbegent.co.uk/).
+
+All source code is licensed under the [Mozilla Public License](https://github.com/mattbegent/azure-function-accessibility-reporter/blob/main/LICENSE).
