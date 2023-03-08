@@ -1,13 +1,14 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService) {
+    .controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService) {
 
+        $scope.config = {};
         $scope.pageState = "loading";
-        $scope.testUrl = "";
+        $scope.testPathname = "";
         $scope.violationsOpen = true;
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
-        var impacts = ["minor","moderate","serious","critical"];
-
+        var impacts = ["minor", "moderate", "serious", "critical"];
+            
         function isAbsoluteURL(urlString) {
             return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
         }
@@ -41,7 +42,6 @@ angular.module("umbraco")
         }
 
         function sortResponse(results) {
-            
             var sortedViolations = results.violations.sort(sortIssues);
             results.violations = sortedViolations;
             var sortedIncomplete = results.incomplete.sort(sortIssues);
@@ -49,21 +49,30 @@ angular.module("umbraco")
             return results;
         }
 
-        // TODO: If a local page we could fall back to grabbing and sending html instead maybe?
-        contentResource.getNiceUrl(editorState.current.id).then(function (data) {
-            if (isAbsoluteURL(data)) {
-                $scope.testUrl = data;
-            } else {
-                var potentialHostDomain = getHostname(editorState.current.urls);
-                $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
+        AccessibilityReporterApiService.getConfig()
+        .then(function (config) {
+            $scope.config = config;
+            if (!config.testBaseUrl) {
+                testBaseUrl = location.protocol + '//' + getHostname(editorState.current.urls);
             }
+        })
+        .then(function () {
+            return contentResource.getNiceUrl(editorState.current.id);
+        })
+        .then(function (niceUrl) {
+            if (isAbsoluteURL(niceUrl)) {
+                $scope.testPathname = new URL(niceUrl).pathname;
+            } else {
+                $scope.testPathname = niceUrl;
+            }
+            return niceUrl;
         })
         .then(function() {
             return userService.getCurrentUser();
         })
         .then(function (user) {
             var userLocale = user && user.locale ? user.locale : undefined;
-            return AccessibilityReporterApiService.getIssues($scope.testUrl, userLocale);
+            return AccessibilityReporterApiService.getIssues($scope.config, $scope.testPathname, userLocale);
         })
         .then(function (response) {
             if (response) {

@@ -1,0 +1,8 @@
+{
+    "apiUrl": "https://api.accessibilityreporter.com/api/audit",
+    "testBaseUrl": "https://gibe.digital",
+    "tags": [
+        "wcag2a",
+        "wcag2aa"
+    ]
+}
