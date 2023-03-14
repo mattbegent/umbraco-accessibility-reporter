@@ -1,180 +1,185 @@
 <div ng-controller="My.AccessibilityReporterApp as vm">
     <uui-scroll-container>
-
-        <uui-box headline="Running Accessibility Audit on Current Live Page {{testUrl}}" ng-if="pageState === 'loading'">
-            <uui-loader></uui-loader> 
+  
+      <uui-box headline="Running accessibility audit on current live page {{testUrl}}" ng-if="pageState === 'loading'">
+        <uui-loader></uui-loader>
+      </uui-box>
+  
+      <div ng-if="pageState === 'loaded'">
+  
+        <uui-box headline="Accessibility audit results for {{testUrl}}" style="margin-bottom: 20px;">
+          <p>Test ran at {{testDateTime}} using {{results.testEngine.name}} v{{results.testEngine.version}}.</p>
+          <div class="c-summary__container">
+            <div class="c-summary c-summary--issues">
+              <div class="c-summary__circle">
+                {{totalIssues()}}
+              </div>
+              <span class="c-summary__title">Failed</span>
+            </div>
+            <div class="c-summary c-summary--incomplete">
+              <div class="c-summary__circle">
+                {{totalIncomplete()}}
+              </div>
+              <span class="c-summary__title">Incomplete</span>
+            </div>
+            <div class="c-summary c-summary--passed">
+              <div class="c-summary__circle">
+                {{totalPassed()}}
+              </div>
+              <span class="c-summary__title">Passed</span>
+            </div>
+          </div>
         </uui-box>
-
-        <div ng-if="pageState === 'loaded'">
-
-            <uui-box headline="Accessibility Audit Results for {{testUrl}}" style="margin-bottom: 20px;">
-                <p>Test ran at {{testDateTime}} using {{results.testEngine.name}} v{{results.testEngine.version}}.</p>
-                <div class="c-summary__container">
-                    <div class="c-summary c-summary--issues">
-                        <div class="c-summary__circle">
-                            {{totalIssues()}}
-                        </div>
-                        <span class="c-summary__title">Failed</span>
-                    </div>
-                    <div class="c-summary c-summary--incomplete">
-                        <div class="c-summary__circle">
-                            {{totalIncomplete()}}
-                        </div>
-                        <span class="c-summary__title">Incomplete</span>
-                    </div>
-                    <div class="c-summary c-summary--passed">
-                        <div class="c-summary__circle">
-                            {{totalPassed()}}
-                        </div>
-                        <span class="c-summary__title">Passed</span>
-                    </div>
-                </div>
-            </uui-box>
-
-            <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleViolations()" aria-expanded="{{violationsOpen === true}}" id="violationsAccordion">
-                    <h5 class="c-accordion-header__title">Failed Tests</h5>
-                    <div ng-if="results.violations.length">
-                        <uui-tag color="danger" look="outline" style="margin: 0 5px;">{{totalIssues()}}</uui-tag>
-                        <uui-symbol-expand ng-if="!violationsOpen"></uui-symbol-expand>
-                        <uui-symbol-expand ng-if="violationsOpen" open></uui-symbol-expand>
-                    </div>
-                </button>
-                <div ng-if="results.violations.length" role="region" aria-labelledby="violationsAccordion">
-                    <p>All these tests need resolving at to improve the accessibility of this page.</p>
-                    <div class="c-table__container">
-                        <uui-table ng-if="violationsOpen">
-                            <uui-table-head>
-                                <uui-table-head-cell>Impact</uui-table-head-cell>
-                                <uui-table-head-cell>Title</uui-table-head-cell>
-                                <uui-table-head-cell>Description</uui-table-head-cell> 
-                                <uui-table-head-cell>Accessibility Standard</uui-table-head-cell> 
-                                <uui-table-head-cell>Issues</uui-table-head-cell> 
-                                <uui-table-head-cell>Action</uui-table-head-cell> 
-                            </uui-table-head>
-                            <uui-table-row ng-repeat="result in results.violations" ng-click="openDetail(result)" style="cursor: pointer;">
-                                <uui-table-cell><uui-tag color="{{impactToTag(result.impact)}}" look="primary">{{result.impact}}</uui-tag></uui-table-cell>
-                                <uui-table-cell>{{result.help}}</uui-table-cell>
-                                <uui-table-cell>{{result.description}}</uui-table-cell>
-                                <uui-table-cell>
-                                    <span ng-repeat="tag in mapTagsToStandard(result.tags)">
-                                        <uui-tag color="default" look="outline">{{tag}}</uui-tag>
-                                    </span>
-                                </uui-table-cell>
-                                <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
-                                <uui-table-cell>
-                                    <button type="button" class="c-detail-button">
-                                        <span class="c-detail-button__group">
-                                            <uui-icon-registry-essential>
-                                                <uui-icon name="see"></uui-icon>
-                                            </uui-icon-registry-essential>
-                                            <span class="c-detail-button__text">
-                                                View details <span class="sr-only">about {{result.help}}</span>
-                                            </span>
-                                        </span>
-                                    </button>
-                                </uui-table-cell>
-                            </uui-table-row>
-                        </uui-table> 
-                    </div>
-                </div>
-                <div ng-if="!results.violations.length">
-                    <p>No issues found! Great work!</p>
-                </div>
-            </uui-box>
-
-            <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleIncomplete()" aria-expanded="{{incompleteOpen === true}}" id="incompleteAccordion">
-                    <h5 class="c-accordion-header__title">Incomplete Tests</h5>
-                    <div ng-if="results.incomplete.length">
-                        <uui-tag color="default" look="outline" style="margin: 0 5px;">{{results.incomplete.length}}</uui-tag>
-                        <uui-symbol-expand ng-if="!incompleteOpen"></uui-symbol-expand>
-                        <uui-symbol-expand ng-if="incompleteOpen" open></uui-symbol-expand>
-                    </div>
-                </button>
-                <div ng-if="results.incomplete.length" role="region" aria-labelledby="incompleteAccordion">
-                    <p>These tests could not be definitively passed or failed. Please manually review these tests.</p>
-                    <div class="c-table__container">
-                        <uui-table ng-if="incompleteOpen">
-                            <uui-table-head>
-                                <uui-table-head-cell>Impact</uui-table-head-cell>
-                                <uui-table-head-cell>Title</uui-table-head-cell>
-                                <uui-table-head-cell>Description</uui-table-head-cell> 
-                                <uui-table-head-cell>Accessibility Standard</uui-table-head-cell> 
-                                <uui-table-head-cell>Issues</uui-table-head-cell> 
-                                <uui-table-head-cell>Action</uui-table-head-cell> 
-                            </uui-table-head>
-                            <uui-table-row ng-repeat="result in results.incomplete" ng-click="openDetail(result)" style="cursor: pointer;">
-                                <uui-table-cell><uui-tag color="{{impactToTag(result.impact)}}" look="primary">{{result.impact}}</uui-tag></uui-table-cell>
-                                <uui-table-cell>{{result.help}}</uui-table-cell>
-                                <uui-table-cell>{{result.description}}</uui-table-cell>
-                                <uui-table-cell>
-                                    <span ng-repeat="tag in mapTagsToStandard(result.tags)">
-                                        <uui-tag color="default" look="outline">{{tag}}</uui-tag>
-                                    </span>
-                                </uui-table-cell>
-                                <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
-                                <uui-table-cell>
-                                    <button type="button" class="c-detail-button">
-                                        <span class="c-detail-button__group">
-                                            <uui-icon-registry-essential>
-                                                <uui-icon name="see"></uui-icon>
-                                            </uui-icon-registry-essential>
-                                            <span class="c-detail-button__text">
-                                                View details <span class="sr-only">about {{result.help}}</span>
-                                            </span>
-                                        </span>
-                                    </button>
-                            </uui-table-row>
-                        </uui-table> 
-                    </div>
-                </div>
-                <div ng-if="!results.incomplete.length">
-                    <p>All automated tests ran successfully.</p>
-                </div>
-            </uui-box>
-
-            <uui-box style="margin-bottom: 20px;">
-                <button type="button" slot="headline" class="c-accordion-header" ng-click="togglePasses()" aria-expanded="{{passesOpen === true}}" id="passesAccordion">
-                    <h5 class="c-accordion-header__title">Passed Tests</h5>
-                    <uui-tag color="positive" look="outline" style="margin: 0 5px;">{{results.passes.length}}</uui-tag>
-                    <uui-symbol-expand ng-if="!passesOpen"></uui-symbol-expand>
-                    <uui-symbol-expand ng-if="passesOpen" open></uui-symbol-expand>
-                </button>
-                <p>All these tests passed - super work!</p>
-                <div class="c-table__container" role="region" aria-labelledby="passesAccordion">
-                    <uui-table ng-if="passesOpen">
-                        <uui-table-head>
-                            <uui-table-head-cell>Impact</uui-table-head-cell>
-                            <uui-table-head-cell>Title</uui-table-head-cell>
-                            <uui-table-head-cell>Description</uui-table-head-cell> 
-                            <uui-table-head-cell>Accessibility Standard</uui-table-head-cell> 
-                            <uui-table-head-cell>Elements</uui-table-head-cell> 
-                        </uui-table-head>
-                        <uui-table-row ng-repeat="result in results.passes">
-                            <uui-table-cell><uui-tag color="positive" look="primary">passed</uui-tag></uui-table-cell>
-                            <uui-table-cell>{{result.help}}</uui-table-cell>
-                            <uui-table-cell>{{result.description}}</uui-table-cell>
-                            <uui-table-cell>
-                                <span ng-repeat="tag in mapTagsToStandard(result.tags)">
-                                    <uui-tag color="default" look="outline">{{tag}}</uui-tag>
-                                </span>
-                            </uui-table-cell>
-                            <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
-                        </uui-table-row>
-                    </uui-table>
-                </div> 
-            </uui-box>
-
-            <uui-box headline="Manual Tests">
-                <p>Please note automated accessibility audits can only catch up to 40% of accessibility issues. Manual testing is needed to ensure that this page is fully accessible.</p>
-            </uui-box>
-
-        </div>
-
-        <uui-box ng-if="pageState === 'errored'" headline="Accessibility audit of current live page {{testUrl}} errored">
-            Accessibility Reporter only works for URLs that are accessible publicly. If your page is publicly accessible, please try refreshing this page to run the accessibility audit again.
+  
+        <uui-box style="margin-bottom: 20px;">
+          <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleViolations()" aria-expanded="{{violationsOpen === true}}" id="violationsAccordion">
+            <h5 class="c-accordion-header__title">Failed Tests</h5>
+            <div ng-if="results.violations.length">
+              <uui-tag color="danger" look="outline" style="margin: 0 5px;">{{totalIssues()}}</uui-tag>
+              <uui-symbol-expand ng-if="!violationsOpen"></uui-symbol-expand>
+              <uui-symbol-expand ng-if="violationsOpen" open></uui-symbol-expand>
+            </div>
+          </button>
+          <div ng-if="results.violations.length" role="region" aria-labelledby="violationsAccordion">
+            <p>All these tests need resolving at to improve the accessibility of this page.</p>
+            <div class="c-table__container">
+              <uui-table ng-if="violationsOpen">
+                <uui-table-head>
+                  <uui-table-head-cell>Impact</uui-table-head-cell>
+                  <uui-table-head-cell>Title</uui-table-head-cell>
+                  <uui-table-head-cell>Description</uui-table-head-cell>
+                  <uui-table-head-cell>Accessibility Standard</uui-table-head-cell>
+                  <uui-table-head-cell>Issues</uui-table-head-cell>
+                  <uui-table-head-cell>Action</uui-table-head-cell>
+                </uui-table-head>
+                <uui-table-row ng-repeat="result in results.violations" ng-click="openDetail(result)" style="cursor: pointer;">
+                  <uui-table-cell><uui-tag color="{{impactToTag(result.impact)}}" look="primary">{{result.impact}}</uui-tag></uui-table-cell>
+                  <uui-table-cell>{{result.help}}</uui-table-cell>
+                  <uui-table-cell>{{result.description}}</uui-table-cell>
+                  <uui-table-cell>
+                    <span ng-repeat="tag in mapTagsToStandard(result.tags)">
+                      <uui-tag color="default" look="outline">{{tag}}</uui-tag>
+                    </span>
+                  </uui-table-cell>
+                  <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
+                  <uui-table-cell>
+                    <button type="button" class="c-detail-button">
+                      <span class="c-detail-button__group">
+                        <uui-icon-registry-essential>
+                          <uui-icon name="see"></uui-icon>
+                        </uui-icon-registry-essential>
+                        <span class="c-detail-button__text">
+                          View details <span class="sr-only">about {{result.help}}</span>
+                        </span>
+                      </span>
+                    </button>
+                  </uui-table-cell>
+                </uui-table-row>
+              </uui-table>
+            </div>
+          </div>
+          <div ng-if="!results.violations.length">
+            <p>No issues found! Great work!</p>
+          </div>
         </uui-box>
-
+  
+        <uui-box style="margin-bottom: 20px;">
+          <button type="button" slot="headline" class="c-accordion-header" ng-click="toggleIncomplete()" aria-expanded="{{incompleteOpen === true}}" id="incompleteAccordion">
+            <h5 class="c-accordion-header__title">Incomplete Tests</h5>
+            <div ng-if="results.incomplete.length">
+              <uui-tag color="default" look="outline" style="margin: 0 5px;">{{results.incomplete.length}}</uui-tag>
+              <uui-symbol-expand ng-if="!incompleteOpen"></uui-symbol-expand>
+              <uui-symbol-expand ng-if="incompleteOpen" open></uui-symbol-expand>
+            </div>
+          </button>
+          <div ng-if="results.incomplete.length" role="region" aria-labelledby="incompleteAccordion">
+            <p>These tests could not be definitively passed or failed. Please manually review these tests.</p>
+            <div class="c-table__container">
+              <uui-table ng-if="incompleteOpen">
+                <uui-table-head>
+                  <uui-table-head-cell>Impact</uui-table-head-cell>
+                  <uui-table-head-cell>Title</uui-table-head-cell>
+                  <uui-table-head-cell>Description</uui-table-head-cell>
+                  <uui-table-head-cell>Accessibility Standard</uui-table-head-cell>
+                  <uui-table-head-cell>Issues</uui-table-head-cell>
+                  <uui-table-head-cell>Action</uui-table-head-cell>
+                </uui-table-head>
+                <uui-table-row ng-repeat="result in results.incomplete" ng-click="openDetail(result)" style="cursor: pointer;">
+                  <uui-table-cell><uui-tag color="{{impactToTag(result.impact)}}" look="primary">{{result.impact}}</uui-tag></uui-table-cell>
+                  <uui-table-cell>{{result.help}}</uui-table-cell>
+                  <uui-table-cell>{{result.description}}</uui-table-cell>
+                  <uui-table-cell>
+                    <span ng-repeat="tag in mapTagsToStandard(result.tags)">
+                      <uui-tag color="default" look="outline">{{tag}}</uui-tag>
+                    </span>
+                  </uui-table-cell>
+                  <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
+                  <uui-table-cell>
+                    <button type="button" class="c-detail-button">
+                      <span class="c-detail-button__group">
+                        <uui-icon-registry-essential>
+                          <uui-icon name="see"></uui-icon>
+                        </uui-icon-registry-essential>
+                        <span class="c-detail-button__text">
+                          View details <span class="sr-only">about {{result.help}}</span>
+                        </span>
+                      </span>
+                    </button>
+                </uui-table-row>
+              </uui-table>
+            </div>
+          </div>
+          <div ng-if="!results.incomplete.length">
+            <p>All automated tests ran successfully.</p>
+          </div>
+        </uui-box>
+  
+        <uui-box style="margin-bottom: 20px;">
+          <button type="button" slot="headline" class="c-accordion-header" ng-click="togglePasses()" aria-expanded="{{passesOpen === true}}" id="passesAccordion">
+            <h5 class="c-accordion-header__title">Passed Tests</h5>
+            <uui-tag color="positive" look="outline" style="margin: 0 5px;">{{results.passes.length}}</uui-tag>
+            <uui-symbol-expand ng-if="!passesOpen"></uui-symbol-expand>
+            <uui-symbol-expand ng-if="passesOpen" open></uui-symbol-expand>
+          </button>
+          <p>All these tests passed - super work!</p>
+          <div class="c-table__container" role="region" aria-labelledby="passesAccordion">
+            <uui-table ng-if="passesOpen">
+              <uui-table-head>
+                <uui-table-head-cell>Impact</uui-table-head-cell>
+                <uui-table-head-cell>Title</uui-table-head-cell>
+                <uui-table-head-cell>Description</uui-table-head-cell>
+                <uui-table-head-cell>Accessibility Standard</uui-table-head-cell>
+                <uui-table-head-cell>Elements</uui-table-head-cell>
+              </uui-table-head>
+              <uui-table-row ng-repeat="result in results.passes">
+                <uui-table-cell><uui-tag color="positive" look="primary">passed</uui-tag></uui-table-cell>
+                <uui-table-cell>{{result.help}}</uui-table-cell>
+                <uui-table-cell>{{result.description}}</uui-table-cell>
+                <uui-table-cell>
+                  <span ng-repeat="tag in mapTagsToStandard(result.tags)">
+                    <uui-tag color="default" look="outline">{{tag}}</uui-tag>
+                  </span>
+                </uui-table-cell>
+                <uui-table-cell>{{result.nodes.length}}</uui-table-cell>
+              </uui-table-row>
+            </uui-table>
+          </div>
+        </uui-box>
+  
+        <uui-box headline="Manual Tests">
+          <p>Please note automated accessibility audits can only catch up to 40% of accessibility issues. Manual testing is needed to ensure that this page is fully accessible.</p>
+        </uui-box>
+  
+      </div>
+  
+      <uui-box ng-if="pageState === 'errored'" headline="Accessibility audit of current live page {{testUrl}} errored">
+        Accessibility Reporter only works for URLs that are accessible publicly. If your page is publicly accessible, please try refreshing this page to run the accessibility audit again.
+      </uui-box>
+  
+      <uui-box ng-if="pageState === 'unauthorised'" headline="Accessibility audit not authorised">
+        You do not have permission to view this audit.
+      </uui-box>
+  
     </uui-scroll-container>
-</div>
+  </div>
+  

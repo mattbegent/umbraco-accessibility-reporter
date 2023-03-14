@@ -1,8 +1,29 @@
 {
     "apiUrl": "https://api.accessibilityreporter.com/api/audit",
-    "testBaseUrl": "https://gibe.digital",
+    "testBaseUrl": "https://example.com",
+    "testUrlsMap": [
+		{
+			"name": "Website 1",
+			"url": "https://website1.com"
+		},
+		{
+			"name": "Website 2",
+			"url": "https://website2.com"
+		},
+		{
+			"name": "Website 3",
+			"url": "https://website3.com"
+		},
+		{
+			"name": "Website 4",
+			"url": "https://website4.com"
+		}
+	],
     "tags": [
         "wcag2a",
         "wcag2aa"
-    ]
+    ],
+    "userGroups": [
+		"admin"
+	]
 }
