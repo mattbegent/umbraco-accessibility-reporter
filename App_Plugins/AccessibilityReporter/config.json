@@ -1,7 +1,7 @@
 {
     "apiUrl": "https://api.accessibilityreporter.com/api/audit",
     "testBaseUrl": "https://example.com",
-    "testUrlsMap": [
+    "multisiteTestBaseUrls": [
 		{
 			"name": "Website 1",
 			"url": "https://website1.com"
@@ -19,11 +19,12 @@
 			"url": "https://website4.com"
 		}
 	],
-    "tags": [
+    "testsToRun": [
         "wcag2a",
         "wcag2aa"
     ],
     "userGroups": [
 		"admin"
-	]
+	],
+	"runTestsAutomatically": true
 }

@@ -179,6 +179,11 @@
       <uui-box ng-if="pageState === 'unauthorised'" headline="Accessibility audit not authorised">
         You do not have permission to view this audit.
       </uui-box>
+
+      <uui-box ng-if="pageState === 'manuallyrun'" headline="Accessibility Reporter">
+        <p>Start running accessibility tests on the current live version of {{testUrl}} by using the button below.</p>
+        <uui-button look="primary" color="default" ng-click="runTests()" label="Run accessibility tests on current live page">Run tests</uui-button>
+      </uui-box>
   
     </uui-scroll-container>
   </div>

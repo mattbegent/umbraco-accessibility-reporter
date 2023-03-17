@@ -11,9 +11,9 @@ angular
           if (language) {
             requestUrl.searchParams.append("language", language);
           }
-          if (config.tags) {
-            for (var i = 0; i < config.tags.length; i++) {
-              requestUrl.searchParams.append("tags", config.tags[i]);
+          if (config.testsToRun) {
+            for (var i = 0; i < config.testsToRun.length; i++) {
+              requestUrl.searchParams.append("tags", config.testsToRun[i]);
             }
           }
           return umbRequestHelper.resourcePromise(

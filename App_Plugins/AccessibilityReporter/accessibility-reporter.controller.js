@@ -18,6 +18,7 @@ angular
       $scope.violationsOpen = true;
       $scope.incompleteOpen = true;
       $scope.passesOpen = false;
+      $scope.userLocale;
       var impacts = ["minor", "moderate", "serious", "critical"];
 
       function isAbsoluteURL(urlString) {
@@ -90,10 +91,10 @@ angular
       AccessibilityReporterApiService.getConfig()
         .then(function (config) {
           $scope.config = config;
-          if (config.testUrlsMap) {
+          if (config.multisiteTestBaseUrls) {
             var parentName = getParentNodeName();
             if (parentName) {
-              $scope.config.testBaseUrl = config.testUrlsMap.find(
+              $scope.config.testBaseUrl = config.multisiteTestBaseUrls.find(
                 (url) => url.name === parentName
               ).url;
             } else {
@@ -128,17 +129,32 @@ angular
             $scope.pageState = "unauthorised";
             throw new Error("User not in allowed group.");
           }
-          var userLocale = user && user.locale ? user.locale : undefined;
+          $scope.userLocale = user && user.locale ? user.locale : undefined;
           $scope.testUrl = new URL(
             $scope.testPathname,
             $scope.config.testBaseUrl
           ).toString();
-          return AccessibilityReporterApiService.getIssues(
-            $scope.config,
-            $scope.testPathname,
-            userLocale
-          );
+
+          if($scope.config.runTestsAutomatically) {
+            $scope.runTests();
+          } else {
+            $scope.pageState = "manuallyrun";
+          }
+
         })
+        .catch(function () {
+          if ($scope.pageState !== "unauthorised") {
+            $scope.pageState = "errored";
+          }
+        });
+
+      $scope.runTests = function() {
+        $scope.pageState = "loading";
+        return AccessibilityReporterApiService.getIssues(
+          $scope.config,
+          $scope.testPathname,
+          $scope.userLocale
+        )
         .then(function (response) {
           if (response) {
             $scope.results = sortResponse(response);
@@ -157,6 +173,7 @@ angular
             $scope.pageState = "errored";
           }
         });
+      }
 
       $scope.totalIssues = function () {
         if (!$scope.results) {
