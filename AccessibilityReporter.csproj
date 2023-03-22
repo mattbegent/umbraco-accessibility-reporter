@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Version>1.2.0</Version>
     <ContentTargetFolders>.</ContentTargetFolders>
+	<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Product>AccessibilityReporter</Product>
     <PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
     <Title>AccessibilityReporter</Title>
@@ -17,6 +18,7 @@
     <PackageIcon>logo.png</PackageIcon>
     <PackageReleaseNotes>Added localization for 11 languages to the accessibility report results. This does not yet include table headings and messages.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
+	<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,9 +29,13 @@
   <ItemGroup>
     <Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
     <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
+    <Content Include="Controllers\ConfigApiController.cs" />
+    <Content Include="Infrastructure\AccessibilityReporterComposer.cs" />
+    <Content Include="Infrastructure\Config\AccessibilityReporterSettings.cs" />
+    <Content Include="Infrastructure\Config\TestBaseUrl.cs" />
     <None Include="logos\logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-
+	
   <ItemGroup>
     <None Update="README.md">
       <Pack>True</Pack>
