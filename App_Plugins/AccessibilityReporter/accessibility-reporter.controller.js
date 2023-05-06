@@ -72,7 +72,7 @@ angular.module("umbraco")
                     count: $scope.totalIssues(),
                     type: "alert" 
                 };
-                $scope.testDateTime = moment(response.timestamp).format('MMMM Do YYYY HH:mm:ss');
+                $scope.testDateTime = moment(response.timestamp).format('HH:mm:ss MMMM Do YYYY');
             }
             $scope.pageState = "loaded";
         },

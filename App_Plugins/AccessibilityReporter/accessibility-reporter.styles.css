@@ -78,3 +78,11 @@
     font-size: 16px; 
     font-weight: 700;
 }
+
+.c-checklist__item {
+    margin: 0 0 1rem 0;
+}
+
+.c-tag {
+    margin-bottom: 0.25rem;
+}
