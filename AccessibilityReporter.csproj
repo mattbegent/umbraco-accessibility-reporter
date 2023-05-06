@@ -15,7 +15,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Copyright>Matt Begent</Copyright>
     <PackageIcon>logo.png</PackageIcon>
-    <PackageReleaseNotes>Added localization for 11 languages to the accessibility report results. This does not yet include table headings and messages.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added manual testing checklist.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
