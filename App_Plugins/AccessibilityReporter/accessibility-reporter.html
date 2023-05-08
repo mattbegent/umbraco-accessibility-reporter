@@ -1,14 +1,14 @@
 <div ng-controller="My.AccessibilityReporterApp as vm">
     <uui-scroll-container>
 
-        <uui-box headline="Running Accessibility Audit on Current Live Page {{testUrl}}" ng-if="pageState === 'loading'">
+        <uui-box headline="Running Accessibility Tests on Current Live Page {{testUrl}}" ng-if="pageState === 'loading'">
             <uui-loader></uui-loader> 
         </uui-box>
 
         <div ng-if="pageState === 'loaded'">
 
-            <uui-box headline="Accessibility Audit Results for {{testUrl}}" style="margin-bottom: 20px;">
-                <p>Test ran at {{testDateTime}} using {{results.testEngine.name}} v{{results.testEngine.version}}.</p>
+            <uui-box headline="Accessibility Report for {{testUrl}}" style="margin-bottom: 20px;">
+                <p>Tests ran at {{testDateTime}} using {{results.testEngine.name}} v{{results.testEngine.version}}.</p>
                 <div class="c-summary__container">
                     <div class="c-summary c-summary--issues">
                         <div class="c-summary__circle">
@@ -29,6 +29,7 @@
                         <span class="c-summary__title">Passed</span>
                     </div>
                 </div>
+                <uui-button look="secondary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page">Rerun Tests</uui-button>
             </uui-box>
 
             <uui-box style="margin-bottom: 20px;">
@@ -167,7 +168,7 @@
             </uui-box>
 
             <uui-box headline="Manual Tests">
-                <p>Automated accessibility audits can only catch up to 40% of accessibility issues. Manual testing is needed to ensure that this page is fully accessible.</p>
+                <p>Automated accessibility tests can only catch up to 40% of accessibility issues. Manual testing is needed to ensure that this page is fully accessible.</p>
                 <h5>Basic Manual Tests</h5>
                 <p>Please as a minimum manually run the following tests on <a href="{{testUrl}}" target="_blank" class="btn-link -underline">{{testUrl}} <span class="sr-only">(opens in a new window)</span></a>.</p>
                 <div class="c-checklist">
@@ -194,8 +195,9 @@
 
         </div>
 
-        <uui-box ng-if="pageState === 'errored'" headline="Accessibility audit of current live page {{testUrl}} errored">
-            Accessibility Reporter only works for URLs that are accessible publicly. If your page is publicly accessible, please try refreshing this page to run the accessibility audit again.
+        <uui-box ng-if="pageState === 'errored'" headline="Accessibility report for current live page {{testUrl}} errored">
+            <p>Accessibility Reporter only works for URLs that are accessible publicly. If your page is publicly accessible, please try refreshing this page to run the accessibility report again.</p>
+            <uui-button look="secondary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page">Rerun Tests</uui-button>
         </uui-box>
 
     </uui-scroll-container>

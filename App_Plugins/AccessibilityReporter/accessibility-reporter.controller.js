@@ -6,6 +6,7 @@ angular.module("umbraco")
         $scope.violationsOpen = true;
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
+        $scope.userLocale;
         var impacts = ["minor","moderate","serious","critical"];
 
         function isAbsoluteURL(urlString) {
@@ -62,23 +63,33 @@ angular.module("umbraco")
             return userService.getCurrentUser();
         })
         .then(function (user) {
-            var userLocale = user && user.locale ? user.locale : undefined;
-            return AccessibilityReporterApiService.getIssues($scope.testUrl, userLocale);
+            $scope.userLocale = user && user.locale ? user.locale : undefined;
+            return $scope.runTests();
         })
-        .then(function (response) {
-            if (response) {
-                $scope.results = sortResponse(response);
-                $scope.model.badge = {
-                    count: $scope.totalIssues(),
-                    type: "alert" 
-                };
-                $scope.testDateTime = moment(response.timestamp).format('HH:mm:ss MMMM Do YYYY');
-            }
-            $scope.pageState = "loaded";
-        },
-        function (error) {
+        .catch(function () {
             $scope.pageState = "errored";
         });
+
+        $scope.runTests = function() {
+            $scope.pageState = "loading";
+            return AccessibilityReporterApiService.getIssues($scope.testUrl, $scope.userLocale)
+            .then(function (response) {
+              if (response) {
+                $scope.results = sortResponse(response);
+                $scope.model.badge = {
+                  count: $scope.totalIssues(),
+                  type: "alert",
+                };
+                $scope.testDateTime = moment(response.timestamp).format(
+                  "HH:mm:ss MMMM Do YYYY"
+                );
+              }
+              $scope.pageState = "loaded";
+            })
+            .catch(function () {
+                $scope.pageState = "errored";
+            });
+          }
     
         $scope.totalIssues = function() {
 

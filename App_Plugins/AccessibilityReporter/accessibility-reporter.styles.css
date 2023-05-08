@@ -46,6 +46,7 @@
     grid-template-columns: 1fr 1fr 1fr 1fr;
     max-width: 600px;
     overflow-x: auto;
+    margin-bottom: 20px;
 }
 
 .c-summary__circle {
