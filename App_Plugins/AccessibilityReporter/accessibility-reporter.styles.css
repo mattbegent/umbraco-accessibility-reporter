@@ -6,7 +6,7 @@
     padding: 0;
     background-color: transparent;
     font-family: inherit;
-    font-size: inherit;
+    font-size: 17.25px;
     font-weight: inherit;
     font-size: inherit;
 }
@@ -36,6 +36,10 @@
     overflow-x: auto;
 }
 
+.c-table__container uui-table-head-cell {
+    font-size: 14px;
+}
+
 .c-summary {
     text-align: center;
 }
@@ -51,39 +55,111 @@
 
 .c-summary__circle {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     border: 4px solid #d42054;
-    height: 75px;
-    width: 75px;
-    border-radius: 100%;
+    height: 110px;
+    width: 110px; 
+    border-radius: 100%; 
     margin: 0 auto 10px auto;
     font-weight: 700;
-    font-size: 24px;
+    font-size: 28px;
 }
 
 .c-summary--passed .c-summary__circle {
-    border-color: #25aa60;
+    border-color: #1C824A;
 }
 
 .c-summary--incomplete .c-summary__circle {
-    border-color: #1b264f;
+    border-color: #000;
 }
 
 .c-summary__title {
     text-align: center;
     font-weight: 700;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.c-summary__button {
+    margin-right: 10px;
 }
 
 .c-detail__title {
-    font-size: 16px; 
+    font-size: 15px; 
     font-weight: 700;
 }
 
 .c-checklist__item {
-    margin: 0 0 1rem 0;
+    margin: 0 0 1.5rem 0;
 }
 
 .c-tag {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.c-title__group {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.c-title {
+    font-size: 17.25px;
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.c-title__link {
+    text-decoration: underline;
+    text-underline-position: below;
+}
+
+.c-title__link:hover,
+.c-title__link:focus {
+    text-decoration: none;
+}
+
+.c-paragraph {
+    margin: 0 0 1rem 0;
+}
+
+.c-paragraph__spaced {
+    margin: 0 0 2rem 0;
+}
+
+.c-bold {
+    font-weight: 700;;
+}
+
+.c-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid currentColor;
+    height: 32px;
+    width: 32px; 
+    border-radius: 100%; 
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.c-circle--failed {
+    color: #d42054;
+}
+
+.c-circle--incomplete {
+    color: #000;
+}
+
+.c-circle--passed {
+    color: #1C824A;
+}
+
+.c-circle__text {
+    margin: 3px 0 0 0;
 }

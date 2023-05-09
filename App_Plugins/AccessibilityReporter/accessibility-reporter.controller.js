@@ -1,5 +1,5 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, appState) {
 
         $scope.pageState = "loading";
         $scope.testUrl = "";
@@ -8,6 +8,21 @@ angular.module("umbraco")
         $scope.passesOpen = false;
         $scope.userLocale;
         var impacts = ["minor","moderate","serious","critical"];
+
+        function init() {
+            userService.getCurrentUser()
+            .then(function (user) {
+                $scope.userLocale = user && user.locale ? user.locale : undefined;
+                return $scope.runTests();
+            })
+            .catch(function () {
+                $scope.pageState = "errored";
+            });
+        }
+
+        function getPageName() {
+            return appState.getTreeState("selectedNode") ? appState.getTreeState("selectedNode").name : 'current page';;
+        }
 
         function isAbsoluteURL(urlString) {
             return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
@@ -19,7 +34,7 @@ angular.module("umbraco")
 
         function getHostname(possibleUrls) {
             for(var i=0; i < possibleUrls.length; i++){
-                var possibleCurrentUrl = possibleUrls[i].text;
+                var possibleCurrentUrl = possibleUrls[i].text; 
                 if(isAbsoluteURL(possibleCurrentUrl)) {
                     return getHostnameFromString(possibleCurrentUrl);
                 }
@@ -50,29 +65,19 @@ angular.module("umbraco")
             return results;
         }
 
-        // TODO: If a local page we could fall back to grabbing and sending html instead maybe?
-        contentResource.getNiceUrl(editorState.current.id).then(function (data) {
-            if (isAbsoluteURL(data)) {
-                $scope.testUrl = data;
-            } else {
-                var potentialHostDomain = getHostname(editorState.current.urls);
-                $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
-            }
-        })
-        .then(function() {
-            return userService.getCurrentUser();
-        })
-        .then(function (user) {
-            $scope.userLocale = user && user.locale ? user.locale : undefined;
-            return $scope.runTests();
-        })
-        .catch(function () {
-            $scope.pageState = "errored";
-        });
-
         $scope.runTests = function() {
             $scope.pageState = "loading";
-            return AccessibilityReporterApiService.getIssues($scope.testUrl, $scope.userLocale)
+            $scope.pageName = getPageName();
+            return contentResource.getNiceUrl(editorState.current.id).then(function (data) {
+                if (isAbsoluteURL(data)) {
+                    $scope.testUrl = data;
+                } else {
+                    var potentialHostDomain = getHostname(editorState.current.urls);
+                    $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
+                }
+            }).then(function() {
+                return AccessibilityReporterApiService.getIssues($scope.testUrl, $scope.userLocale)
+            })
             .then(function (response) {
               if (response) {
                 $scope.results = sortResponse(response);
@@ -80,16 +85,19 @@ angular.module("umbraco")
                   count: $scope.totalIssues(),
                   type: "alert",
                 };
-                $scope.testDateTime = moment(response.timestamp).format(
-                  "HH:mm:ss MMMM Do YYYY"
+                $scope.testTime = moment(response.timestamp).format(
+                  "HH:mm:ss"
                 );
+                $scope.testDate = moment(response.timestamp).format(
+                    "MMMM Do YYYY"
+                  );
               }
               $scope.pageState = "loaded";
             })
             .catch(function () {
                 $scope.pageState = "errored";
             });
-          }
+        }
     
         $scope.totalIssues = function() {
 
@@ -118,7 +126,13 @@ angular.module("umbraco")
             if(!$scope.results) {
                 return 0;
             }
-            return $scope.results.incomplete.length.toString();
+            var total = 0;
+
+            for(var i=0; i < $scope.results.incomplete.length; i++){
+                total += $scope.results.incomplete[i].nodes.length;
+            }
+
+            return total.toString();
         };
 
         $scope.impactToTag = function(impact) {
@@ -162,10 +176,14 @@ angular.module("umbraco")
         // https://www.deque.com/axe/core-documentation/api-documentation/
         $scope.mapTagsToStandard = function(tags) {
             var catTagsRemoved = tags.filter(tag => {
-                return tag.indexOf('cat.') === -1;
+                return tag.indexOf('cat.') === -1 && !tag.startsWith('TT') && !tag.startsWith('ACT');
             });
             var formattedTags = catTagsRemoved.map(tagToStandard);
             return formattedTags;
+        }
+
+        $scope.upperCaseFirstLetter = function(word) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
         }
 
         function tagToStandard(tag) {
@@ -203,5 +221,7 @@ angular.module("umbraco")
             }
             return tag;
         }
+
+        init();
 
     });

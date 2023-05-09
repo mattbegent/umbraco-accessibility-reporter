@@ -21,4 +21,8 @@ angular.module("umbraco")
             return $scope.addFullStop(summary.replace('Fix any of the following:', '').replace('Fix all of the following:', ''));
         };
 
+        $scope.upperCaseFirstLetter = function(word) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        };
+
     });
