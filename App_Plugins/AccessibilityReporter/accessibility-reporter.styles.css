@@ -72,7 +72,7 @@
 }
 
 .c-summary--incomplete .c-summary__circle {
-    border-color: #000;
+    border-color: #fad634;
 }
 
 .c-summary__title {
@@ -149,17 +149,52 @@
 }
 
 .c-circle--failed {
-    color: #d42054;
+    border-color: #d42054;
 }
 
 .c-circle--incomplete {
-    color: #000;
+    border-color: #fad634;
 }
 
 .c-circle--passed {
-    color: #1C824A;
+    border-color: #1C824A;
 }
 
 .c-circle__text {
     margin: 3px 0 0 0;
+}
+
+.c-incident-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+    height: 24px;
+    width: 24px;
+    border-radius: 100%;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.c-incident-number--serious,
+.c-incident-number--critical {
+    border-color: #d42054;
+}
+
+.c-incident-number--moderate {
+    border-color: #fad634;
+}
+
+.c-incident-number__text {
+    margin: 2px 0 0 0;
+}
+
+/* Fix Umbraco Colors */
+
+.umb-sub-views-nav-item .badge.-type-alert {
+    background-color: #d42054;
+}
+
+.c-uui-tag--positive {
+    background-color: #1C824A;
 }

@@ -82,8 +82,8 @@ angular.module("umbraco")
               if (response) {
                 $scope.results = sortResponse(response);
                 $scope.model.badge = {
-                  count: $scope.totalIssues(),
-                  type: "alert",
+                  count: $scope.results.violations.length,
+                  type: $scope.results.violations.length ? "alert" : "default",
                 };
                 $scope.testTime = moment(response.timestamp).format(
                   "HH:mm:ss"
@@ -186,6 +186,34 @@ angular.module("umbraco")
             return word.charAt(0).toUpperCase() + word.slice(1);
         }
 
+        $scope.failedTitle = function() {
+            let title = 'Failed Test';
+            if($scope.results.violations.length !== 1) {
+                title += 's';
+            }
+            if($scope.totalIssues() !== "0") {
+                title += ` due to ${$scope.totalIssues()} Error`;
+                if($scope.totalIssues() !== 1) {
+                    title += 's';
+                }
+            }
+            return title;
+        };
+
+        $scope.incompleteTitle = function() {
+            let title = 'Incomplete Test';
+            if($scope.results.violations.length !== 1) {
+                title += 's';
+            }
+            if($scope.totalIncomplete() !== "0") {
+                title += ` due to ${$scope.totalIncomplete()} Error`;
+                if($scope.totalIncomplete() !== 1) {
+                    title += 's';
+                }
+            }
+            return title;
+        };
+
         function tagToStandard(tag) {
             switch (tag) {
                 case "wcag2a":
@@ -220,7 +248,7 @@ angular.module("umbraco")
                 return tag.replace('section', 'Section ');
             }
             return tag;
-        }
+        };
 
         init();
 
