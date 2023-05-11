@@ -1,5 +1,5 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, appState) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, appState, notificationsService) {
 
         $scope.pageState = "loading";
         $scope.testUrl = "";
@@ -7,7 +7,7 @@ angular.module("umbraco")
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
         $scope.userLocale;
-        var impacts = ["minor","moderate","serious","critical"];
+        const impacts = ["minor","moderate","serious","critical"];
 
         function init() {
             userService.getCurrentUser()
@@ -212,6 +212,63 @@ angular.module("umbraco")
                 }
             }
             return title;
+        };
+
+        function formattedResultsForExport(results) {
+            let formattedRows = [];
+            for (let index = 0; index < results.length; index++) {
+                const currentResult = results[index];
+                formattedRows.push({
+                    impact: currentResult.impact ? $scope.upperCaseFirstLetter(currentResult.impact) : '',
+                    title: currentResult.help,
+                    description: currentResult.description,
+                    standard: $scope.mapTagsToStandard(currentResult.tags).join(', '),
+                    errors: currentResult.nodes.length
+                });
+            }
+            return formattedRows;
+        }
+
+        function formatFileName(name) {
+            return name.replace(/\s+/g, '-').toLowerCase();
+        }
+
+        $scope.exportResults = function() {
+
+            try {
+
+                const failedRows = formattedResultsForExport($scope.results.violations);
+                const incompleteRows = formattedResultsForExport($scope.results.incomplete);
+                const passedRows = formattedResultsForExport($scope.results.passes);
+
+                const failedWorksheet = XLSX.utils.json_to_sheet(failedRows);
+                const incompleteWorksheet = XLSX.utils.json_to_sheet(incompleteRows);
+                const passedWorksheet = XLSX.utils.json_to_sheet(passedRows);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, failedWorksheet, "Failed Tests");
+                XLSX.utils.book_append_sheet(workbook, incompleteWorksheet, "Incomplete Tests");
+                XLSX.utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
+
+                const headers = [["Impact", "Title", "Description", "Standard", "Errors"]];
+                XLSX.utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
+                XLSX.utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });
+                XLSX.utils.sheet_add_aoa(passedWorksheet, headers, { origin: "A1" });
+
+                const failedTitleWidth = failedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
+                const incompleteTitleWidth = incompleteRows.reduce((w, r) => Math.max(w, r.title.length), 40);
+                const passedTitleWidth = passedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
+                failedWorksheet["!cols"] = [{ width: 10 }, { width: failedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ]; 
+                incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ]; 
+                passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ]; 
+
+                XLSX.writeFile(workbook, 
+                    formatFileName(`accessibility-report-${$scope.pageName}-${moment($scope.results.timestamp)
+                        .format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
+
+            } catch(error) {
+                notificationsService.error("Failed", "An error occurred exporting the report. Please try again later.");
+            }
+
         };
 
         function tagToStandard(tag) {
