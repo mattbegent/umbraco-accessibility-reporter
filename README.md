@@ -35,3 +35,7 @@ Automated accessibility testing is no substitute for manual testing and testing 
 Copyright © [Matt Begent](https://mattbegent.co.uk/).
 
 All source code is licensed under the [Mozilla Public License](https://github.com/mattbegent/azure-function-accessibility-reporter/blob/main/LICENSE).
+
+## Third party licensing
+
+[SheetJS Community Edition](https://docs.sheetjs.com/) is licensed under the [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0).
