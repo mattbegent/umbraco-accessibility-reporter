@@ -2,16 +2,18 @@
 <div ng-controller="My.AccessibilityReporterDetail as vm">
     <div class="umb-editor-header" style="display: flex; align-items: center;">
         <div class="umb-editor-header__name-and-description" style="flex: 1 1 auto;">
-            <h1 class="umb-panel-header-name">{{model.result.help}} <uui-tag color="default" look="outline" style="margin: 0 5px;">{{model.result.nodes.length}} issues</uui-tag></h1>
+            <h1 class="umb-panel-header-name">{{model.result.help}} <uui-tag color="default" look="outline" style="margin: 0 5px;">{{model.result.nodes.length}} error<span ng-if="model.result.nodes.length !== 1">s</span></uui-tag></h1>
         </div>
     </div>
     <div class="umb-editor-container umb-panel-body umb-scrollable row-fluid">
         <div class="umb-pane">
 
             <div class="umb-group-panel" ng-repeat="issue in model.result.nodes">
-                <uui-box headline="Issue {{$index + 1}}">
+                <uui-box>
 
-                    <uui-tag slot="headline" color="{{impactToTag(model.result.impact)}}" look="primary" style="margin-left: 10px;">{{model.result.impact}}</uui-tag>
+                    <div slot="headline">
+                        <h2 class="c-title">Error {{$index + 1}} <uui-tag slot="headline" color="{{impactToTag(model.result.impact)}}" look="primary" style="margin-left: 10px;">{{upperCaseFirstLetter(model.result.impact)}}</uui-tag></h2>
+                    </div>
 
                     <h3 class="c-detail__title" style="margin-top: 0;">Description</h3>
                     <p>{{addFullStop(model.result.description)}}</p>
