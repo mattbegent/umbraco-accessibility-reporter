@@ -51,7 +51,7 @@
                 <p>
                     <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page" class="c-summary__button">Rerun Tests</uui-button>
                     <uui-button look="secondary" color="default" ng-click="exportResults()" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export Results</uui-button>
-                    Tests ran at <strong>{{testTime}}</strong> on <strong>{{testDate}}</strong>
+                    <span class="c-summary__time">Tests ran at <strong>{{testTime}}</strong> on <strong>{{testDate}}</strong></span>
                 </p>
                 
             </uui-box>
@@ -212,7 +212,7 @@
                     </div>
                     <h2 class="c-title">Manual Tests</h2>
                 </div>
-                <p class="c-paragraph">Automated accessibility tests can only catch up to <strong>40% of accessibility issues</strong>. Manual testing is needed to ensure that this page is fully accessible.</p>
+                <p class="c-paragraph">Automated accessibility tests can only catch up to <strong>37% of accessibility issues</strong>. Manual testing is needed to ensure that this page is fully accessible.</p>
                 <p class="c-paragraph__spaced">As a minimum it is recommended that the following manual tests are run on <a href="{{testUrl}}" target="_blank" class="btn-link -underline c-bold">{{pageName}} <span class="sr-only">(opens in a new window)</span></a> every time that the automated tests are run.</p>
                 <div class="c-checklist">
                     <div class="c-checklist__item">

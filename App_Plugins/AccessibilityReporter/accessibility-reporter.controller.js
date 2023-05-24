@@ -1,23 +1,15 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, appState, notificationsService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, contentResource, AccessibilityReporterApiService, editorService, appState, notificationsService) {
 
         $scope.pageState = "loading";
         $scope.testUrl = "";
         $scope.violationsOpen = true;
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
-        $scope.userLocale;
         const impacts = ["minor","moderate","serious","critical"];
 
         function init() {
-            userService.getCurrentUser()
-            .then(function (user) {
-                $scope.userLocale = user && user.locale ? user.locale : undefined;
-                return $scope.runTests();
-            })
-            .catch(function () {
-                $scope.pageState = "errored";
-            });
+            $scope.runTests();
         }
 
         function getPageName() {
@@ -40,7 +32,7 @@ angular.module("umbraco")
                 }
             }
             // fallback if hostnames not set assume current host
-            return location.hostname;
+            return location.hostname + (location.port ? ":" + location.port : "");
         }
         
         function sortIssues(a, b) {
@@ -65,6 +57,53 @@ angular.module("umbraco")
             return results;
         }
 
+        async function getTestResults(testUrl) {
+
+            return new Promise(async (resolve, reject) => {
+
+                try {
+
+                    const iframeId = "arTestIframe";
+
+                    window.addEventListener("message", function(message) {
+                        if(message.data) {
+                            resolve(message.data);
+                        } else {
+                            reject(message);
+                        } 
+                        document.getElementById(iframeId).remove();
+                    }, {once : true});
+
+                    const container = document.getElementById('contentcolumn');
+                    const testIframe = document.createElement("iframe");
+                    testIframe.setAttribute("src", testUrl);        
+                    testIframe.setAttribute("id", iframeId);   
+                    testIframe.style.width = "1280px";
+                    testIframe.style.height = "800px";
+                    testIframe.style.zIndex = "1";
+                    testIframe.style.position = "absolute";
+                    container.appendChild(testIframe);
+
+                    testIframe.onload = function() {
+                        var scriptAxe = testIframe.contentWindow.document.createElement("script");
+                        scriptAxe.type = "text/javascript";
+                        scriptAxe.src = "/App_Plugins/AccessibilityReporter/axe.min.js";
+                        testIframe.contentWindow.document.body.appendChild(scriptAxe);
+
+                        var scriptRunTests = testIframe.contentWindow.document.createElement("script");
+                        scriptRunTests.type = "text/javascript";
+                        scriptRunTests.src = "/App_Plugins/AccessibilityReporter/run-tests.js";
+                        testIframe.contentWindow.document.body.appendChild(scriptRunTests);
+                    };
+                 
+                } catch(error) {
+                    reject(error); // Possible Security Error (another origin)
+                }
+
+            });
+
+        }
+
         $scope.runTests = function() {
             $scope.pageState = "loading";
             $scope.pageName = getPageName();
@@ -76,7 +115,7 @@ angular.module("umbraco")
                     $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
                 }
             }).then(function() {
-                return AccessibilityReporterApiService.getIssues($scope.testUrl, $scope.userLocale)
+                return getTestResults($scope.testUrl);
             })
             .then(function (response) {
               if (response) {
@@ -307,6 +346,6 @@ angular.module("umbraco")
             return tag;
         };
 
-        init();
+        init();      
 
     });

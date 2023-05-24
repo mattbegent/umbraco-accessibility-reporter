@@ -86,6 +86,13 @@
     margin-right: 10px;
 }
 
+@media (max-width: 768px) {
+    .c-summary__time {
+        display: block;
+        margin-top: 10px;
+    }
+}
+
 .c-detail__title {
     font-size: 15px; 
     font-weight: 700;
