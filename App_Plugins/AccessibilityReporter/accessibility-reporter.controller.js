@@ -25,6 +25,9 @@ angular.module("umbraco")
         }
 
         function getHostname(possibleUrls) {
+            if (location.hostname.indexOf('localhost') !== -1) {
+                return getLocalHostname();
+            }
             for(var i=0; i < possibleUrls.length; i++){
                 var possibleCurrentUrl = possibleUrls[i].text; 
                 if(isAbsoluteURL(possibleCurrentUrl)) {
@@ -32,7 +35,20 @@ angular.module("umbraco")
                 }
             }
             // fallback if hostnames not set assume current host
+            return getLocalHostname();
+        }
+
+        function getLocalHostname() {
             return location.hostname + (location.port ? ":" + location.port : "");
+        }
+
+        function hasRoutes() {
+            for (var i = 0; i < editorState.current.urls.length; i++) {
+                if (editorState.current.urls[i].isUrl) {
+                    return true;
+                }
+            }
+            return false;
         }
         
         function sortIssues(a, b) {
@@ -62,6 +78,9 @@ angular.module("umbraco")
             return new Promise(async (resolve, reject) => {
 
                 try {
+
+                    const testRequest = new Request(testUrl);
+                    await fetch(testRequest);
 
                     const iframeId = "arTestIframe";
 
@@ -94,9 +113,9 @@ angular.module("umbraco")
                         scriptRunTests.type = "text/javascript";
                         scriptRunTests.src = "/App_Plugins/AccessibilityReporter/run-tests.js";
                         testIframe.contentWindow.document.body.appendChild(scriptRunTests);
-                    };
+                    };        
                  
-                } catch(error) {
+                } catch (error) {
                     reject(error); // Possible Security Error (another origin)
                 }
 
@@ -108,6 +127,9 @@ angular.module("umbraco")
             $scope.pageState = "loading";
             $scope.pageName = getPageName();
             return contentResource.getNiceUrl(editorState.current.id).then(function (data) {
+                if (!hasRoutes()) {
+                    throw new Error('Page URL cannot be routed');
+                }
                 if (isAbsoluteURL(data)) {
                     $scope.testUrl = data;
                 } else {
