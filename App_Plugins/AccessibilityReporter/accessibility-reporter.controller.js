@@ -13,7 +13,7 @@ angular.module("umbraco")
         }
 
         function getPageName() {
-            return appState.getTreeState("selectedNode") ? appState.getTreeState("selectedNode").name : 'current page';;
+            return editorState.current && editorState.current.variants.length ? editorState.current.variants[0].name : 'Current page';
         }
 
         function isAbsoluteURL(urlString) {
@@ -147,11 +147,11 @@ angular.module("umbraco")
                   type: $scope.results.violations.length ? "alert" : "default",
                 };
                 $scope.testTime = moment(response.timestamp).format(
-                  "HH:mm:ss"
+                    "HH:mm:ss"
                 );
                 $scope.testDate = moment(response.timestamp).format(
                     "MMMM Do YYYY"
-                  );
+                );
               }
               $scope.pageState = "loaded";
             })
@@ -311,9 +311,10 @@ angular.module("umbraco")
                 XLSX.utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
 
                 const headers = [["Impact", "Title", "Description", "Standard", "Errors"]];
+                const passedHeaders = [["Impact", "Title", "Description", "Standard", "Elements"]];
                 XLSX.utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
                 XLSX.utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });
-                XLSX.utils.sheet_add_aoa(passedWorksheet, headers, { origin: "A1" });
+                XLSX.utils.sheet_add_aoa(passedWorksheet, passedHeaders, { origin: "A1" });
 
                 const failedTitleWidth = failedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
                 const incompleteTitleWidth = incompleteRows.reduce((w, r) => Math.max(w, r.title.length), 40);

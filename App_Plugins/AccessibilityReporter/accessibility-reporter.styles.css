@@ -72,7 +72,7 @@
 }
 
 .c-summary--incomplete .c-summary__circle {
-    border-color: #fad634;
+    border-color: #f79c37;
 }
 
 .c-summary__title {
@@ -160,7 +160,7 @@
 }
 
 .c-circle--incomplete {
-    border-color: #fad634;
+    border-color: #f79c37;
 }
 
 .c-circle--passed {
