@@ -17,7 +17,7 @@ namespace AccessibilityReporter.Controllers
 
         [HttpGet]
         public JsonResult Current()
-            => new JsonResult(_accessibilityReporterOptions.Value, new JsonSerializerOptions
+            => new JsonResult(_accessibilityReporterOptions.Value.WithDefaults(), new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });

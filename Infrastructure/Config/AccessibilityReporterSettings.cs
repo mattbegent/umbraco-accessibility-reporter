@@ -1,16 +1,10 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace AccessibilityReporter.Infrastructure.Config
 {
     public class AccessibilityReporterSettings
     {
-        public AccessibilityReporterSettings()
-        {
-            UserGroups = new HashSet<string>() { "admin" };
-        }
-
-        [JsonIgnore]
         public static string SectionName = "AccessibilityReporter";
 
         public string ApiUrl { get; set; } = string.Empty;
@@ -19,6 +13,23 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; }
 
-        public HashSet<string> UserGroups { get; set; }
+        public HashSet<string> UserGroups { get; set; } = new HashSet<string>();
+
+        public HashSet<string> TestsToRun { get; set; } = new HashSet<string>();
+
+        public AccessibilityReporterSettings WithDefaults()
+        {
+            if (UserGroups.Any() == false)
+            {
+                UserGroups = new HashSet<string>() { "admin" };
+            }
+
+            if (TestsToRun.Any() == false)
+            {
+                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa" };
+            }
+
+            return this;
+        }
     }
 }
