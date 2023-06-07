@@ -26,7 +26,6 @@ You can configure how Accessibility Reporter runs by adding an `AccessibilityRep
 
 - **ApiUrl** - This is the URL of the API that will run the tests. By default this is `https://api.accessibilityreporter.com/api/audit`, however you can host your own Azure function by forking `https://github.com/mattbegent/azure-function-accessibility-reporter` and deploying it to Azure.  
 - **TestBaseUrl** (optional) - If you have a single website in your Umbraco instance this sets the base URL to test against. If not set Accessibility Reporter will try to infer this from available information in Umbraco.
-- **MultisiteTestBaseUrls** (optional) - If you have multiple websites in your Umbraco instance use this to set the test URL for each website. The name should match the node name in Umbraco.
 - **TestsToRun** (optional) - This sets which axe-core rules should be run. For example, you may want to test your website against `wcag2a` only. A full list of supported tags can be found in the [axe-core documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags). If not set Accessibility Reporter defaults to the axe-core defaults. 
 - **UserGroups** (optional) - Use this option if you want to restrict which user groups can see Accessibility Reporter.
 - **RunTestsAutomatically** (optional) - By default Accessibility Reporter runs as soon as you open up a content node. If you instead want Accessibility Reporter to run on demand via a button click, set this option to false.
@@ -36,31 +35,14 @@ You can configure how Accessibility Reporter runs by adding an `AccessibilityRep
     "AccessibilityReporter": {
         "ApiUrl": "https://api.accessibilityreporter.com/api/audit",
         "TestBaseUrl": "https://example.com",
-        "MultisiteTestBaseUrls": [
-            {
-                "Name": "Website 1",
-                "Url": "https://website1.com"
-            },
-            {
-                "Name": "Website 2",
-                "Url": "https://website2.com"
-            },
-            {
-                "Name": "Website 3",
-                "Url": "https://website3.com"
-            },
-            {
-                "Name": "Website 4",
-                "Url": "https://website4.com"
-            }
-        ],
         "TestsToRun": [
             "wcag2a",
             "wcag2aa"
         ],
         "UserGroups": [
-            "admin"
-        ],
+            "admin",
+            "editor"
+        ]
         "RunTestsAutomatically": true
     }
 
