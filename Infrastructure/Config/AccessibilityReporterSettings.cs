@@ -1,11 +1,15 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AccessibilityReporter.Infrastructure.Config
 {
     public class AccessibilityReporterSettings
     {
+        public AccessibilityReporterSettings()
+        {
+            UserGroups = new List<string>() { "admin" };
+        }
+
         [JsonIgnore]
         public static string SectionName = "AccessibilityReporter";
 
@@ -15,6 +19,6 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; }
 
-        public IEnumerable<string> UserGroups { get; set; } = new List<string> { "admin" };
+        public IEnumerable<string> UserGroups { get; set; }
     }
 }
