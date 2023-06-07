@@ -7,7 +7,7 @@ namespace AccessibilityReporter.Infrastructure.Config
     {
         public AccessibilityReporterSettings()
         {
-            UserGroups = new List<string>() { "admin" };
+            UserGroups = new HashSet<string>() { "admin" };
         }
 
         [JsonIgnore]
@@ -19,6 +19,6 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; }
 
-        public IEnumerable<string> UserGroups { get; set; }
+        public HashSet<string> UserGroups { get; set; }
     }
 }
