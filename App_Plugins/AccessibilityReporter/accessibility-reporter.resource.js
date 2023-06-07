@@ -23,7 +23,7 @@ angular
         },
         getConfig: function () {
           return umbRequestHelper.resourcePromise(
-            $http.get("/App_Plugins/AccessibilityReporter/config.json"),
+            $http.get("/umbraco/backoffice/api/config/current"),
             "Failed to retrieve Accessibility Reporter config"
           );
         },

@@ -5,11 +5,12 @@ using Umbraco.Cms.Core.DependencyInjection;
 
 namespace AccessibilityReporter.Infrastructure
 {
-    internal class AccessibilityReporterComposer : IComposer
+    internal class AccessibilityReporterComposer : IComposer 
     {
         public void Compose(IUmbracoBuilder builder)
         {
-            builder.Services.Configure<AccessibilityReporterSettings>(builder.Config.GetSection(AccessibilityReporterSettings.SectionName));
+            builder.Services.Configure<AccessibilityReporterSettings>
+                (builder.Config.GetSection(AccessibilityReporterSettings.SectionName));
         }
     }
 }

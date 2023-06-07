@@ -29,10 +29,6 @@
   <ItemGroup>
     <Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
     <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
-    <Content Include="Controllers\ConfigApiController.cs" />
-    <Content Include="Infrastructure\AccessibilityReporterComposer.cs" />
-    <Content Include="Infrastructure\Config\AccessibilityReporterSettings.cs" />
-    <Content Include="Infrastructure\Config\TestBaseUrl.cs" />
     <None Include="logos\logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 	
