@@ -72,7 +72,7 @@
 }
 
 .c-summary--incomplete .c-summary__circle {
-    border-color: #fad634;
+    border-color: #f79c37;
 }
 
 .c-summary__title {
@@ -80,6 +80,13 @@
     font-weight: 700;
     font-size: 16px;
     margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .c-summary__time {
+        display: block;
+        margin-top: 10px;
+    }
 }
 
 .c-summary__button {
@@ -153,7 +160,7 @@
 }
 
 .c-circle--incomplete {
-    border-color: #fad634;
+    border-color: #f79c37;
 }
 
 .c-circle--passed {
