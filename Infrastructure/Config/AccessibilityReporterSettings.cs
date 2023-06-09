@@ -21,12 +21,12 @@ namespace AccessibilityReporter.Infrastructure.Config
         {
             if (UserGroups.Any() == false)
             {
-                UserGroups = new HashSet<string>() { "admin" };
+                UserGroups = new HashSet<string>() { "admin", "editor", "writer" };
             }
 
             if (TestsToRun.Any() == false)
             {
-                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa" };
+                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa" };
             }
 
             return this;

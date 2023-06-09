@@ -33,15 +33,19 @@ You can configure how Accessibility Reporter runs by adding an `AccessibilityRep
 ### Example options
 
     "AccessibilityReporter": {
-        "ApiUrl": "https://api.accessibilityreporter.com/api/audit",
+        "ApiUrl": "https://api.example.com/api/audit",
         "TestBaseUrl": "https://example.com",
         "TestsToRun": [
-            "wcag2a",
-            "wcag2aa"
+            "wcag2a", 
+            "wcag2aa", 
+            "wcag21a", 
+            "wcag21aa", 
+            "wcag22aa"
         ],
         "UserGroups": [
             "admin",
-            "editor"
+            "editor",
+            "writer"
         ]
         "RunTestsAutomatically": true
     }
