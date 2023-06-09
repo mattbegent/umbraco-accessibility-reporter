@@ -5,6 +5,9 @@ angular
     function ($q, $http, umbRequestHelper) {
       return {
         getIssues: function (config, pathnameToTest, language) {
+          if(!config.apiUrl) {
+            return $q.reject('Please supply an ApiUrl in AppSettings.');
+          }
           let requestUrl = new URL(config.apiUrl);
           let testUrl = new URL(pathnameToTest, config.testBaseUrl);
           requestUrl.searchParams.append("url", testUrl.toString());

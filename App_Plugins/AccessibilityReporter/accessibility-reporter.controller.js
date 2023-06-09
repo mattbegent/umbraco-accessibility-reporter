@@ -20,17 +20,6 @@ angular.module("umbraco")
                     }
                 })
                 .then(function () {
-                    return contentResource.getNiceUrl(editorState.current.id);
-                })
-                .then(function (data) {
-                    if (isAbsoluteURL(data)) {
-                        $scope.testPathname = new URL(data).pathname;
-                    } else {
-                        $scope.testPathname = data;
-                    }
-                    return data;
-                })
-                .then(function () {
                     return userService.getCurrentUser();
                 })
                 .then(function (user) {
@@ -44,10 +33,6 @@ angular.module("umbraco")
                         throw new Error("User not in allowed group.");
                     }
                     $scope.userLocale = user && user.locale ? user.locale : undefined;
-                    $scope.testUrl = new URL(
-                        $scope.testPathname,
-                        $scope.config.testBaseUrl
-                    ).toString();
 
                     if ($scope.config.runTestsAutomatically) {
                         $scope.runTests();
@@ -56,11 +41,7 @@ angular.module("umbraco")
                     }
 
                 })
-                .catch(function () {
-                    if ($scope.pageState !== "unauthorised") {
-                        $scope.pageState = "errored";
-                    }
-                });
+                .catch(handleError);
         }
 
         function getPageName() {
@@ -103,7 +84,7 @@ angular.module("umbraco")
         }
 
         function getFallbackBaseUrl() {
-            return getHostname(editorState.current.urls);
+            return location.protocol + "//" + getHostname(editorState.current.urls);
         }
         
         function sortIssues(a, b) {
@@ -163,19 +144,17 @@ angular.module("umbraco")
                         scriptAxe.type = "text/javascript";
                         scriptAxe.src = "/App_Plugins/AccessibilityReporter/axe.min.js";
                         testIframe.contentWindow.document.body.appendChild(scriptAxe);
-
-                        var scriptRunTests = testIframe.contentWindow.document.createElement("script");
-                        scriptRunTests.type = "text/javascript";
-                        scriptRunTests.src = "/App_Plugins/AccessibilityReporter/run-tests.js";
-                        testIframe.contentWindow.document.body.appendChild(scriptRunTests);
                     };        
 
                 } catch (error) {
-                    // TODO: Fallback to check Azure Function
-                    return AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale)
-                    //reject(error); // Possible Security Error (another origin)
+                    // Possible Security Error (another origin)
+                    // Fallback to check Api if available
+                    if($scope.config.apiUrl) {
+                        resolve(AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale));
+                    } else {
+                        reject(error); 
+                    }
                 }
-
             });
 
         }
@@ -183,19 +162,25 @@ angular.module("umbraco")
         $scope.runTests = function() {
             $scope.pageState = "loading";
             $scope.pageName = getPageName();
-            return contentResource.getNiceUrl(editorState.current.id).then(function (data) {
+
+            return contentResource.getNiceUrl(editorState.current.id)
+            .then(function (data) {
                 if (!hasRoutes()) {
                     throw new Error('Page URL cannot be routed');
                 }
                 if (isAbsoluteURL(data)) {
-                    $scope.testUrl = data;
+                    $scope.testPathname = new URL(data).pathname;
                 } else {
-                    var potentialHostDomain = getHostname(editorState.current.urls);
-                    $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
+                    $scope.testPathname = data;
                 }
-            }).then(function() {
-                return getTestResults($scope.testUrl);
-                //return AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale)
+                return data;
+            })
+            .then(function() {
+                $scope.testUrl = new URL(
+                    $scope.testPathname,
+                    $scope.config.testBaseUrl
+                ).toString();
+                return getTestResults($scope.testUrl).catch(handleError);
             })
             .then(function (response) {
               if (response) {
@@ -210,14 +195,19 @@ angular.module("umbraco")
                 $scope.testDate = moment(response.timestamp).format(
                     "MMMM Do YYYY"
                 );
+                $scope.pageState = "loaded";
+              } else {
+                throw new Error('Error getting test results.');
               }
-              $scope.pageState = "loaded";
+              
             })
-            .catch(function () {
-                if ($scope.pageState !== "unauthorised") {
-                    $scope.pageState = "errored";
-                }
-            });
+            .catch(handleError);
+        }
+
+        function handleError() {
+            if ($scope.pageState !== "unauthorised") {
+                $scope.pageState = "errored";
+            }
         }
     
         $scope.totalIssues = function() {
