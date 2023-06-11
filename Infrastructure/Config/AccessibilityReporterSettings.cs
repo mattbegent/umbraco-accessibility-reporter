@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace AccessibilityReporter.Infrastructure.Config
 {
@@ -13,18 +12,18 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; } = true;
 
-        public HashSet<string> UserGroups { get; set; } = new HashSet<string>();
+        public HashSet<string> UserGroups { get; set; } 
 
-        public HashSet<string> TestsToRun { get; set; } = new HashSet<string>();
+        public HashSet<string> TestsToRun { get; set; }
 
         public AccessibilityReporterSettings WithDefaults()
         {
-            if (UserGroups.Any() == false)
+            if (UserGroups == null)
             {
-                UserGroups = new HashSet<string>() { "admin", "editor", "writer" };
+                UserGroups = new HashSet<string>() { "admin", "editor", "writer", "translator", "sensitiveData" };
             }
 
-            if (TestsToRun.Any() == false)
+            if (TestsToRun == null)
             {
                 TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa" };
             }

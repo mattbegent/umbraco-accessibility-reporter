@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 		<PropertyGroup>
-				<TargetFramework>net7.0</TargetFramework>
+				<TargetFramework>net6.0</TargetFramework>
 				<Version>2.0.0</Version>
 				<ContentTargetFolders>.</ContentTargetFolders>
 				<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
@@ -22,8 +22,8 @@
 		</PropertyGroup>
 
 		<ItemGroup>
-				<PackageReference Include="Umbraco.Cms.Web.Website" Version="11.1.0" />
-				<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="11.1.0" />
+				<PackageReference Include="Umbraco.Cms.Web.Website" Version="10.0.0" />
+				<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.0.0" />
 		</ItemGroup>
 
 		<ItemGroup>
