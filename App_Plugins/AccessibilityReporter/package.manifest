@@ -1,11 +1,11 @@
 {
     "name": "AccessibilityReporter",
-    "version": "1.6.0",
+    "version": "2.0.0",
     "allowPackageTelemetry": true,
     "contentApps": [
     {
         "name": "Accessibility", // required - the name that appears under the icon
-        "version": "1.6.0",
+        "version": "2.0.0",
         "alias": "AccessibilityReporter", // required - unique alias for your app
         "weight": 0, // optional, default is 0, use values between -99 and +99 to appear between the existing Content (-100) and Info (100) apps
         "icon": "icon-globe-alt", // required - the icon to use
