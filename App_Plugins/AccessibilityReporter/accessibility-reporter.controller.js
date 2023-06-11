@@ -1,5 +1,5 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, appState, notificationsService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, notificationsService) {
 
         $scope.config = {};
         $scope.pageState = "loading";
@@ -148,12 +148,7 @@ angular.module("umbraco")
 
                 } catch (error) {
                     // Possible Security Error (another origin)
-                    // Fallback to check Api if available
-                    if($scope.config.apiUrl) {
-                        resolve(AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale));
-                    } else {
-                        reject(error); 
-                    }
+                    reject(error); 
                 }
             });
 
@@ -180,7 +175,7 @@ angular.module("umbraco")
                     $scope.testPathname,
                     $scope.config.testBaseUrl
                 ).toString();
-                return getTestResults($scope.testUrl).catch(handleError);
+                return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale) : getTestResults($scope.testUrl);
             })
             .then(function (response) {
               if (response) {
@@ -211,7 +206,6 @@ angular.module("umbraco")
         }
     
         $scope.totalIssues = function() {
-
             if(!$scope.results) {
                 return 0;
             }
@@ -223,7 +217,6 @@ angular.module("umbraco")
             }
 
             return total.toString();
-
         };
 
         $scope.totalPassed = function() {

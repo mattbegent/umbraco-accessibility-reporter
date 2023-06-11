@@ -11,7 +11,7 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public string TestBaseUrl { get; set; } = string.Empty;
 
-        public bool RunTestsAutomatically { get; set; }
+        public bool RunTestsAutomatically { get; set; } = true;
 
         public HashSet<string> UserGroups { get; set; } = new HashSet<string>();
 

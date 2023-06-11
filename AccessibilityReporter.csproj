@@ -16,7 +16,7 @@
 				<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 				<Copyright>Matt Begent</Copyright>
 				<PackageIcon>logo.png</PackageIcon>
-				<PackageReleaseNotes>Added configuration options.</PackageReleaseNotes>
+				<PackageReleaseNotes>Added configuration options, tests by default now run within Umbraco instead of an Azure function and added support for Umbraco 10.</PackageReleaseNotes>
 				<RepositoryType>git</RepositoryType>
 				<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
 		</PropertyGroup>
@@ -28,6 +28,7 @@
 
 		<ItemGroup>
 				<Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
+				<Content Include="appsettings-schema.AccessibilityReporter.json" PackagePath="" />
 				<None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
 				<None Include="logos\logo.png" Pack="true" PackagePath="\" />
 		</ItemGroup>
