@@ -41,6 +41,10 @@
     "Description": "Accessibility Reporter helps you make sure that your website is accessible to all.",
     "VersionSpecificPackageIds": [
       {
+        "UmbracoMajorVersion": 10,
+        "PackageId": "Umbraco.Community.AccessibilityReporter"
+      },
+      {
         "UmbracoMajorVersion": 11,
         "PackageId": "Umbraco.Community.AccessibilityReporter"
       }
