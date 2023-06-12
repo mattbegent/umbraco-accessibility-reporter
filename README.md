@@ -47,7 +47,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
             "admin",
             "editor",
             "writer"
-        ]
+        ],
         "RunTestsAutomatically": false
     }
 
@@ -73,7 +73,7 @@ All options are completely optional and if you don't set them, they default to t
             "writer",
             "translator", 
             "sensitiveData"
-        ]
+        ],
         "RunTestsAutomatically": true
     }
 
