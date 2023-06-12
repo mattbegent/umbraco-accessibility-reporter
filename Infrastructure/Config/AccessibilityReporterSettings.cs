@@ -25,7 +25,7 @@ namespace AccessibilityReporter.Infrastructure.Config
 
             if (TestsToRun == null)
             {
-                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa" };
+                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "wcag***", "best-practice" };
             }
 
             return this;

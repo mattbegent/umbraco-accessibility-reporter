@@ -40,7 +40,8 @@ You can run Accessibility Reporter without adding any configuration options, as 
             "wcag2aa", 
             "wcag21a", 
             "wcag21aa", 
-            "wcag22aa"
+            "wcag22aa",
+            "wcag***"
         ],
         "UserGroups": [
             "admin",
@@ -62,12 +63,16 @@ All options are completely optional and if you don't set them, they default to t
             "wcag2aa", 
             "wcag21a", 
             "wcag21aa", 
-            "wcag22aa"
+            "wcag22aa",
+            "wcag***",
+            "best-practice"
         ],
         "UserGroups": [
             "admin",
             "editor",
-            "writer"
+            "writer",
+            "translator", 
+            "sensitiveData"
         ]
         "RunTestsAutomatically": true
     }
