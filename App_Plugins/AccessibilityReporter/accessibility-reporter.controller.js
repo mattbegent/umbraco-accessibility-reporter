@@ -1,8 +1,10 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, appState, notificationsService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, notificationsService) {
 
+        $scope.config = {};
         $scope.pageState = "loading";
         $scope.testUrl = "";
+        $scope.testPathname = "";
         $scope.violationsOpen = true;
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
@@ -10,18 +12,40 @@ angular.module("umbraco")
         const impacts = ["minor","moderate","serious","critical"];
 
         function init() {
-            userService.getCurrentUser()
-            .then(function (user) {
-                $scope.userLocale = user && user.locale ? user.locale : undefined;
-                return $scope.runTests();
-            })
-            .catch(function () {
-                $scope.pageState = "errored";
-            });
+            AccessibilityReporterApiService.getConfig()
+                .then(function (config) {
+                    $scope.config = config;
+                    if (!config.testBaseUrl) {
+                        $scope.config.testBaseUrl = getFallbackBaseUrl();
+                    }
+                })
+                .then(function () {
+                    return userService.getCurrentUser();
+                })
+                .then(function (user) {
+                    if (
+                        $scope.config.userGroups &&
+                        !user.userGroups.some((group) =>
+                            $scope.config.userGroups.includes(group)
+                        )
+                    ) {
+                        $scope.pageState = "unauthorised";
+                        throw new Error("User not in allowed group.");
+                    }
+                    $scope.userLocale = user && user.locale ? user.locale : undefined;
+
+                    if ($scope.config.runTestsAutomatically) {
+                        $scope.runTests();
+                    } else {
+                        $scope.pageState = "manuallyrun";
+                    }
+
+                })
+                .catch(handleError);
         }
 
         function getPageName() {
-            return appState.getTreeState("selectedNode") ? appState.getTreeState("selectedNode").name : 'current page';;
+            return editorState.current && editorState.current.variants.length ? editorState.current.variants[0].name : 'Current page';
         }
 
         function isAbsoluteURL(urlString) {
@@ -33,6 +57,9 @@ angular.module("umbraco")
         }
 
         function getHostname(possibleUrls) {
+            if (location.hostname.indexOf('localhost') !== -1) {
+                return getLocalHostname();
+            }
             for(var i=0; i < possibleUrls.length; i++){
                 var possibleCurrentUrl = possibleUrls[i].text; 
                 if(isAbsoluteURL(possibleCurrentUrl)) {
@@ -40,7 +67,24 @@ angular.module("umbraco")
                 }
             }
             // fallback if hostnames not set assume current host
-            return location.hostname;
+            return getLocalHostname();
+        }
+
+        function getLocalHostname() {
+            return location.hostname + (location.port ? ":" + location.port : "");
+        }
+
+        function hasRoutes() {
+            for (var i = 0; i < editorState.current.urls.length; i++) {
+                if (editorState.current.urls[i].isUrl) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function getFallbackBaseUrl() {
+            return location.protocol + "//" + getHostname(editorState.current.urls);
         }
         
         function sortIssues(a, b) {
@@ -65,18 +109,73 @@ angular.module("umbraco")
             return results;
         }
 
+        async function getTestResults(testUrl) {
+
+            return new Promise(async (resolve, reject) => {
+
+                try {
+
+                    const testRequest = new Request(testUrl);
+                    await fetch(testRequest);
+
+                    const iframeId = "arTestIframe";
+
+                    window.addEventListener("message", function(message) {
+                        if(message.data) {
+                            resolve(message.data);
+                        } else {
+                            reject(message);
+                        } 
+                        document.getElementById(iframeId).remove();
+                    }, {once : true});
+
+                    const container = document.getElementById('contentcolumn');
+                    const testIframe = document.createElement("iframe");
+                    testIframe.setAttribute("src", testUrl);        
+                    testIframe.setAttribute("id", iframeId);   
+                    testIframe.style.width = "1280px";
+                    testIframe.style.height = "800px";
+                    testIframe.style.zIndex = "1";
+                    testIframe.style.position = "absolute";
+                    container.appendChild(testIframe);
+
+                    testIframe.onload = function() {
+                        var scriptAxe = testIframe.contentWindow.document.createElement("script");
+                        scriptAxe.type = "text/javascript";
+                        scriptAxe.src = "/App_Plugins/AccessibilityReporter/axe.min.js";
+                        testIframe.contentWindow.document.body.appendChild(scriptAxe);
+                    };        
+
+                } catch (error) {
+                    // Possible Security Error (another origin)
+                    reject(error); 
+                }
+            });
+
+        }
+
         $scope.runTests = function() {
             $scope.pageState = "loading";
             $scope.pageName = getPageName();
-            return contentResource.getNiceUrl(editorState.current.id).then(function (data) {
-                if (isAbsoluteURL(data)) {
-                    $scope.testUrl = data;
-                } else {
-                    var potentialHostDomain = getHostname(editorState.current.urls);
-                    $scope.testUrl = location.protocol + '//' + potentialHostDomain + data;
+
+            return contentResource.getNiceUrl(editorState.current.id)
+            .then(function (data) {
+                if (!hasRoutes()) {
+                    throw new Error('Page URL cannot be routed');
                 }
-            }).then(function() {
-                return AccessibilityReporterApiService.getIssues($scope.testUrl, $scope.userLocale)
+                if (isAbsoluteURL(data)) {
+                    $scope.testPathname = new URL(data).pathname;
+                } else {
+                    $scope.testPathname = data;
+                }
+                return data;
+            })
+            .then(function() {
+                $scope.testUrl = new URL(
+                    $scope.testPathname,
+                    $scope.config.testBaseUrl
+                ).toString();
+                return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale) : getTestResults($scope.testUrl);
             })
             .then(function (response) {
               if (response) {
@@ -86,21 +185,27 @@ angular.module("umbraco")
                   type: $scope.results.violations.length ? "alert" : "default",
                 };
                 $scope.testTime = moment(response.timestamp).format(
-                  "HH:mm:ss"
+                    "HH:mm:ss"
                 );
                 $scope.testDate = moment(response.timestamp).format(
                     "MMMM Do YYYY"
-                  );
+                );
+                $scope.pageState = "loaded";
+              } else {
+                throw new Error('Error getting test results.');
               }
-              $scope.pageState = "loaded";
+              
             })
-            .catch(function () {
+            .catch(handleError);
+        }
+
+        function handleError() {
+            if ($scope.pageState !== "unauthorised") {
                 $scope.pageState = "errored";
-            });
+            }
         }
     
         $scope.totalIssues = function() {
-
             if(!$scope.results) {
                 return 0;
             }
@@ -112,7 +217,6 @@ angular.module("umbraco")
             }
 
             return total.toString();
-
         };
 
         $scope.totalPassed = function() {
@@ -250,9 +354,10 @@ angular.module("umbraco")
                 XLSX.utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
 
                 const headers = [["Impact", "Title", "Description", "Standard", "Errors"]];
+                const passedHeaders = [["Impact", "Title", "Description", "Standard", "Elements"]];
                 XLSX.utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
                 XLSX.utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });
-                XLSX.utils.sheet_add_aoa(passedWorksheet, headers, { origin: "A1" });
+                XLSX.utils.sheet_add_aoa(passedWorksheet, passedHeaders, { origin: "A1" });
 
                 const failedTitleWidth = failedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
                 const incompleteTitleWidth = incompleteRows.reduce((w, r) => Math.max(w, r.title.length), 40);
