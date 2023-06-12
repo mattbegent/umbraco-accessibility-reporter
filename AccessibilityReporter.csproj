@@ -1,39 +1,42 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <Version>2.0.0</Version>
-    <ContentTargetFolders>.</ContentTargetFolders>
-    <Product>AccessibilityReporter</Product>
-    <PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
-    <Title>AccessibilityReporter</Title>
-    <Description>Accessibility Reporter for Umbraco is a content app that helps you to make your website accessible.</Description>
-    <PackageTags>Accessibility; WCAG; Umbraco; Content App; umbraco-marketplace;</PackageTags>
-    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Copyright>Matt Begent</Copyright>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageReleaseNotes>Added export button results.</PackageReleaseNotes>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+		<PropertyGroup>
+				<TargetFramework>net6.0</TargetFramework>
+				<Version>2.0.0</Version>
+				<ContentTargetFolders>.</ContentTargetFolders>
+				<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+				<Product>AccessibilityReporter</Product>
+				<PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
+				<Title>AccessibilityReporter</Title>
+				<Description>Accessibility Reporter for Umbraco is a content app that helps you to make your website accessible.</Description>
+				<PackageTags>Accessibility; WCAG; Umbraco; Content App; umbraco-marketplace;</PackageTags>
+				<PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+				<RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
+				<PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
+				<PackageReadmeFile>README.md</PackageReadmeFile>
+				<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+				<Copyright>Matt Begent</Copyright>
+				<PackageIcon>logo.png</PackageIcon>
+				<PackageReleaseNotes>Added configuration options, tests by default now run within Umbraco instead of an Azure function and added support for Umbraco 10.</PackageReleaseNotes>
+				<RepositoryType>git</RepositoryType>
+				<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
+		</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="11.1.0" />
-    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="11.1.0" />
-  </ItemGroup>
+		<ItemGroup>
+				<PackageReference Include="Umbraco.Cms.Web.Website" Version="10.0.0" />
+				<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.0.0" />
+		</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
-    <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
-    <None Include="logos\logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+		<ItemGroup>
+				<Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
+				<Content Include="appsettings-schema.AccessibilityReporter.json" PackagePath="" />
+				<None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
+				<None Include="logos\logo.png" Pack="true" PackagePath="\" />
+		</ItemGroup>
 
-  <ItemGroup>
-    <None Update="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+		<ItemGroup>
+				<None Update="README.md">
+						<Pack>True</Pack>
+						<PackagePath>\</PackagePath>
+				</None>
+		</ItemGroup>
 </Project>
