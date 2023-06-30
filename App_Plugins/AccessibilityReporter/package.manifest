@@ -5,24 +5,32 @@
     "contentApps": [
     {
         "name": "Accessibility", // required - the name that appears under the icon
-        "version": "2.0.0",
         "alias": "AccessibilityReporter", // required - unique alias for your app
         "weight": 0, // optional, default is 0, use values between -99 and +99 to appear between the existing Content (-100) and Info (100) apps
         "icon": "icon-globe-alt", // required - the icon to use
-        "view": "~/App_Plugins/AccessibilityReporter/accessibility-reporter.html", // required - the location of the view file
+        "view": "~/App_Plugins/AccessibilityReporter/accessibility-reporter-content-app.html", // required - the location of the view file
         "show": [
             "+content/*" // show app for all content types
         ]
     }
     ],
-    // array of files we want to inject into the application on app_start
+    "dashboards":  [
+        {
+            "alias": "accessibilityDashboard",
+            "view":  "/App_Plugins/AccessibilityReporter/accessibility-reporter-dashboard.html",
+            "sections":  [ "content" ]
+        }
+    ],
     "javascript": [
-        "~/App_Plugins/AccessibilityReporter/accessibility-reporter.controller.js",
+        "~/App_Plugins/AccessibilityReporter/accessibility-reporter.service.js",
+        "~/App_Plugins/AccessibilityReporter/accessibility-reporter-content-app.controller.js",
+        "~/App_Plugins/AccessibilityReporter/accessibility-reporter-dashboard.controller.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter-detail.controller.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter.resource.js",
-        "~/App_Plugins/AccessibilityReporter/xlsx.mini.min.js",
+        "~/App_Plugins/AccessibilityReporter/libs/xlsx.mini.min.js",
+        "~/App_Plugins/AccessibilityReporter/libs/axe-only.min.js"
     ],
     "css": [
-        "~/App_Plugins/AccessibilityReporter/accessibility-reporter.styles.css",
+        "~/App_Plugins/AccessibilityReporter/accessibility-reporter.styles.css"
     ]
 }

@@ -1,0 +1,150 @@
+<div ng-controller="My.AccessibilityReporterDashboard as vm">
+    <uui-scroll-container>
+
+        <uui-box ng-if="pageState === 'pre-test'">
+            <div slot="headline" class="c-title__group">
+                <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="42" height="42">
+                <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="m7 9 5 1m5-1-5 1m0 0v3m0 0-2 5m2-5 2 5" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="M12 8.5c-.7 0-1.2-.6-1.2-1.3S11.3 6 12 6s1.2.6 1.2 1.2-.5 1.3-1.2 1.3z" style="fill:#443b52" />
+                </svg>
+                <h2 class="c-title">Accessibility Reporter</h2>
+            </div>
+            <p>Start running accessibility tests on the entire website by using the button below.</p>
+            <p>While the tests are running please stay on this page.</p>
+            <uui-button look="primary" color="default" ng-click="runTests()" label="Run accessibility tests on current live pages" class="c-summary__button">Run Tests</uui-button>
+        </uui-box>
+
+        <uui-box ng-if="pageState === 'running-tests'">
+            <div slot="headline" class="c-title__group">
+                <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="42" height="42">
+                <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="m7 9 5 1m5-1-5 1m0 0v3m0 0-2 5m2-5 2 5" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="M12 8.5c-.7 0-1.2-.6-1.2-1.3S11.3 6 12 6s1.2.6 1.2 1.2-.5 1.3-1.2 1.3z" style="fill:#443b52" />
+                </svg>
+                <h2 class="c-title">Running accessibility tests <span ng-if="currentTestUrl">on</span> {{currentTestUrl}}</h2>
+            </div>
+            <uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>  
+        </uui-box>
+
+        <uui-box ng-if="pageState === 'errored'">
+            <div slot="headline" class="c-title__group">
+                <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="42" height="42">
+                <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="m7 9 5 1m5-1-5 1m0 0v3m0 0-2 5m2-5 2 5" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="M12 8.5c-.7 0-1.2-.6-1.2-1.3S11.3 6 12 6s1.2.6 1.2 1.2-.5 1.3-1.2 1.3z" style="fill:#443b52" />
+                </svg>
+                <h2 class="c-title">Accessibility Report errored</h2>
+            </div>
+            <p>Accessibility Reporter only works for URLs that are accessible publicly.</p>
+            <p>If your page is publicly accessible, please try using the "Rerun Tests" button below or refreshing this page to run the accessibility report again.</p>
+            <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page">Rerun Tests</uui-button>
+        </uui-box>
+
+        <uui-box ng-if="pageState === 'unauthorised'">
+            <div slot="headline" class="c-title__group">
+                <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="42" height="42">
+                <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="m7 9 5 1m5-1-5 1m0 0v3m0 0-2 5m2-5 2 5" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
+                <path d="M12 8.5c-.7 0-1.2-.6-1.2-1.3S11.3 6 12 6s1.2.6 1.2 1.2-.5 1.3-1.2 1.3z" style="fill:#443b52" />
+                </svg>
+                <h2 class="c-title">You do not have permission to view this dashboard.</h2>
+            </div>
+        </uui-box>
+
+        <div class="c-dashboard-grid" ng-if="pageState === 'has-results'">
+
+            <uui-box>
+                <div slot="headline">
+                    <h2 class="c-title">Total Failed Tests</h2>
+                </div>
+                <p class="c-dashboard-number">{{totalErrors}}</p>
+            </uui-box>
+
+            <uui-box>
+                <div slot="headline">
+                    <h2 class="c-title">Average Tests Failed Per Page</h2>
+                </div>
+                <p class="c-dashboard-number">{{errorsPerPage}}</p>
+            </uui-box>
+
+            <uui-box>
+                <div slot="headline">
+                    <h2 class="c-title">Pages Tested</h2>
+                </div>
+                <p class="c-dashboard-number">{{pagesTested}}</p>
+            </uui-box>
+
+            <uui-box class="c-dashboard-grid__full-row">
+                <div slot="headline">
+                    <h2 class="c-title">Pages With Failures</h2>
+                </div>
+                <p ng-if="!pageSummaryCurrentPage.length">No tests failed! High 5, you rock!</p>
+                <uui-table ng-if="pageSummaryCurrentPage.length">
+                    <uui-table-head>
+                        <uui-table-head-cell>Name</uui-table-head-cell>
+                        <uui-table-head-cell>URL</uui-table-head-cell>
+                        <uui-table-head-cell>Number Of Failures</uui-table-head-cell>
+                        <uui-table-head-cell>Action</uui-table-head-cell>
+                    </uui-table-head>
+                    <uui-table-row ng-repeat="page in pageSummaryCurrentPage">
+                        <uui-table-cell>{{page.name}}</uui-table-cell>
+                        <uui-table-cell>{{page.url}}</uui-table-cell>
+                        <uui-table-cell>{{page.numberOfErrors}}</uui-table-cell>
+                        <uui-table-cell>
+                            <button type="button" class="c-detail-button c-detail-button--active" ng-click="openDetail(page.id)">
+                                <span class="c-detail-button__group">
+                                    <uui-icon-registry-essential>
+                                        <uui-icon name="see"></uui-icon>
+                                    </uui-icon-registry-essential>
+                                    <span class="c-detail-button__text">
+                                        View Page
+                                    </span>
+                                </span>
+                            </button>
+                        </uui-table-cell>
+                    </uui-table-row>
+                </uui-table>
+                <umb-pagination 
+                    page-number="pagination.currentPage"
+                    total-pages="pagination.totalPages"
+                    on-next="changePage"
+                    on-prev="changePage"
+                    on-change="changePage"
+                    on-go-to-page="changePage">
+                </umb-pagination>
+            </uui-box>
+
+            <uui-box class="c-dashboard-grid__full-row">
+                <div slot="headline">
+                    <h2 class="c-title">Most Common Failures</h2>
+                </div>
+                <p ng-if="!pageSummaryCurrentPage.length">No tests failed! High 5, you rock!</p>
+                <uui-table ng-if="pageSummaryCurrentPage.length">
+                    <uui-table-head>
+                        <uui-table-head-cell>Impact</uui-table-head-cell>
+                        <uui-table-head-cell>Title</uui-table-head-cell>
+                        <uui-table-head-cell>Description</uui-table-head-cell>
+                        <uui-table-head-cell>Accessibility Standard</uui-table-head-cell>
+                        <uui-table-head-cell>Errors</uui-table-head-cell>
+                    </uui-table-head>
+                    <uui-table-row ng-repeat="result in mostCommonErrors">
+                        <uui-table-cell><uui-tag color="{{accessibilityReporterService.impactToTag(result.impact)}}" look="primary">{{accessibilityReporterService.upperCaseFirstLetter(result.impact)}}</uui-tag></uui-table-cell>
+                        <uui-table-cell>{{result.help}}</uui-table-cell>
+                        <uui-table-cell>{{result.description}}</uui-table-cell>
+                        <uui-table-cell>
+                            <span ng-repeat="tag in accessibilityReporterService.mapTagsToStandard(result.tags)">
+                                <uui-tag color="default" look="outline" class="c-tag">{{tag}}</uui-tag>
+                            </span>
+                        </uui-table-cell>
+                        <uui-table-cell><div class="c-incident-number c-incident-number--{{result.impact}}"><div class="c-incident-number__text">{{result.nodes.length}}</div></div></uui-table-cell>
+                    </uui-table-row>
+                </uui-table>
+            </uui-box>
+
+        </div>
+
+        <uui-button ng-if="pageState === 'has-results'" look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page" class="c-summary__button">Rerun Tests</uui-button>
+
+    </uui-scroll-container>
+</div>

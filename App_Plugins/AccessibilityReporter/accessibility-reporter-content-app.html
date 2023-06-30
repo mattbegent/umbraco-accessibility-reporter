@@ -83,11 +83,11 @@
                                 <uui-table-head-cell>Action</uui-table-head-cell>
                             </uui-table-head>
                             <uui-table-row ng-repeat="result in results.violations" ng-click="openDetail(result)" style="cursor: pointer;">
-                                <uui-table-cell><uui-tag color="{{impactToTag(result.impact)}}" look="primary">{{upperCaseFirstLetter(result.impact)}}</uui-tag></uui-table-cell>
+                                <uui-table-cell><uui-tag color="{{accessibilityReporterService.impactToTag(result.impact)}}" look="primary">{{accessibilityReporterService.upperCaseFirstLetter(result.impact)}}</uui-tag></uui-table-cell>
                                 <uui-table-cell>{{result.help}}</uui-table-cell>
                                 <uui-table-cell>{{result.description}}</uui-table-cell>
                                 <uui-table-cell>
-                                    <span ng-repeat="tag in mapTagsToStandard(result.tags)">
+                                    <span ng-repeat="tag in accessibilityReporterService.mapTagsToStandard(result.tags)">
                                         <uui-tag color="default" look="outline" class="c-tag">{{tag}}</uui-tag>
                                     </span>
                                 </uui-table-cell>
@@ -139,11 +139,11 @@
                                 <uui-table-head-cell>Action</uui-table-head-cell>
                             </uui-table-head>
                             <uui-table-row ng-repeat="result in results.incomplete" ng-click="openDetail(result)" style="cursor: pointer;">
-                                <uui-table-cell><uui-tag color="{{impactToTag(result.impact)}}" look="primary">{{upperCaseFirstLetter(result.impact)}}</uui-tag></uui-table-cell>
+                                <uui-table-cell><uui-tag color="{{accessibilityReporterService.impactToTag(result.impact)}}" look="primary">{{accessibilityReporterService.upperCaseFirstLetter(result.impact)}}</uui-tag></uui-table-cell>
                                 <uui-table-cell>{{result.help}}</uui-table-cell>
                                 <uui-table-cell>{{result.description}}</uui-table-cell>
                                 <uui-table-cell>
-                                    <span ng-repeat="tag in mapTagsToStandard(result.tags)">
+                                    <span ng-repeat="tag in accessibilityReporterService.mapTagsToStandard(result.tags)">
                                         <uui-tag color="default" look="outline" class="c-tag">{{tag}}</uui-tag>
                                     </span>
                                 </uui-table-cell>
@@ -196,7 +196,7 @@
                             <uui-table-cell>{{result.help}}</uui-table-cell>
                             <uui-table-cell>{{result.description}}</uui-table-cell>
                             <uui-table-cell>
-                                <span ng-repeat="tag in mapTagsToStandard(result.tags)">
+                                <span ng-repeat="tag in accessibilityReporterService.mapTagsToStandard(result.tags)">
                                     <uui-tag color="default" look="outline" class="c-tag">{{tag}}</uui-tag>
                                 </span>
                             </uui-table-cell>

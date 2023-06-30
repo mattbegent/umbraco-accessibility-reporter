@@ -205,3 +205,28 @@
 .c-uui-tag--positive {
     background-color: #1C824A;
 }
+
+/* Dashboard */
+
+.c-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 1rem;
+}
+
+.c-dashboard-grid__full-row {
+    grid-column: 1 / 4; 
+}
+
+.c-dashboard-number {
+    font-size: 5rem;
+    line-height: 1;
+    margin: 1rem 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.c-detail-button--active {
+    pointer-events: all;
+}

@@ -1,5 +1,5 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterApiService, editorService, notificationsService) {
+	.controller("My.AccessibilityReporterApp", function ($scope, editorState, userService, contentResource, AccessibilityReporterService, AccessibilityReporterApiService, editorService, notificationsService) {
 
         $scope.config = {};
         $scope.pageState = "loading";
@@ -9,7 +9,7 @@ angular.module("umbraco")
         $scope.incompleteOpen = true;
         $scope.passesOpen = false;
         $scope.userLocale;
-        const impacts = ["minor","moderate","serious","critical"];
+        $scope.accessibilityReporterService = AccessibilityReporterService;
 
         function init() {
             AccessibilityReporterApiService.getConfig()
@@ -86,72 +86,14 @@ angular.module("umbraco")
         function getFallbackBaseUrl() {
             return location.protocol + "//" + getHostname(editorState.current.urls);
         }
-        
-        function sortIssues(a, b) {
-            if(a.impact === b.impact) {
-                return  b.nodes.length - a.nodes.length;
-            }
-            if(impacts.indexOf(a.impact) > impacts.indexOf(b.impact)) {
-                return -1;
-            }
-            if(impacts.indexOf(a.impact) < impacts.indexOf(b.impact)) {
-                return 1;
-            }
-            return 0;
-        }
 
         function sortResponse(results) {
             
-            var sortedViolations = results.violations.sort(sortIssues);
+            var sortedViolations = results.violations.sort(AccessibilityReporterService.sortIssues);
             results.violations = sortedViolations;
-            var sortedIncomplete = results.incomplete.sort(sortIssues);
+            var sortedIncomplete = results.incomplete.sort(AccessibilityReporterService.sortIssues);
             results.incomplete = sortedIncomplete;
             return results;
-        }
-
-        async function getTestResults(testUrl) {
-
-            return new Promise(async (resolve, reject) => {
-
-                try {
-
-                    const testRequest = new Request(testUrl);
-                    await fetch(testRequest);
-
-                    const iframeId = "arTestIframe";
-
-                    window.addEventListener("message", function(message) {
-                        if(message.data) {
-                            resolve(message.data);
-                        } else {
-                            reject(message);
-                        } 
-                        document.getElementById(iframeId).remove();
-                    }, {once : true});
-
-                    const container = document.getElementById('contentcolumn');
-                    const testIframe = document.createElement("iframe");
-                    testIframe.setAttribute("src", testUrl);        
-                    testIframe.setAttribute("id", iframeId);   
-                    testIframe.style.width = "1280px";
-                    testIframe.style.height = "800px";
-                    testIframe.style.zIndex = "1";
-                    testIframe.style.position = "absolute";
-                    container.appendChild(testIframe);
-
-                    testIframe.onload = function() {
-                        var scriptAxe = testIframe.contentWindow.document.createElement("script");
-                        scriptAxe.type = "text/javascript";
-                        scriptAxe.src = "/App_Plugins/AccessibilityReporter/axe.min.js";
-                        testIframe.contentWindow.document.body.appendChild(scriptAxe);
-                    };        
-
-                } catch (error) {
-                    // Possible Security Error (another origin)
-                    reject(error); 
-                }
-            });
-
         }
 
         $scope.runTests = function() {
@@ -175,7 +117,7 @@ angular.module("umbraco")
                     $scope.testPathname,
                     $scope.config.testBaseUrl
                 ).toString();
-                return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale) : getTestResults($scope.testUrl);
+                return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale) : AccessibilityReporterService.runTest($scope.testUrl);
             })
             .then(function (response) {
               if (response) {
@@ -239,18 +181,6 @@ angular.module("umbraco")
             return total.toString();
         };
 
-        $scope.impactToTag = function(impact) {
-            switch(impact) {
-                case "serious":
-                case "critical":
-                  return "danger";
-                case "moderate":
-                    return "warning";
-                default:
-                  return "default";
-            };
-        };
-
         $scope.toggleViolations = function() {
             $scope.violationsOpen  = !$scope.violationsOpen;
         };
@@ -276,19 +206,6 @@ angular.module("umbraco")
                 }
             });
         };
-
-        // https://www.deque.com/axe/core-documentation/api-documentation/
-        $scope.mapTagsToStandard = function(tags) {
-            var catTagsRemoved = tags.filter(tag => {
-                return tag.indexOf('cat.') === -1 && !tag.startsWith('TT') && !tag.startsWith('ACT');
-            });
-            var formattedTags = catTagsRemoved.map(tagToStandard);
-            return formattedTags;
-        }
-
-        $scope.upperCaseFirstLetter = function(word) {
-            return word.charAt(0).toUpperCase() + word.slice(1);
-        }
 
         $scope.failedTitle = function() {
             let title = 'Failed Test';
@@ -323,10 +240,10 @@ angular.module("umbraco")
             for (let index = 0; index < results.length; index++) {
                 const currentResult = results[index];
                 formattedRows.push({
-                    impact: currentResult.impact ? $scope.upperCaseFirstLetter(currentResult.impact) : '',
+                    impact: currentResult.impact ? AccessibilityReporterService.upperCaseFirstLetter(currentResult.impact) : '',
                     title: currentResult.help,
                     description: currentResult.description,
-                    standard: $scope.mapTagsToStandard(currentResult.tags).join(', '),
+                    standard: AccessibilityReporterService.mapTagsToStandard(currentResult.tags).join(', '),
                     errors: currentResult.nodes.length
                 });
             }
@@ -374,42 +291,6 @@ angular.module("umbraco")
                 notificationsService.error("Failed", "An error occurred exporting the report. Please try again later.");
             }
 
-        };
-
-        function tagToStandard(tag) {
-            switch (tag) {
-                case "wcag2a":
-                    return "WCAG 2.0 A";
-                case "wcag2aa":
-                    return "WCAG 2.0 AAA";
-                case "wcag2aaa":
-                    return "WCAG 2.0 AAA";
-                case "wcag21a":
-                    return "WCAG 2.1 A";
-                case "wcag21aa":
-                    return "WCAG 2.1 AAA";
-                case "wcag21aaa":
-                    return "WCAG 2.1 AAA";
-                case "wcag22a":
-                    return "WCAG 2.2 A";
-                case "wcag22aa":
-                    return "WCAG 2.2 AAA";
-                case "wcag22aaa":
-                    return "WCAG 2.2 AAA";
-                case "best-practice":
-                    return "Best Practice";
-                case "section508":
-                    return "Section 508";
-                default:
-                    break;
-            }
-            if(tag.indexOf('wcag') !== -1) {
-                return tag.toUpperCase();
-            }
-            if(tag.indexOf('section') !== -1) {
-                return tag.replace('section', 'Section ');
-            }
-            return tag;
         };
 
         init();
