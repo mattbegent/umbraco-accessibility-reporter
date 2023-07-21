@@ -28,6 +28,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
 - **TestBaseUrl** (optional) - If you run Umbraco in a headless way or Accessibility Reporter is having trouble finding the domain to test against, set this to the base URL of your wesbite. If not set Accessibility Reporter will try to infer this from available information in Umbraco.
 - **TestsToRun** (optional) - This sets which axe-core rules should be run. For example, you may want to test your website against `wcag2a` only. A full list of supported tags can be found in the [axe-core documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags). If not set Accessibility Reporter defaults to WCAG A and AA tests. 
 - **UserGroups** (optional) - Use this option if you want to restrict which user groups can see Accessibility Reporter. By default users with admin, editor or writer permissions can see it.
+- **ExcludedDocTypes** (optional) - Use this option if you want to exclude Accessibility Reporter from showing on certain document types.
 - **RunTestsAutomatically** (optional) - By default Accessibility Reporter runs as soon as you open up a content node. If you instead want Accessibility Reporter to run on demand via a button click, set this option to false.
 
 ### Example options
@@ -48,6 +49,9 @@ You can run Accessibility Reporter without adding any configuration options, as 
             "editor",
             "writer"
         ],
+        "ExcludedDocTypes": [
+            "excludedPage"
+        ],
         "RunTestsAutomatically": false
     }
 
@@ -64,7 +68,6 @@ All options are completely optional and if you don't set them, they default to t
             "wcag21a", 
             "wcag21aa", 
             "wcag22aa",
-            "wcag***",
             "best-practice"
         ],
         "UserGroups": [

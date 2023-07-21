@@ -16,6 +16,8 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public HashSet<string> TestsToRun { get; set; }
 
+        public HashSet<string> ExcludedDocTypes { get; set; }
+
         public AccessibilityReporterSettings WithDefaults()
         {
             if (UserGroups == null)
@@ -25,7 +27,7 @@ namespace AccessibilityReporter.Infrastructure.Config
 
             if (TestsToRun == null)
             {
-                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "wcag***", "best-practice" };
+                TestsToRun = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice" };
             }
 
             return this;
