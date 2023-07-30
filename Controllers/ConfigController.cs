@@ -8,16 +8,16 @@ namespace AccessibilityReporter.Controllers
 {
     public class ConfigController : UmbracoAuthorizedApiController
     {
-        private readonly IOptions<AccessibilityReporterSettings> _accessibilityReporterOptions;
+        private readonly IAccessibilityReporterSettings settings;
 
-        public ConfigController(IOptions<AccessibilityReporterSettings> accessibilityReporterOptions)
+        public ConfigController(IAccessibilityReporterSettings accessibilityReporterOptions)
         {
-            _accessibilityReporterOptions = accessibilityReporterOptions;
+            settings = accessibilityReporterOptions;
         }
 
         [HttpGet]
         public JsonResult Current()
-            => new JsonResult(_accessibilityReporterOptions.Value.WithDefaults(), new JsonSerializerOptions
+            => new JsonResult(settings, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });

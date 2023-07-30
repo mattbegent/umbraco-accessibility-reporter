@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 		<PropertyGroup>
 				<TargetFramework>net6.0</TargetFramework>
+				<Nullable>enable</Nullable>
 				<Version>2.1.0</Version>
 				<ContentTargetFolders>.</ContentTargetFolders>
 				<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
