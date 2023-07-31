@@ -2,7 +2,7 @@
 
 namespace AccessibilityReporter.Infrastructure.Config
 {
-    internal class AccessibilityReporterAppSettings : IAccessibilityReporterSettings
+    public class AccessibilityReporterAppSettings 
 	{
         public static string SectionName = "AccessibilityReporter";
 
@@ -12,10 +12,10 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; } = true;
 
-        public HashSet<string> UserGroups { get; set; } 
+        public HashSet<string> UserGroups { get; set; } = new HashSet<string>() { "admin", "editor", "writer", "translator", "sensitiveData" };
 
-        public HashSet<string> TestsToRun { get; set; }
+		public HashSet<string> TestsToRun { get; set; } = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice" };
 
-        public HashSet<string> ExcludedDocTypes { get; set; }
+        public HashSet<string> ExcludedDocTypes { get; set; } = new HashSet<string>();
     }
 }
