@@ -129,6 +129,35 @@ class AccessibilityReporter {
         return location.protocol + "//"  + location.hostname + (location.port ? ":" + location.port : "");
     }
 
+    static formatResultForSaving(result, nodeId, culture) {
+
+        return {
+            "url":result.url,
+            "nodeId":nodeId,
+            "culture":culture,
+            "date":result.timestamp,
+            "violations": result.violations.map((test)=> {
+                return {
+                    id: test.id,
+                    errors: test.nodes.length
+                }
+            }),
+            "incomplete":result.violations.map((test)=> {
+                return {
+                    id: test.id,
+                    errors: test.nodes.length
+                }
+            }),
+            "passes":result.violations.map((test)=> {
+                return {
+                    id: test.id,
+                    elements: test.nodes.length
+                }
+            })
+        }
+        
+    }
+
 }
 
 angular.module("umbraco")
