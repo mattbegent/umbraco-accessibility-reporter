@@ -47,6 +47,10 @@
       {
         "UmbracoMajorVersion": 11,
         "PackageId": "Umbraco.Community.AccessibilityReporter"
+      },
+      {
+        "UmbracoMajorVersion": 12,
+        "PackageId": "Umbraco.Community.AccessibilityReporter"
       }
     ]
   }
