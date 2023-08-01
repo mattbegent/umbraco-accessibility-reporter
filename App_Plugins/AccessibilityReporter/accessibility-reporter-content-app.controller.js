@@ -23,15 +23,6 @@ angular.module("umbraco")
                     return userService.getCurrentUser();
                 })
                 .then(function (user) {
-                    if (
-                        $scope.config.userGroups &&
-                        !user.userGroups.some((group) =>
-                            $scope.config.userGroups.includes(group)
-                        )
-                    ) {
-                        $scope.pageState = "unauthorised";
-                        throw new Error("User not in allowed group.");
-                    }
                     $scope.userLocale = user && user.locale ? user.locale : undefined;
 
                     if ($scope.config.runTestsAutomatically) {
@@ -57,7 +48,8 @@ angular.module("umbraco")
         }
 
         function getHostname(possibleUrls) {
-            if (location.hostname.indexOf('localhost') !== -1) {
+            if (!$scope.config.apiUrl) {
+                // so we don't get iframe CORS issues
                 return getLocalHostname();
             }
             for(var i=0; i < possibleUrls.length; i++){
@@ -72,15 +64,6 @@ angular.module("umbraco")
 
         function getLocalHostname() {
             return location.hostname + (location.port ? ":" + location.port : "");
-        }
-
-        function hasRoutes() {
-            for (var i = 0; i < editorState.current.urls.length; i++) {
-                if (editorState.current.urls[i].isUrl) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         function getFallbackBaseUrl() {
@@ -102,9 +85,6 @@ angular.module("umbraco")
 
             return contentResource.getNiceUrl(editorState.current.id)
             .then(function (data) {
-                if (!hasRoutes()) {
-                    throw new Error('Page URL cannot be routed');
-                }
                 if (isAbsoluteURL(data)) {
                     $scope.testPathname = new URL(data).pathname;
                 } else {
@@ -142,9 +122,7 @@ angular.module("umbraco")
         }
 
         function handleError() {
-            if ($scope.pageState !== "unauthorised") {
-                $scope.pageState = "errored";
-            }
+            $scope.pageState = "errored";
         }
     
         $scope.totalIssues = function() {

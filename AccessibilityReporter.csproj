@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 		<PropertyGroup>
 				<TargetFramework>net6.0</TargetFramework>
+				<Nullable>enable</Nullable>
 				<Version>3.0.3-alpha</Version>
 				<ContentTargetFolders>.</ContentTargetFolders>
 				<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
@@ -16,7 +17,7 @@
 				<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 				<Copyright>Matt Begent</Copyright>
 				<PackageIcon>logo.png</PackageIcon>
-				<PackageReleaseNotes>Added configuration options, tests by default now run within Umbraco instead of an Azure function and added support for Umbraco 10.</PackageReleaseNotes>
+				<PackageReleaseNotes>Only show on content pages, improve user restrictions, added option to exclude from certain document types.</PackageReleaseNotes>
 				<RepositoryType>git</RepositoryType>
 				<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
 		</PropertyGroup>
