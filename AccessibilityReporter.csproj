@@ -2,7 +2,7 @@
 		<PropertyGroup>
 				<TargetFramework>net6.0</TargetFramework>
 				<Nullable>enable</Nullable>
-				<Version>3.0.3-alpha</Version>
+				<Version>3.0.7-alpha</Version>
 				<ContentTargetFolders>.</ContentTargetFolders>
 				<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 				<Product>AccessibilityReporter</Product>

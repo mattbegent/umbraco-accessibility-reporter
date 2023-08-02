@@ -15,6 +15,7 @@ namespace AccessibilityReporter.Infrastructure
 				.Bind(builder.Config.GetSection(AccessibilityReporterAppSettings.SectionName));
 
 			builder.AddContentApp<AccessibilityReporterFactory>();
+			builder.AddDashboard<AccessibilityReporterDashboard>();
 		}
 	}
 }

@@ -1,14 +1,7 @@
 {
     "name": "AccessibilityReporter",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "allowPackageTelemetry": true,
-    "dashboards":  [
-        {
-            "alias": "accessibilityDashboard",
-            "view":  "/App_Plugins/AccessibilityReporter/accessibility-reporter-dashboard.html",
-            "sections":  [ "content" ]
-        }
-    ],
     "javascript": [
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter.service.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter-content-app.controller.js",

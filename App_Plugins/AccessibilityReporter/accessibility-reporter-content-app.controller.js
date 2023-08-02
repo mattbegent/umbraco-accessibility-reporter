@@ -121,7 +121,8 @@ angular.module("umbraco")
             .catch(handleError);
         }
 
-        function handleError() {
+        function handleError(error) {
+            console.error(error);
             $scope.pageState = "errored";
         }
     
@@ -266,6 +267,7 @@ angular.module("umbraco")
                         .format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
 
             } catch(error) {
+                console.error(error);
                 notificationsService.error("Failed", "An error occurred exporting the report. Please try again later.");
             }
 

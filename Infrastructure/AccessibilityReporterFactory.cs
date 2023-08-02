@@ -45,7 +45,7 @@ namespace AccessibilityReporter.Infrastructure
 				Alias = "AccessibilityReporter",
 				Name = "Accessibility",
 				Icon = "icon-globe-alt",
-				View = "/App_Plugins/AccessibilityReporter/accessibility-reporter.html",
+				View = "/App_Plugins/AccessibilityReporter/accessibility-reporter-content-app.html",
 				Weight = 0
 			};
 		}

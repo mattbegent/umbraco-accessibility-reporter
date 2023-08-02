@@ -11,7 +11,7 @@ angular.module("umbraco")
         $scope.currentTestUrl = "";
         $scope.testPages = [];
         $scope.accessibilityReporterService = AccessibilityReporterService;
-        $scope.pageSize = 6;
+        $scope.pageSize = 5;
         $scope.currentPage = 1;
 
         function init() {
@@ -26,26 +26,14 @@ angular.module("umbraco")
                     return userService.getCurrentUser();
                 })
                 .then(function (user) {
-                    if (
-                        $scope.config.userGroups &&
-                        !user.userGroups.some((group) =>
-                            $scope.config.userGroups.includes(group)
-                        )
-                    ) {
-                        $scope.pageState = "unauthorised";
-                        throw new Error("User not in allowed group.");
-                    }
                     $scope.userLocale = user && user.locale ? user.locale : undefined;
-
                 })
                 .catch(handleError);
         }
 
         function handleError(error) {
-            console.log(error);
-            if ($scope.pageState !== "unauthorised") {
-                $scope.pageState = "errored";
-            }
+            console.error(error);
+            $scope.pageState = "errored";
         }
 
         // Checkout for getting the url!!!!
@@ -98,7 +86,7 @@ angular.module("umbraco")
             try {
                 await getTestUrls();
             } catch(error) {
-                console.log(error);
+                console.error(error);
                 return;
             }
 
@@ -115,7 +103,7 @@ angular.module("umbraco")
                     testResults.push(testResult);
                     $scope.$apply();
                 } catch(error) {
-                    console.log(error);
+                    console.error(error);
                     continue;
                 }
             }
