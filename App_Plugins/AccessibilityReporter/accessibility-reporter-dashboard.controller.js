@@ -1,7 +1,7 @@
 angular.module("umbraco")
 	.controller("My.AccessibilityReporterDashboard", function ($scope, appState, contentResource, editorService, AccessibilityReporterService, AccessibilityReporterApiService, userService) {
 
-        var dashboardStorageKey = "AR.Dashboard";
+        const dashboardStorageKey = "AR.Dashboard";
 
         $scope.pageState = "pre-test";
         $scope.results = [];
@@ -155,8 +155,64 @@ angular.module("umbraco")
             $scope.mostCommonErrors = getUniqueErrors(sortedAllErrors).slice(0, 6);; 
             $scope.pageSummary = pageSummary.sort(soryPageSummary);
 
+            displaySeverityChart(sortedAllErrors);
+            topFailuresChart();
+
             paginateResults();
            
+        }
+
+        function displaySeverityChart(sortedAllErrors) {
+
+            function countNumberOfTestsWithImpact(errors, impact) {
+                return errors.filter(error => error.impact === impact).length;
+            }
+
+            $scope.severityChartData = JSON.stringify({
+                labels: [
+                    'Critical',
+                    'Serious',
+                    'Moderate',
+                    'Minor'
+                ],
+                datasets: [{
+                    label: 'Failures',
+                    data: [
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'critical'), 
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'serious'), 
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'moderate'), 
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'minor')
+                    ],
+                    backgroundColor: [
+                        'rgb(153,23,61)',
+                        'rgb(212, 32, 84)',
+                        'rgb(250, 214, 52)',
+                        'rgb(27, 38, 79)'
+                    ],
+                    hoverOffset: 4,
+                    rotation: 0
+                }]
+            });
+        }
+
+        function topFailuresChart() {
+            $scope.topFailuresChartData = JSON.stringify({
+                // TODO: Very temp
+                labels: $scope.mostCommonErrors.map((error)=> error.id.replaceAll('-', ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())),
+                datasets: [{
+                    label: 'Failures',
+                    data: $scope.mostCommonErrors.map((error)=> error.nodes.length),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(201, 203, 207, 1)'
+                    ]
+                }]
+            });
         }
 
         async function getTestResult(testUrl) {
@@ -171,8 +227,7 @@ angular.module("umbraco")
                     distinct.push(errors[i]);
                     unique[errors[i].id] = 1;
                 }
-                }
-                console.log(distinct);
+            }
             return distinct;
         }
 

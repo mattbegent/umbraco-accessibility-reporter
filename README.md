@@ -107,4 +107,6 @@ All source code is licensed under the [Mozilla Public License](https://github.co
 
 [axe-core](https://github.com/dequelabs/axe-core) is licensed under the [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
 
+[Chart.js](https://github.com/chartjs/Chart.js) is licensed under the [MIT License](https://github.com/chartjs/Chart.js/blob/master/LICENSE.md).
+
 [SheetJS Community Edition](https://docs.sheetjs.com/) is licensed under the [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0).

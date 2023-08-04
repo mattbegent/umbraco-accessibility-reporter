@@ -65,6 +65,27 @@
                 <p class="c-dashboard-number">{{pagesTested}}</p>
             </uui-box>
 
+            <uui-box>
+                <div slot="headline">
+                    <h2 class="c-title">Failure Severity</h2>
+                </div>
+                <ar-chart [attr.data]="{{severityChartData}}" type="doughnut" width="300" height="300"></ar-chart>
+            </uui-box>
+
+            <uui-box>
+                <div slot="headline">
+                    <h2 class="c-title">Top Errors</h2>
+                </div>
+                <ar-chart [attr.data]="{{topFailuresChartData}}" type="bar" width="600" height="300"></ar-chart>
+            </uui-box>
+
+            <uui-box>
+                <div slot="headline">
+                    <h2 class="c-title">Compared To Top 1 Million</h2>
+                </div>
+                <ar-chart [attr.data]="{{topFailuresChartData}}" type="bar" width="600" height="300"></ar-chart>
+            </uui-box>
+
             <uui-box class="c-dashboard-grid__full-row">
                 <div slot="headline">
                     <h2 class="c-title">Pages With Failures</h2>
