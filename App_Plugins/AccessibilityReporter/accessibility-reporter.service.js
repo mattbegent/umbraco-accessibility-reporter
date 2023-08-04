@@ -158,6 +158,20 @@ class AccessibilityReporter {
         
     }
 
+    static saveToSessionStorage(key, value) {
+        // TODO: Test this with large amounts of data
+        sessionStorage.setItem(key, JSON.stringify(value));
+    }
+
+    static getItemFromSessionStorage(key) {
+        const item = sessionStorage.getItem(key);
+        if(item) {
+            return JSON.parse(item);
+        } else {
+            return null;
+        }
+    }
+
 }
 
 angular.module("umbraco")

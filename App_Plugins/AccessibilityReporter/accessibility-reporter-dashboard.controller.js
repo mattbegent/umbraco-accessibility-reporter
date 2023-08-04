@@ -1,6 +1,8 @@
 angular.module("umbraco")
 	.controller("My.AccessibilityReporterDashboard", function ($scope, appState, contentResource, editorService, AccessibilityReporterService, AccessibilityReporterApiService, userService) {
 
+        var dashboardStorageKey = "AR.Dashboard";
+
         $scope.pageState = "pre-test";
         $scope.results = [];
         $scope.pageSummary = [];
@@ -27,6 +29,7 @@ angular.module("umbraco")
                 })
                 .then(function (user) {
                     $scope.userLocale = user && user.locale ? user.locale : undefined;
+                    loadDashboard();
                 })
                 .catch(handleError);
         }
@@ -34,6 +37,17 @@ angular.module("umbraco")
         function handleError(error) {
             console.error(error);
             $scope.pageState = "errored";
+        }
+
+        function loadDashboard() {
+            
+            var dashboardResultsFromStorage = AccessibilityReporterService.getItemFromSessionStorage(dashboardStorageKey);
+            if(dashboardResultsFromStorage) {
+                $scope.results = dashboardResultsFromStorage;
+                setStats(dashboardResultsFromStorage);
+                $scope.pageState = "has-results";
+            }
+
         }
 
         // Checkout for getting the url!!!!
@@ -109,6 +123,7 @@ angular.module("umbraco")
             }
            
             $scope.results = testResults;
+            AccessibilityReporterService.saveToSessionStorage(dashboardStorageKey, testResults);
             setStats(testResults);
             $scope.pageState = "has-results";
 
