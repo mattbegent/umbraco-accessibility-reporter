@@ -64,7 +64,7 @@
     border-radius: 100%; 
     margin: 0 auto 10px auto;
     font-weight: 700;
-    font-size: 28px;
+    font-size: 34px;
 }
 
 .c-summary--passed .c-summary__circle {
@@ -73,6 +73,10 @@
 
 .c-summary--incomplete .c-summary__circle {
     border-color: #f79c37;
+}
+
+.c-summary--info .c-summary__circle {
+    border-color: #1b264f;
 }
 
 .c-summary__title {
@@ -219,10 +223,20 @@
     grid-column: 1 / 4; 
 }
 
+.c-dashboard-grid__23 {
+    grid-column: 2 / 4; 
+}
+
 .c-dashboard-number {
     font-size: 5rem;
     line-height: 1;
     margin: 1rem 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.c-dashboard-number__info {
+    font-size: 1rem;
     text-align: center;
     font-weight: bold;
 }

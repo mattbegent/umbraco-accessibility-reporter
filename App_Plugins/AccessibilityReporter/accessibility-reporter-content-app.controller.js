@@ -192,7 +192,7 @@ angular.module("umbraco")
                 title += 's';
             }
             if($scope.totalIssues() !== "0") {
-                title += ` due to ${$scope.totalIssues()} Error`;
+                title += ` due to ${$scope.totalIssues()} Violation`;
                 if($scope.totalIssues() !== 1) {
                     title += 's';
                 }
@@ -249,7 +249,7 @@ angular.module("umbraco")
                 XLSX.utils.book_append_sheet(workbook, incompleteWorksheet, "Incomplete Tests");
                 XLSX.utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
 
-                const headers = [["Impact", "Title", "Description", "Standard", "Errors"]];
+                const headers = [["Impact", "Title", "Description", "Standard", "Violations"]];
                 const passedHeaders = [["Impact", "Title", "Description", "Standard", "Elements"]];
                 XLSX.utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
                 XLSX.utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });

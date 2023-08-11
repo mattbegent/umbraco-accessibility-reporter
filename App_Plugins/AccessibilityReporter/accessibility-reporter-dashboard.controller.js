@@ -71,7 +71,6 @@ angular.module("umbraco")
                 for (let index = 0; index < children.items.length; index++) {
                     const element = children.items[index];
                     if(element.state === "Published") {
-                        console.log(element);
                         const url = await contentResource.getNiceUrl(element.id);
                         //const content = await contentResource.getById(element.id, $scope.userLocale)
                         $scope.testPages.push({
@@ -96,6 +95,8 @@ angular.module("umbraco")
             $scope.results = [];
             $scope.pageSummary = [];
             $scope.testPages = [];
+
+            var startTime = new Date();
 
             try {
                 await getTestUrls();
@@ -122,50 +123,136 @@ angular.module("umbraco")
                 }
             }
            
-            $scope.results = testResults;
-            AccessibilityReporterService.saveToSessionStorage(dashboardStorageKey, testResults);
-            setStats(testResults);
+            $scope.results = {
+                startTime: startTime,
+                endTime: new Date(),
+                pages: testResults
+            };
+            AccessibilityReporterService.saveToSessionStorage(dashboardStorageKey, $scope.results);
+            setStats($scope.results);
             $scope.pageState = "has-results";
 
             $scope.$apply();
         };
 
+        $scope.formatTime = function(dateToFormat) {
+            return moment(dateToFormat).format(
+                "HH:mm:ss"
+            );
+        }
+
         function setStats(testResults) {
             let totalErrors = 0;
             let allErrors = [];
+
+            let totalViolations = 0;
+            let totalAViolations = 0;
+            let totalAAViolations = 0;
+            let totalAAAViolations = 0;
+            let totalOtherViolations = 0;
+
             let pageSummary = [];
-            for (let index = 0; index < testResults.length; index++) {
-                const currentResult = testResults[index];
+            for (let index = 0; index < testResults.pages.length; index++) {
+                const currentResult = testResults.pages[index];
                 totalErrors += currentResult.violations.length;
                 allErrors = allErrors.concat(currentResult.violations);
                 if(currentResult.violations.length) {
+                    
                     pageSummary.push({
                         url: currentResult.url,
                         name: currentResult.page.name,
                         id: currentResult.page.id,
                         numberOfErrors: currentResult.violations.length
                     });
+
+                    for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
+                        const currentViolation = currentResult.violations[indexVoilations];
+                        const violationWCAGLevel = getWCAGLevel(currentViolation.tags);
+                        switch (violationWCAGLevel) {
+                            case 'AAA':
+                                totalAAAViolations += currentViolation.nodes.length;
+                                break;
+                            case 'AA':
+                                totalAAViolations += currentViolation.nodes.length;
+                                break;
+                            case 'A':
+                                totalAViolations += currentViolation.nodes.length;
+                                break;
+                            case 'Other':
+                                totalOtherViolations += currentViolation.nodes.length;
+                                break;
+                        }
+                        totalViolations += currentViolation.nodes.length;
+                    }
                 }
                 
             }
-            $scope.pagesTested = testResults.length;
+
+            $scope.pagesTested = testResults.pages.length;
             $scope.totalErrors = totalErrors;
-            $scope.errorsPerPage = (totalErrors / testResults.length).toFixed(2);;
+
+            $scope.totalViolations = totalViolations;
+            $scope.totalAAAViolations = totalAAAViolations;
+            $scope.totalAAViolations = totalAAViolations;
+            $scope.totalAViolations = totalAViolations;
+            $scope.totalOtherViolations = totalOtherViolations;
+            $scope.reportSummaryText = getReportSummaryText();
+
+            $scope.errorsPerPage = (totalViolations / testResults.pages.length).toFixed(2);
             const sortedAllErrors = allErrors.sort(AccessibilityReporterService.sortIssues);
-            $scope.mostCommonErrors = getUniqueErrors(sortedAllErrors).slice(0, 6);; 
+            $scope.mostCommonErrors = getUniqueErrors(sortedAllErrors).slice(0, 6);
+       
             $scope.pageSummary = pageSummary.sort(soryPageSummary);
 
+            $scope.pageWithMostViolations = $scope.pageSummary[0].name;
+            $scope.pageWithMostViolationsNumber = $scope.pageSummary[0].numberOfErrors;
+
             displaySeverityChart(sortedAllErrors);
-            topFailuresChart();
+            topViolationsChart();
 
             paginateResults();
            
         }
 
+        function getWCAGLevel(tags) {
+            for (let index = 0; index < tags.length; index++) {
+                const tag = tags[index];
+                switch (tag) {
+                    case 'wcagaaa':
+                        return 'AAA';
+                    case 'wcag2aa':
+                    case 'wcag21aa':
+                    case 'wcag22aa':
+                        return 'AA';
+                    case 'wcag2a':
+                    case 'wcag21a':
+                    case 'wcag22a':
+                        return 'A';
+                    default:
+                        continue;
+                }
+            }
+            return 'Other';
+        }
+
+        function getReportSummaryText() {
+            if($scope.totalAViolations !== 0 && $scope.totalAAViolations !== 0) {
+                return `This website <strong>does not</strong> comply with <strong>WCAG AA</strong>.`;
+            } 
+            return "High 5, you rock! No WCAG A or WCAG AA violations were found. Please manually test your website to check full compliance.";
+        }
+
         function displaySeverityChart(sortedAllErrors) {
 
             function countNumberOfTestsWithImpact(errors, impact) {
-                return errors.filter(error => error.impact === impact).length;
+                var totalViolationsForForImpact = 0;
+                for (let index = 0; index < errors.length; index++) {
+                    const currentError = errors[index];
+                    if(currentError.impact === impact) {
+                        totalViolationsForForImpact += currentError.nodes.length;
+                    }
+                }
+                return totalViolationsForForImpact;
             }
 
             $scope.severityChartData = JSON.stringify({
@@ -176,7 +263,7 @@ angular.module("umbraco")
                     'Minor'
                 ],
                 datasets: [{
-                    label: 'Failures',
+                    label: 'Violations',
                     data: [
                         countNumberOfTestsWithImpact(sortedAllErrors, 'critical'), 
                         countNumberOfTestsWithImpact(sortedAllErrors, 'serious'), 
@@ -195,12 +282,11 @@ angular.module("umbraco")
             });
         }
 
-        function topFailuresChart() {
-            $scope.topFailuresChartData = JSON.stringify({
-                // TODO: Very temp
+        function topViolationsChart() {
+            $scope.topViolationsChartData = JSON.stringify({
                 labels: $scope.mostCommonErrors.map((error)=> error.id.replaceAll('-', ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())),
                 datasets: [{
-                    label: 'Failures',
+                    label: 'Violations',
                     data: $scope.mostCommonErrors.map((error)=> error.nodes.length),
                     backgroundColor: [
                         'rgba(255, 99, 132, 1)',

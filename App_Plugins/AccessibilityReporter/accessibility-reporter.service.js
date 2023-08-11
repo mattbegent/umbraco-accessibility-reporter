@@ -89,19 +89,19 @@ class AccessibilityReporter {
             case "wcag2a":
                 return "WCAG 2.0 A";
             case "wcag2aa":
-                return "WCAG 2.0 AAA";
+                return "WCAG 2.0 AA";
             case "wcag2aaa":
                 return "WCAG 2.0 AAA";
             case "wcag21a":
                 return "WCAG 2.1 A";
             case "wcag21aa":
-                return "WCAG 2.1 AAA";
+                return "WCAG 2.1 AA";
             case "wcag21aaa":
                 return "WCAG 2.1 AAA";
             case "wcag22a":
                 return "WCAG 2.2 A";
             case "wcag22aa":
-                return "WCAG 2.2 AAA";
+                return "WCAG 2.2 AA";
             case "wcag22aaa":
                 return "WCAG 2.2 AAA";
             case "best-practice":
@@ -159,8 +159,12 @@ class AccessibilityReporter {
     }
 
     static saveToSessionStorage(key, value) {
-        // TODO: Test this with large amounts of data
-        sessionStorage.setItem(key, JSON.stringify(value));
+        try {
+            sessionStorage.setItem(key, JSON.stringify(value));
+        } catch(error) {
+            console.error(error);
+        }
+        
     }
 
     static getItemFromSessionStorage(key) {

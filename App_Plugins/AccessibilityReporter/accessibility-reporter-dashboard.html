@@ -44,58 +44,90 @@
 
         <div class="c-dashboard-grid" ng-if="pageState === 'has-results'">
 
-            <uui-box>
+            <uui-box class="c-dashboard-grid__full-row">
                 <div slot="headline">
-                    <h2 class="c-title">Total Failed Tests</h2>
+                    <h1 class="c-title">Whole Website Accessibility Report</h1>
                 </div>
-                <p class="c-dashboard-number">{{totalErrors}}</p>
+                <div>
+                    <p ng-bind-html="reportSummaryText"></p>
+                    <div class="c-summary__container">
+                        <div class="c-summary" ng-class="{'c-summary--error': totalAViolations, 'c-summary--info': !totalAViolations}">
+                            <div class="c-summary__circle">
+                                {{totalAViolations}}
+                                <span class="c-summary__title">A Issues</span>
+                            </div>
+                        </div>
+                        <div class="c-summary" ng-class="{'c-summary--error': totalAAViolations, 'c-summary--info': !totalAAViolations}">
+                            <div class="c-summary__circle">
+                                {{totalAAViolations}}
+                                <span class="c-summary__title">AA Issues</span>
+                            </div>
+                        </div>
+                        <div class="c-summary" ng-class="{'c-summary--error': totalAAAViolations, 'c-summary--info': !totalAAAViolations}">
+                            <div class="c-summary__circle">
+                                {{totalAAAViolations}}
+                                <span class="c-summary__title">AAA Issues</span>
+                            </div>
+                        </div>
+                        <div class="c-summary" ng-class="{'c-summary--error': totalOtherViolations, 'c-summary--info': !totalOtherViolations}">
+                            <div class="c-summary__circle">
+                                {{totalOtherViolations}}
+                                <span class="c-summary__title">Other Issues</span>
+                            </div>
+                        </div>
+                    </div>
+                    <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun full website accessibility tests" class="c-summary__button">Rerun Tests</uui-button>
+                    <span class="c-summary__time">Started at <strong>{{formatTime(results.startTime)}}</strong> and ended at <strong>{{formatTime(results.endTime)}}</strong></span>
+                </div>
             </uui-box>
 
-            <uui-box>
+            <uui-box ng-if="totalViolations">
                 <div slot="headline">
-                    <h2 class="c-title">Average Tests Failed Per Page</h2>
+                    <h2 class="c-title">Total Violations</h2>
+                </div>
+                <p class="c-dashboard-number">{{totalViolations}}</p>
+                <p class="c-dashboard-number__info">Across {{totalErrors}} different failed tests</p>
+            </uui-box>
+
+            <uui-box ng-if="errorsPerPage">
+                <div slot="headline">
+                    <h2 class="c-title">Violations Per Page</h2>
                 </div>
                 <p class="c-dashboard-number">{{errorsPerPage}}</p>
+                <p class="c-dashboard-number__info">Across {{pagesTested}} pages</p>
             </uui-box>
 
-            <uui-box>
+            <uui-box ng-if="errorsPerPage">
                 <div slot="headline">
-                    <h2 class="c-title">Pages Tested</h2>
+                    <h2 class="c-title">Most Violations</h2>
                 </div>
-                <p class="c-dashboard-number">{{pagesTested}}</p>
+                <p class="c-dashboard-number">{{pageWithMostViolationsNumber}}</p>
+                <p class="c-dashboard-number__info">Found on "{{pageWithMostViolations}}"</p>
             </uui-box>
 
-            <uui-box>
+            <uui-box ng-if="totalViolations">
                 <div slot="headline">
-                    <h2 class="c-title">Failure Severity</h2>
+                    <h2 class="c-title">Violation Severity</h2>
                 </div>
                 <ar-chart [attr.data]="{{severityChartData}}" type="doughnut" width="300" height="300"></ar-chart>
             </uui-box>
 
-            <uui-box>
+            <uui-box ng-if="totalViolations" class="c-dashboard-grid__23">
                 <div slot="headline">
-                    <h2 class="c-title">Top Errors</h2>
+                    <h2 class="c-title">Top Violations</h2>
                 </div>
-                <ar-chart [attr.data]="{{topFailuresChartData}}" type="bar" width="600" height="300"></ar-chart>
+                <ar-chart [attr.data]="{{topViolationsChartData}}" type="bar" width="600" height="300"></ar-chart>
             </uui-box>
 
-            <uui-box>
+            <uui-box class="c-dashboard-grid__full-row" ng-if="pageSummaryCurrentPage.length">
                 <div slot="headline">
-                    <h2 class="c-title">Compared To Top 1 Million</h2>
+                    <h2 class="c-title">Pages With Violations</h2>
                 </div>
-                <ar-chart [attr.data]="{{topFailuresChartData}}" type="bar" width="600" height="300"></ar-chart>
-            </uui-box>
-
-            <uui-box class="c-dashboard-grid__full-row">
-                <div slot="headline">
-                    <h2 class="c-title">Pages With Failures</h2>
-                </div>
-                <p ng-if="!pageSummaryCurrentPage.length">No tests failed! High 5, you rock!</p>
-                <uui-table ng-if="pageSummaryCurrentPage.length">
+                <uui-table>
                     <uui-table-head>
                         <uui-table-head-cell>Name</uui-table-head-cell>
                         <uui-table-head-cell>URL</uui-table-head-cell>
-                        <uui-table-head-cell>Failures</uui-table-head-cell>
+                        <uui-table-head-cell>Violations</uui-table-head-cell>
                         <uui-table-head-cell>Action</uui-table-head-cell>
                     </uui-table-head>
                     <uui-table-row ng-repeat="page in pageSummaryCurrentPage">
@@ -126,17 +158,16 @@
                 </umb-pagination>
             </uui-box>
 
-            <uui-box class="c-dashboard-grid__full-row">
+            <uui-box class="c-dashboard-grid__full-row" ng-if="pageSummaryCurrentPage.length">
                 <div slot="headline">
                     <h2 class="c-title">Most Common Failures</h2>
                 </div>
-                <p ng-if="!pageSummaryCurrentPage.length">No tests failed! High 5, you rock!</p>
                 <uui-table ng-if="pageSummaryCurrentPage.length">
                     <uui-table-head>
                         <uui-table-head-cell>Impact</uui-table-head-cell>
                         <uui-table-head-cell>Title</uui-table-head-cell>
                         <uui-table-head-cell>Accessibility Standard</uui-table-head-cell>
-                        <uui-table-head-cell>Errors</uui-table-head-cell>
+                        <uui-table-head-cell>Violations</uui-table-head-cell>
                     </uui-table-head>
                     <uui-table-row ng-repeat="result in mostCommonErrors">
                         <uui-table-cell><uui-tag color="{{accessibilityReporterService.impactToTag(result.impact)}}" look="primary">{{accessibilityReporterService.upperCaseFirstLetter(result.impact)}}</uui-tag></uui-table-cell>
@@ -152,8 +183,6 @@
             </uui-box>
 
         </div>
-
-        <uui-button ng-if="pageState === 'has-results'" look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page" class="c-summary__button">Rerun Tests</uui-button>
 
     </uui-scroll-container>
 </div>

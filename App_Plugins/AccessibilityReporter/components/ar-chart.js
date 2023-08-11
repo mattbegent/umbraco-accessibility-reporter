@@ -14,11 +14,25 @@ class ARChart extends HTMLElement {
 
         // delay while angular renders
         setTimeout(()=> {
-            console.log(JSON.parse(this.getAttribute('[attr.data]')));
-            new Chart(ctx, {
+
+            let chartSettings = {
                 type: this.getAttribute('type'),
                 data: JSON.parse(this.getAttribute('[attr.data]'))
-            });
+            };
+
+            if(this.getAttribute('type') === 'bar') {
+                chartSettings.options = {  
+                    scales: {
+                        y: {
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                };
+            }
+
+            new Chart(ctx, chartSettings);
         }, 100);
 
     }

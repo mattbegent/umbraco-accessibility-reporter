@@ -25,19 +25,7 @@ angular
                         $http.get("/umbraco/backoffice/api/config/current"),
                         "Failed to retrieve Accessibility Reporter config"
                     );
-                },
-                getDashboard: function () {
-                    return umbRequestHelper.resourcePromise(
-                        $http.get("/umbraco/backoffice/api/dashboard"),
-                        "Failed to retrieve Accessibility Reporter dashboard"
-                    );
-                },
-                saveResult: function (result) {
-                    return umbRequestHelper.resourcePromise(
-                        $http.post("/umbraco/backoffice/api/config/current", result),
-                        "Failed to retrieve Accessibility Reporter config"
-                    );
-                },
+                }
             };
         }
     );
