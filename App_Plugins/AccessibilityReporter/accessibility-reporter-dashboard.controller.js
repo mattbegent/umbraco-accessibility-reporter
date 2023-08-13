@@ -70,8 +70,16 @@ angular.module("umbraco")
             if(children.items) {
                 for (let index = 0; index < children.items.length; index++) {
                     const element = children.items[index];
+
+                    if ($scope.testPages.length >= $scope.config.maxPages) {
+                        return;
+                    }
+
                     if(element.state === "Published") {
                         const url = await contentResource.getNiceUrl(element.id);
+                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
+                            continue;
+                        }
                         //const content = await contentResource.getById(element.id, $scope.userLocale)
                         $scope.testPages.push({
                             url: AccessibilityReporterService.getBaseURL() + url,
@@ -199,15 +207,16 @@ angular.module("umbraco")
             $scope.reportSummaryText = getReportSummaryText();
 
             $scope.errorsPerPage = (totalViolations / testResults.pages.length).toFixed(2);
-            const sortedAllErrors = allErrors.sort(AccessibilityReporterService.sortIssues);
-            $scope.mostCommonErrors = getUniqueErrors(sortedAllErrors).slice(0, 6);
+            const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
+            const sortedByViolations = allErrors.sort(AccessibilityReporterService.sortByViolations);
+            $scope.mostCommonErrors = getUniqueErrors(sortedByViolations).slice(0, 6);
        
             $scope.pageSummary = pageSummary.sort(soryPageSummary);
 
             $scope.pageWithMostViolations = $scope.pageSummary[0].name;
             $scope.pageWithMostViolationsNumber = $scope.pageSummary[0].numberOfErrors;
 
-            displaySeverityChart(sortedAllErrors);
+            displaySeverityChart(sortedByImpact);
             topViolationsChart();
 
             paginateResults();

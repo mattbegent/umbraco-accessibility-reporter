@@ -72,9 +72,9 @@ angular.module("umbraco")
 
         function sortResponse(results) {
             
-            var sortedViolations = results.violations.sort(AccessibilityReporterService.sortIssues);
+            var sortedViolations = results.violations.sort(AccessibilityReporterService.sortIssuesByImpact);
             results.violations = sortedViolations;
-            var sortedIncomplete = results.incomplete.sort(AccessibilityReporterService.sortIssues);
+            var sortedIncomplete = results.incomplete.sort(AccessibilityReporterService.sortIssuesByImpact);
             results.incomplete = sortedIncomplete;
             return results;
         }

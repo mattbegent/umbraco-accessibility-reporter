@@ -46,7 +46,7 @@ class AccessibilityReporter {
         });
     }
 
-    static sortIssues(a, b) {
+    static sortIssuesByImpact(a, b) {
         if(a.impact === b.impact) {
             return  b.nodes.length - a.nodes.length;
         }
@@ -57,6 +57,10 @@ class AccessibilityReporter {
             return 1;
         }
         return 0;
+    }
+
+    static sortByViolations(a, b) {
+        return  b.nodes.length - a.nodes.length;
     }
 
     // https://www.deque.com/axe/core-documentation/api-documentation/

@@ -15,6 +15,10 @@ class ARChart extends HTMLElement {
         // delay while angular renders
         setTimeout(()=> {
 
+            if (!this.getAttribute('[attr.data]') || this.getAttribute('[attr.data]').startsWith('{{')) {
+                return;
+            }
+
             let chartSettings = {
                 type: this.getAttribute('type'),
                 data: JSON.parse(this.getAttribute('[attr.data]'))

@@ -4,7 +4,7 @@
 
 ## What is it?
 
-Accessibility Reporter for Umbraco is a content app that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
+Accessibility Reporter for Umbraco is a content app and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
 
 ## Why should I use it?
 
@@ -52,7 +52,8 @@ You can run Accessibility Reporter without adding any configuration options, as 
         "ExcludedDocTypes": [
             "excludedPage"
         ],
-        "RunTestsAutomatically": false
+        "RunTestsAutomatically": false,
+        "MaxPages": 20
     }
 
 ### Defaults
@@ -77,7 +78,8 @@ All options are completely optional and if you don't set them, they default to t
             "translator", 
             "sensitiveData"
         ],
-        "RunTestsAutomatically": true
+        "RunTestsAutomatically": true,
+        "MaxPages": 50
     }
 
 ## Limitations
