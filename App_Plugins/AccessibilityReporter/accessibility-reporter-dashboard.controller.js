@@ -101,6 +101,7 @@ angular.module("umbraco")
 
             $scope.pageState = "running-tests";
             $scope.results = [];
+            $scope.currentTestUrl = "";
             $scope.pageSummary = [];
             $scope.testPages = [];
 
