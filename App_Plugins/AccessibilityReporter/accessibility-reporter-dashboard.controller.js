@@ -167,7 +167,7 @@ angular.module("umbraco")
 
                     for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
                         const currentViolation = currentResult.violations[indexVoilations];
-                        const violationWCAGLevel = getWCAGLevel(currentViolation.tags);
+                        const violationWCAGLevel = AccessibilityReporterService.getWCAGLevel(currentViolation.tags);
                         switch (violationWCAGLevel) {
                             case 'AAA':
                                 totalAAAViolations += currentViolation.nodes.length;
@@ -212,27 +212,6 @@ angular.module("umbraco")
 
             paginateResults();
            
-        }
-
-        function getWCAGLevel(tags) {
-            for (let index = 0; index < tags.length; index++) {
-                const tag = tags[index];
-                switch (tag) {
-                    case 'wcagaaa':
-                        return 'AAA';
-                    case 'wcag2aa':
-                    case 'wcag21aa':
-                    case 'wcag22aa':
-                        return 'AA';
-                    case 'wcag2a':
-                    case 'wcag21a':
-                    case 'wcag22a':
-                        return 'A';
-                    default:
-                        continue;
-                }
-            }
-            return 'Other';
         }
 
         function getReportSummaryText() {

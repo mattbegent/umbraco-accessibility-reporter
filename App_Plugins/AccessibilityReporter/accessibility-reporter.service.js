@@ -120,6 +120,27 @@ class AccessibilityReporter {
         return tag;
     }
 
+    static getWCAGLevel(tags) {
+        for (let index = 0; index < tags.length; index++) {
+            const tag = tags[index];
+            switch (tag) {
+                case 'wcagaaa':
+                    return 'AAA';
+                case 'wcag2aa':
+                case 'wcag21aa':
+                case 'wcag22aa':
+                    return 'AA';
+                case 'wcag2a':
+                case 'wcag21a':
+                case 'wcag22a':
+                    return 'A';
+                default:
+                    continue;
+            }
+        }
+        return 'Other';
+    }
+
     static getRule(ruleId) {
         const allRules = axe.getRules();
         return allRules.find(rule => rule.ruleId = ruleId);
