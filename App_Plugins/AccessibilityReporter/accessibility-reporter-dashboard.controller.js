@@ -78,7 +78,7 @@ angular.module("umbraco")
 
                     if(element.state === "Published") {
                         const url = await contentResource.getNiceUrl(element.id);
-                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.page.url === url)) {
+                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
                             continue;
                         }
                         //const content = await contentResource.getById(element.id, $scope.userLocale)
@@ -168,14 +168,10 @@ angular.module("umbraco")
                 const currentResult = testResults.pages[index];
                 totalErrors += currentResult.violations.length;
                 allErrors = allErrors.concat(currentResult.violations);
-                if(currentResult.violations.length) {
-                    
-                    pageSummary.push({
-                        url: currentResult.page.url,
-                        name: currentResult.page.name,
-                        id: currentResult.page.id,
-                        numberOfErrors: currentResult.violations.length
-                    });
+                if (currentResult.violations.length) {
+
+                 
+                    let totalViolationsForPage = 0;
 
                     for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
                         const currentViolation = currentResult.violations[indexVoilations];
@@ -195,7 +191,15 @@ angular.module("umbraco")
                                 break;
                         }
                         totalViolations += currentViolation.nodes.length;
+                        totalViolationsForPage += currentViolation.nodes.length;
                     }
+
+                    pageSummary.push({
+                        url: currentResult.page.url,
+                        name: currentResult.page.name,
+                        id: currentResult.page.id,
+                        numberOfErrors: totalViolationsForPage
+                    });
                 }
                 
             }
@@ -314,8 +318,6 @@ angular.module("umbraco")
                 }
 
             });
-
-            console.log(resultFormatted);
 
             return resultFormatted;
         }
