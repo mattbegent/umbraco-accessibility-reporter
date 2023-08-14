@@ -46,7 +46,7 @@
 
             <uui-box class="c-dashboard-grid__full-row">
                 <div slot="headline">
-                    <h1 class="c-title">Whole Website Accessibility Report</h1>
+                    <h1 class="c-title">Accessibility Report</h1>
                 </div>
                 <div>
                     <p ng-bind-html="reportSummaryText"></p>
@@ -109,7 +109,7 @@
                 <div slot="headline">
                     <h2 class="c-title">Violation Severity</h2>
                 </div>
-                <ar-chart [attr.data]="{{severityChartData}}" type="doughnut" width="300" height="300"></ar-chart>
+                <ar-chart [attr.data]="{{severityChartData}}" type="pie" width="300" height="300"></ar-chart>
             </uui-box>
 
             <uui-box ng-if="totalViolations" class="c-dashboard-grid__23">
@@ -158,7 +158,7 @@
                 </umb-pagination>
             </uui-box>
 
-            <uui-box class="c-dashboard-grid__full-row" ng-if="pageSummaryCurrentPage.length">
+            <!-- <uui-box class="c-dashboard-grid__full-row" ng-if="pageSummaryCurrentPage.length">
                 <div slot="headline">
                     <h2 class="c-title">Most Common Violations</h2>
                 </div>
@@ -180,7 +180,7 @@
                         <uui-table-cell><div class="c-incident-number c-incident-number--{{result.impact}}"><div class="c-incident-number__text">{{result.nodes.length}}</div></div></uui-table-cell>
                     </uui-table-row>
                 </uui-table>
-            </uui-box>
+            </uui-box> -->
 
         </div>
 

@@ -21,8 +21,36 @@ class ARChart extends HTMLElement {
 
             let chartSettings = {
                 type: this.getAttribute('type'),
-                data: JSON.parse(this.getAttribute('[attr.data]'))
+                data: JSON.parse(this.getAttribute('[attr.data]')),
+                plugins: [ChartDataLabels]
             };
+
+            if(this.getAttribute('type') === 'pie') {
+                chartSettings.options = {};
+                chartSettings.options.plugins = {  
+                    tooltip: {
+                        enabled: false
+                    },
+                    datalabels: {
+                        clip : true,
+                        backgroundColor: '#FFF',
+                        font: {
+                            size: '16px',
+                            lineHeight: 1,
+                            family: 'Lato'
+                        },
+                        align: 'top',
+                        formatter: ((context, args)=> {
+                            if(context) {
+                                const index = args.dataIndex;
+                                return context + " " + args.chart.data.labels[index];
+                            } else {
+                                return null;
+                            }
+                        })
+                    }
+                }
+            }
 
             if(this.getAttribute('type') === 'bar') {
                 chartSettings.options = {  
@@ -30,6 +58,28 @@ class ARChart extends HTMLElement {
                         y: {
                             ticks: {
                                 precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            enabled: false
+                        },
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            backgroundColor: '#FFF',
+                            font: {
+                                size: '16px',
+                                lineHeight: 1,
+                                family: 'Lato'
+                            },
+                            padding: {
+                                left: 6,
+                                right: 6,
+                                top: 2,
+                                bottom: 2
                             }
                         }
                     }

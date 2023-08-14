@@ -169,8 +169,7 @@ angular.module("umbraco")
                 totalErrors += currentResult.violations.length;
                 allErrors = allErrors.concat(currentResult.violations);
                 if (currentResult.violations.length) {
-
-                 
+                    
                     let totalViolationsForPage = 0;
 
                     for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {

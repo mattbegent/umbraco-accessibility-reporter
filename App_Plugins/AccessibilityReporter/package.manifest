@@ -11,7 +11,8 @@
         "~/App_Plugins/AccessibilityReporter/components/ar-chart.js",
         "~/App_Plugins/AccessibilityReporter/libs/xlsx.mini.min.js",
         "~/App_Plugins/AccessibilityReporter/libs/axe-only.min.js",
-        "~/App_Plugins/AccessibilityReporter/libs/chart.min.js"
+        "~/App_Plugins/AccessibilityReporter/libs/chart.min.js",
+        "~/App_Plugins/AccessibilityReporter/libs/chart-datalabels.min.js"
     ],
     "css": [
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter.styles.css"
