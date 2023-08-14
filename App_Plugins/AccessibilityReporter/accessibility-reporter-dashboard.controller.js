@@ -59,7 +59,8 @@ angular.module("umbraco")
             $scope.testPages.push({
               url: AccessibilityReporterService.getBaseURL() + url,
               id: rootNode.id,
-              name: rootNode.name
+              name: rootNode.name,
+              culture: $scope.userLocale
             });
             await getChildren(rootNode.id);
         }
@@ -119,10 +120,12 @@ angular.module("umbraco")
                 const currentPage = $scope.testPages[index];
                 $scope.currentTestUrl = currentPage.url;
                 try {
-                    const currentResult = await getTestResult(currentPage.url);
+                    const currentResult = await getTestResult(currentPage.url);     
+                    const resultFormatted = reduceTestResult(currentResult);
+
                     const testResult = Object.assign({
                         page: currentPage
-                    }, currentResult);
+                    }, resultFormatted);
     
                     testResults.push(testResult);
                     $scope.$apply();
@@ -168,7 +171,7 @@ angular.module("umbraco")
                 if(currentResult.violations.length) {
                     
                     pageSummary.push({
-                        url: currentResult.url,
+                        url: currentResult.page.url,
                         name: currentResult.page.name,
                         id: currentResult.page.id,
                         numberOfErrors: currentResult.violations.length
@@ -292,6 +295,29 @@ angular.module("umbraco")
 
         async function getTestResult(testUrl) {
             return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, testUrl, $scope.userLocale) : $scope.accessibilityReporterService.runTest(testUrl);
+        }
+
+        function reduceTestResult(testResult) {
+            const { inapplicable, incomplete, passes, testEngine, testEnvironment, testRunner, toolOptions, url, timestamp, ...resultFormatted } = testResult;
+                    
+            resultFormatted.violations = resultFormatted.violations.map((violation)=> {
+                return {
+                    id: violation.id,
+                    help: violation.help,
+                    impact: violation.impact,
+                    tags: violation.tags,
+                    nodes: violation.nodes.map((node)=> {
+                        return {
+                            impact: node.impact
+                        }
+                    })
+                }
+
+            });
+
+            console.log(resultFormatted);
+
+            return resultFormatted;
         }
 
         function getUniqueErrors(errors) {
