@@ -78,7 +78,7 @@ angular.module("umbraco")
 
                     if(element.state === "Published") {
                         const url = await contentResource.getNiceUrl(element.id);
-                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
+                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.page.url === url)) {
                             continue;
                         }
                         //const content = await contentResource.getById(element.id, $scope.userLocale)
