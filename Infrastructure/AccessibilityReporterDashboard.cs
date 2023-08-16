@@ -1,13 +1,22 @@
 ﻿using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Dashboards;
 using Umbraco.Cms.Core;
-using System;
+using AccessibilityReporter.Infrastructure.Config;
+using Microsoft.Extensions.Options;
+using System.Linq;
 
 namespace AccessibilityReporter.Infrastructure
 {
     [Weight(50)]
     public class AccessibilityReporterDashboard : IDashboard
     {
+		private readonly IAccessibilityReporterSettings _settings;
+
+		public AccessibilityReporterDashboard(IAccessibilityReporterSettings settings)
+        {
+            _settings = settings;
+        }
+
         public string Alias => "accessibilityDashboard";
 
         public string[] Sections => new[]
@@ -17,8 +26,13 @@ namespace AccessibilityReporter.Infrastructure
 
         public string View => "/App_Plugins/AccessibilityReporter/accessibility-reporter-dashboard.html";
 
-		// TODO: Jack restrict to groups from the config
-        public IAccessRule[] AccessRules => Array.Empty<IAccessRule>();
+        public IAccessRule[] AccessRules => _settings.UserGroups
+            .Select(userGroup => new AccessRule 
+            { 
+                Type = AccessRuleType.Grant,
+                Value = userGroup
+            })
+            .ToArray();
        
     }
 }
