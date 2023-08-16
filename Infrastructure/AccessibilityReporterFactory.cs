@@ -4,17 +4,16 @@ using Umbraco.Cms.Core.Models.ContentEditing;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models;
 using System.Linq;
-using Microsoft.Extensions.Options;
 
 namespace AccessibilityReporter.Infrastructure
 {
 	internal class AccessibilityReporterFactory : IContentAppFactory
 	{
-		private readonly IOptions<AccessibilityReporterAppSettings> _accessibilityReporterSettings;
+		private readonly IAccessibilityReporterSettings _settings;
 
-		public AccessibilityReporterFactory(IOptions<AccessibilityReporterAppSettings> accessibilityReporterSettings)
+		public AccessibilityReporterFactory(IAccessibilityReporterSettings settings)
 		{
-			_accessibilityReporterSettings = accessibilityReporterSettings;
+			_settings = settings;
 		}
 
 		public ContentApp? GetContentAppFor(object source, IEnumerable<IReadOnlyUserGroup> userGroups)
@@ -26,7 +25,7 @@ namespace AccessibilityReporter.Infrastructure
 				return null;
 			}
 
-			if (_accessibilityReporterSettings.Value.ExcludedDocTypes
+			if (_settings.ExcludedDocTypes
 				.Contains(content.ContentType.Alias))
 			{
 				return null;
@@ -34,7 +33,7 @@ namespace AccessibilityReporter.Infrastructure
 
 			var userGroupAliases = userGroups.Select(x => x.Alias);
 
-			if (_accessibilityReporterSettings.Value.UserGroups
+			if (_settings.UserGroups
 				.Intersect(userGroupAliases).Any() == false)
 			{
 				return null;
