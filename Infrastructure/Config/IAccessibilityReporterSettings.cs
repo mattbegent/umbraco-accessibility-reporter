@@ -10,6 +10,8 @@ namespace AccessibilityReporter.Infrastructure.Config
 
 		bool RunTestsAutomatically { get; set; }
 
+		int MaxPages { get; set; }
+
 		HashSet<string> UserGroups { get; set; }
 
 		HashSet<string> TestsToRun { get; set; }
