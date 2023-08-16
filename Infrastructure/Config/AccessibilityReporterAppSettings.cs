@@ -16,6 +16,8 @@ namespace AccessibilityReporter.Infrastructure.Config
 
 		public HashSet<string> TestsToRun { get; set; } = new HashSet<string>();
 
-		public HashSet<string> ExcludedDocTypes { get; set; } = new HashSet<string>();
-	}
+        public HashSet<string> ExcludedDocTypes { get; set; } = new HashSet<string>();
+
+        public int MaxPages { get; set;} = 50;
+    }
 }

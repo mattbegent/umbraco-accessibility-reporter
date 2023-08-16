@@ -46,7 +46,7 @@ class AccessibilityReporter {
         });
     }
 
-    static sortIssues(a, b) {
+    static sortIssuesByImpact(a, b) {
         if(a.impact === b.impact) {
             return  b.nodes.length - a.nodes.length;
         }
@@ -57,6 +57,10 @@ class AccessibilityReporter {
             return 1;
         }
         return 0;
+    }
+
+    static sortByViolations(a, b) {
+        return  b.nodes.length - a.nodes.length;
     }
 
     // https://www.deque.com/axe/core-documentation/api-documentation/
@@ -118,6 +122,27 @@ class AccessibilityReporter {
             return tag.replace('section', 'Section ');
         }
         return tag;
+    }
+
+    static getWCAGLevel(tags) {
+        for (let index = 0; index < tags.length; index++) {
+            const tag = tags[index];
+            switch (tag) {
+                case 'wcagaaa':
+                    return 'AAA';
+                case 'wcag2aa':
+                case 'wcag21aa':
+                case 'wcag22aa':
+                    return 'AA';
+                case 'wcag2a':
+                case 'wcag21a':
+                case 'wcag22a':
+                    return 'A';
+                default:
+                    continue;
+            }
+        }
+        return 'Other';
     }
 
     static getRule(ruleId) {

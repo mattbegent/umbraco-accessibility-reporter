@@ -59,7 +59,8 @@ angular.module("umbraco")
             $scope.testPages.push({
               url: AccessibilityReporterService.getBaseURL() + url,
               id: rootNode.id,
-              name: rootNode.name
+              name: rootNode.name,
+              culture: $scope.userLocale
             });
             await getChildren(rootNode.id);
         }
@@ -70,8 +71,16 @@ angular.module("umbraco")
             if(children.items) {
                 for (let index = 0; index < children.items.length; index++) {
                     const element = children.items[index];
+
+                    if ($scope.testPages.length >= $scope.config.maxPages) {
+                        return;
+                    }
+
                     if(element.state === "Published") {
                         const url = await contentResource.getNiceUrl(element.id);
+                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
+                            continue;
+                        }
                         //const content = await contentResource.getById(element.id, $scope.userLocale)
                         $scope.testPages.push({
                             url: AccessibilityReporterService.getBaseURL() + url,
@@ -93,6 +102,7 @@ angular.module("umbraco")
 
             $scope.pageState = "running-tests";
             $scope.results = [];
+            $scope.currentTestUrl = "";
             $scope.pageSummary = [];
             $scope.testPages = [];
 
@@ -110,10 +120,12 @@ angular.module("umbraco")
                 const currentPage = $scope.testPages[index];
                 $scope.currentTestUrl = currentPage.url;
                 try {
-                    const currentResult = await getTestResult(currentPage.url);
+                    const currentResult = await getTestResult(currentPage.url);     
+                    const resultFormatted = reduceTestResult(currentResult);
+
                     const testResult = Object.assign({
                         page: currentPage
-                    }, currentResult);
+                    }, resultFormatted);
     
                     testResults.push(testResult);
                     $scope.$apply();
@@ -156,18 +168,13 @@ angular.module("umbraco")
                 const currentResult = testResults.pages[index];
                 totalErrors += currentResult.violations.length;
                 allErrors = allErrors.concat(currentResult.violations);
-                if(currentResult.violations.length) {
+                if (currentResult.violations.length) {
                     
-                    pageSummary.push({
-                        url: currentResult.url,
-                        name: currentResult.page.name,
-                        id: currentResult.page.id,
-                        numberOfErrors: currentResult.violations.length
-                    });
+                    let totalViolationsForPage = 0;
 
                     for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
                         const currentViolation = currentResult.violations[indexVoilations];
-                        const violationWCAGLevel = getWCAGLevel(currentViolation.tags);
+                        const violationWCAGLevel = AccessibilityReporterService.getWCAGLevel(currentViolation.tags);
                         switch (violationWCAGLevel) {
                             case 'AAA':
                                 totalAAAViolations += currentViolation.nodes.length;
@@ -183,7 +190,15 @@ angular.module("umbraco")
                                 break;
                         }
                         totalViolations += currentViolation.nodes.length;
+                        totalViolationsForPage += currentViolation.nodes.length;
                     }
+
+                    pageSummary.push({
+                        url: currentResult.page.url,
+                        name: currentResult.page.name,
+                        id: currentResult.page.id,
+                        numberOfErrors: totalViolationsForPage
+                    });
                 }
                 
             }
@@ -199,40 +214,20 @@ angular.module("umbraco")
             $scope.reportSummaryText = getReportSummaryText();
 
             $scope.errorsPerPage = (totalViolations / testResults.pages.length).toFixed(2);
-            const sortedAllErrors = allErrors.sort(AccessibilityReporterService.sortIssues);
-            $scope.mostCommonErrors = getUniqueErrors(sortedAllErrors).slice(0, 6);
+            const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
+            const sortedByViolations = allErrors.sort(AccessibilityReporterService.sortByViolations);
+            $scope.mostCommonErrors = getUniqueErrors(sortedByViolations).slice(0, 6);
        
             $scope.pageSummary = pageSummary.sort(soryPageSummary);
 
             $scope.pageWithMostViolations = $scope.pageSummary[0].name;
             $scope.pageWithMostViolationsNumber = $scope.pageSummary[0].numberOfErrors;
 
-            displaySeverityChart(sortedAllErrors);
+            displaySeverityChart(sortedByImpact);
             topViolationsChart();
 
             paginateResults();
            
-        }
-
-        function getWCAGLevel(tags) {
-            for (let index = 0; index < tags.length; index++) {
-                const tag = tags[index];
-                switch (tag) {
-                    case 'wcagaaa':
-                        return 'AAA';
-                    case 'wcag2aa':
-                    case 'wcag21aa':
-                    case 'wcag22aa':
-                        return 'AA';
-                    case 'wcag2a':
-                    case 'wcag21a':
-                    case 'wcag22a':
-                        return 'A';
-                    default:
-                        continue;
-                }
-            }
-            return 'Other';
         }
 
         function getReportSummaryText() {
@@ -303,6 +298,27 @@ angular.module("umbraco")
 
         async function getTestResult(testUrl) {
             return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, testUrl, $scope.userLocale) : $scope.accessibilityReporterService.runTest(testUrl);
+        }
+
+        function reduceTestResult(testResult) {
+            const { inapplicable, incomplete, passes, testEngine, testEnvironment, testRunner, toolOptions, url, timestamp, ...resultFormatted } = testResult;
+                    
+            resultFormatted.violations = resultFormatted.violations.map((violation)=> {
+                return {
+                    id: violation.id,
+                    help: violation.help,
+                    impact: violation.impact,
+                    tags: violation.tags,
+                    nodes: violation.nodes.map((node)=> {
+                        return {
+                            impact: node.impact
+                        }
+                    })
+                }
+
+            });
+
+            return resultFormatted;
         }
 
         function getUniqueErrors(errors) {
