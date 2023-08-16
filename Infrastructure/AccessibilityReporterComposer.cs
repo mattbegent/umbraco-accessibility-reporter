@@ -11,10 +11,10 @@ namespace AccessibilityReporter.Infrastructure
 	{
 		public void Compose(IUmbracoBuilder builder)
 		{
-			builder.Services.AddSingleton(
-				AccessibilityReporterSettingsFactory.Make(
-					builder.Config.GetSection(AccessibilityReporterAppSettings.SectionName)
-						.Get<AccessibilityReporterAppSettings>()));
+			var config = builder.Config.GetSection(AccessibilityReporterAppSettings.SectionName)
+				.Get<AccessibilityReporterAppSettings>();
+
+			builder.Services.AddSingleton(AccessibilityReporterSettingsFactory.Make(config ?? new AccessibilityReporterAppSettings()));
 
 			builder.AddContentApp<AccessibilityReporterFactory>();
 			builder.AddDashboard<AccessibilityReporterDashboard>();
