@@ -11,6 +11,11 @@ class ARChart extends HTMLElement {
 
     connectedCallback() {
         const ctx = this.shadowRoot.querySelector('canvas');
+        const labelFontStyles = {
+            size: '15px',
+            lineHeight: 1,
+            family: 'Lato'
+        };
 
         // delay while angular renders
         setTimeout(()=> {
@@ -34,11 +39,7 @@ class ARChart extends HTMLElement {
                     datalabels: {
                         clip : true,
                         backgroundColor: '#FFF',
-                        font: {
-                            size: '16px',
-                            lineHeight: 1,
-                            family: 'Lato'
-                        },
+                        font: labelFontStyles,
                         align: 'top',
                         formatter: ((context, args)=> {
                             if(context) {
@@ -70,11 +71,7 @@ class ARChart extends HTMLElement {
                         },
                         datalabels: {
                             backgroundColor: '#FFF',
-                            font: {
-                                size: '16px',
-                                lineHeight: 1,
-                                family: 'Lato'
-                            },
+                            font: labelFontStyles,
                             padding: {
                                 left: 6,
                                 right: 6,
