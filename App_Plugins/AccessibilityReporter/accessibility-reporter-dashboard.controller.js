@@ -77,7 +77,10 @@ angular.module("umbraco")
                     }
 
                     if(element.state === "Published") {
-                        const url = await contentResource.getNiceUrl(element.id);
+                        let url = await contentResource.getNiceUrl(element.id);
+                        if (AccessibilityReporterService.isAbsoluteURL(url)) {
+                            url = new URL(data).pathname;
+                        } 
                         if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
                             continue;
                         }

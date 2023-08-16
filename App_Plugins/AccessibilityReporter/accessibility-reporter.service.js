@@ -201,6 +201,10 @@ class AccessibilityReporter {
         }
     }
 
+    static isAbsoluteURL(urlString) {
+        return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
+    }
+
 }
 
 angular.module("umbraco")
