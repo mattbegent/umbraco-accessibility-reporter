@@ -26,7 +26,8 @@ namespace AccessibilityReporter.Infrastructure
 				return null;
 			}
 
-			if(_accessibilityReporterSettings.Value.ExcludeIfNoTemplate == true && content.TemplateId.HasValue == false) {
+			if(_accessibilityReporterSettings.Value.IncludeIfNoTemplate == false && content.TemplateId.HasValue == false) 
+			{
 				return null;
 			}
 

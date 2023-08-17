@@ -12,7 +12,7 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; } = true;
 
-        public bool ExcludeIfNoTemplate { get; set; } = true;
+        public bool IncludeIfNoTemplate { get; set; } = false;
 
         public HashSet<string> UserGroups { get; set; } = new HashSet<string>() { "admin", "editor", "writer", "translator", "sensitiveData" };
 

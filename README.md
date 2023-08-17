@@ -30,6 +30,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
 - **UserGroups** (optional) - Use this option if you want to restrict which user groups can see Accessibility Reporter. By default users with admin, editor or writer permissions can see it.
 - **ExcludedDocTypes** (optional) - Use this option if you want to exclude Accessibility Reporter from showing on certain document types.
 - **RunTestsAutomatically** (optional) - By default Accessibility Reporter runs as soon as you open up a content node. If you instead want Accessibility Reporter to run on demand via a button click, set this option to false.
+- **IncludeIfNoTemplate** (optional) - By default Accessibility Reporter does not run on content without templates. However, if you are using Umbraco in a headless way you will was to set this to true.
 
 ### Example options
 
@@ -77,7 +78,8 @@ All options are completely optional and if you don't set them, they default to t
             "translator", 
             "sensitiveData"
         ],
-        "RunTestsAutomatically": true
+        "RunTestsAutomatically": true,
+        "IncludeIfNoTemplate": false 
     }
 
 ## How to use with a headless setup
@@ -90,7 +92,7 @@ To do this deploying the following azure function https://github.com/mattbegent/
 		"ApiUrl": "https://api.example.com/api/audit/", // your azure function
 		"TestBaseUrl": "https://www.example.com", // base url of your website
 		"RunTestsAutomatically": false, // as running in a function costs a small amount you might not to run automatically
-        "ExcludeIfNoTemplate": false // headless content probably doesn't have a template
+        "IncludeIfNoTemplate": true // headless content probably doesn't have a template
 	}
 
 It's worth noting that if you are using Accessibility Reporter in this way the tests will take much longer than if you run Umbraco in a non headless way.

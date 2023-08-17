@@ -17,7 +17,7 @@
 				<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 				<Copyright>Matt Begent</Copyright>
 				<PackageIcon>logo.png</PackageIcon>
-				<PackageReleaseNotes>Only show on content pages, improve user restrictions, added option to exclude from certain document types.</PackageReleaseNotes>
+				<PackageReleaseNotes>Add IncludeIfNoTemplate option.</PackageReleaseNotes>
 				<RepositoryType>git</RepositoryType>
 				<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
 		</PropertyGroup>
