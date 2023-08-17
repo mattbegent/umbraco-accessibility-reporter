@@ -89,11 +89,11 @@ If you use Umbraco in a headless way you will have to setup an azure function in
 To do this deploying the following azure function https://github.com/mattbegent/azure-function-accessibility-reporter and update your websites `appsettings.json` file. Here is an example:
 
     "AccessibilityReporter": {
-		"ApiUrl": "https://api.example.com/api/audit/", // your azure function
-		"TestBaseUrl": "https://www.example.com", // base url of your website
-		"RunTestsAutomatically": false, // as running in a function costs a small amount you might not to run automatically
+        "ApiUrl": "https://api.example.com/api/audit/", // your azure function
+        "TestBaseUrl": "https://www.example.com", // base url of your website
+        "RunTestsAutomatically": false, // as running in a function costs a small amount you might not to run automatically
         "IncludeIfNoTemplate": true // headless content probably doesn't have a template
-	}
+    }
 
 It's worth noting that if you are using Accessibility Reporter in this way the tests will take much longer than if you run Umbraco in a non headless way.
 
