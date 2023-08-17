@@ -12,10 +12,12 @@ namespace AccessibilityReporter.Infrastructure.Config
 
 		public bool RunTestsAutomatically { get; set; } = true;
 
+		public bool IncludeIfNoTemplate { get; set; } = false;
+
 		public int MaxPages { get; set; } = 50;
 
 		public HashSet<string> UserGroups { get; set; } = new HashSet<string>();
-
+        
 		public HashSet<string> TestsToRun { get; set; } = new HashSet<string>();
 
 		public HashSet<string> ExcludedDocTypes { get; set; } = new HashSet<string>();
