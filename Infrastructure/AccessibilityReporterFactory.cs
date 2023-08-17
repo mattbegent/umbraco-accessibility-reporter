@@ -21,8 +21,12 @@ namespace AccessibilityReporter.Infrastructure
 		{
 			var content = source as IContent;
 
-			if (content == null || content.TemplateId.HasValue == false)
+			if (content == null)
 			{
+				return null;
+			}
+
+			if(_accessibilityReporterSettings.Value.ExcludeIfNoTemplate == true && content.TemplateId.HasValue == false) {
 				return null;
 			}
 

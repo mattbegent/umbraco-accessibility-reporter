@@ -49,7 +49,7 @@
                     </div>
                 </div>
                 <p>
-                    <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page" class="c-summary__button">Rerun Tests</uui-button>
+                    <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current published page" class="c-summary__button">Rerun Tests</uui-button>
                     <uui-button look="secondary" color="default" ng-click="exportResults()" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export Results</uui-button>
                     <span class="c-summary__time"><strong>{{testTime}}</strong> on <strong>{{testDate}}</strong></span>
                 </p>
@@ -250,7 +250,7 @@
             </div>
             <p>Accessibility Reporter only works for URLs that are accessible publicly.</p>
             <p>If your page is publicly accessible, please try using the "Rerun Tests" button below or refreshing this page to run the accessibility report again.</p>
-            <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page">Rerun Tests</uui-button>
+            <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current published page">Rerun Tests</uui-button>
         </uui-box>
 
         <uui-box ng-if="pageState === 'manuallyrun'">
@@ -262,8 +262,8 @@
                 </svg>
                 <h2 class="c-title">Accessibility Reporter</h2>
             </div>
-            <p>Start running accessibility tests on the current live version of {{testUrl}} by using the button below.</p>
-            <uui-button look="primary" color="default" ng-click="runTests()" label="Run accessibility tests on current live page">Run tests</uui-button>
+            <p>Start running accessibility tests on the current published version of {{testUrl}} by using the button below.</p>
+            <uui-button look="primary" color="default" ng-click="runTests()" label="Run accessibility tests on current published page">Run tests</uui-button>
         </uui-box>
 
     </uui-scroll-container>
