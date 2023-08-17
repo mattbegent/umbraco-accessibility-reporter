@@ -12,6 +12,8 @@ namespace AccessibilityReporter.Infrastructure.Config
 
         public bool RunTestsAutomatically { get; set; } = true;
 
+        public bool IncludeIfNoTemplate { get; set; } = false;
+
         public HashSet<string> UserGroups { get; set; } = new HashSet<string>() { "admin", "editor", "writer", "translator", "sensitiveData" };
 
 		public HashSet<string> TestsToRun { get; set; } = new HashSet<string>() { "wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice" };

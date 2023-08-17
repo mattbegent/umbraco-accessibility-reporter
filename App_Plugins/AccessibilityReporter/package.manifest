@@ -1,6 +1,6 @@
 {
     "name": "AccessibilityReporter",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "allowPackageTelemetry": true,
     "javascript": [
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter.controller.js",

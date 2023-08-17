@@ -2,7 +2,7 @@
 		<PropertyGroup>
 				<TargetFramework>net6.0</TargetFramework>
 				<Nullable>enable</Nullable>
-				<Version>2.1.0</Version>
+				<Version>2.2.0</Version>
 				<ContentTargetFolders>.</ContentTargetFolders>
 				<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 				<Product>AccessibilityReporter</Product>
@@ -17,7 +17,7 @@
 				<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 				<Copyright>Matt Begent</Copyright>
 				<PackageIcon>logo.png</PackageIcon>
-				<PackageReleaseNotes>Only show on content pages, improve user restrictions, added option to exclude from certain document types.</PackageReleaseNotes>
+				<PackageReleaseNotes>Add IncludeIfNoTemplate option.</PackageReleaseNotes>
 				<RepositoryType>git</RepositoryType>
 				<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
 		</PropertyGroup>
