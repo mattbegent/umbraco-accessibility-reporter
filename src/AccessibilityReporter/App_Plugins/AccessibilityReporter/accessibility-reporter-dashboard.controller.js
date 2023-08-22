@@ -50,55 +50,12 @@ angular.module("umbraco")
 
         }
 
-        // Checkout for getting the url!!!!
-        // https://github.com/enkelmedia/Umbraco-SeoVisualizer/blob/v9/SeoVisualizer/App_Plugins/SeoVisualizer/SeoVisualizerController.controller.js
-
         async function getTestUrls() {
-            const rootNode = appState.getTreeState("currentRootNode").root.children[0];
-            const url = await contentResource.getNiceUrl(rootNode.id);
-            $scope.testPages.push({
-              url: AccessibilityReporterService.getBaseURL() + url,
-              id: rootNode.id,
-              name: rootNode.name,
-              culture: $scope.userLocale
-            });
-            await getChildren(rootNode.id);
-        }
 
-        async function getChildren(nodeId) {
-            const children = await contentResource.getChildren(nodeId);
+            const pages = await AccessibilityReporterApiService.getPages();
+            $scope.testPages = pages;
 
-            if(children.items) {
-                for (let index = 0; index < children.items.length; index++) {
-                    const element = children.items[index];
-
-                    if ($scope.testPages.length >= $scope.config.maxPages) {
-                        return;
-                    }
-
-                    if(element.state === "Published") {
-                        let url = await contentResource.getNiceUrl(element.id);
-                        if (AccessibilityReporterService.isAbsoluteURL(url)) {
-                            url = new URL(data).pathname;
-                        } 
-                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
-                            continue;
-                        }
-                        //const content = await contentResource.getById(element.id, $scope.userLocale)
-                        $scope.testPages.push({
-                            url: AccessibilityReporterService.getBaseURL() + url,
-                            id: element.id,
-                            name: element.name
-                        });
-                    }
-                    const itemChildren = await contentResource.getChildren(element.id);
-                    if(itemChildren.items) {
-                        await getChildren(element.id);
-                    }
-                }
-                
-            }
-
+            return pages;
         }
 
         $scope.runTests = async function() {
@@ -125,7 +82,7 @@ angular.module("umbraco")
                 try {
                     const currentResult = await getTestResult(currentPage.url);     
                     const resultFormatted = reduceTestResult(currentResult);
-
+                    
                     const testResult = Object.assign({
                         page: currentPage
                     }, resultFormatted);
