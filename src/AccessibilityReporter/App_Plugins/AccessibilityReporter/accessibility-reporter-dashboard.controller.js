@@ -58,6 +58,41 @@ angular.module("umbraco")
             return pages;
         }
 
+
+        async function promiseAllInBatches(task, items, batchSize) {
+            let position = 0;
+            let results = [];
+            while (position < items.length) {
+                const itemsForBatch = items.slice(position, position + batchSize);
+                const settledPromises = await Promise.allSettled(itemsForBatch.map(item => task(item)));
+                const newResults = settledPromises.filter(result=> result.status === "fulfilled").map(result => result.value);
+                results = [...results, ...newResults];
+                position += batchSize;
+            }
+            return results;
+        }
+
+        async function runSingleTest(page) {
+
+            return new Promise(async (resolve, reject) => {
+
+                try {
+                    const currentResult = await getTestResult(page.url);  
+                    $scope.currentTestUrl = page.url;   
+                    const resultFormatted = reduceTestResult(currentResult);
+                    
+                    const testResult = Object.assign({
+                        page: page
+                    }, resultFormatted);
+
+                    resolve(testResult);
+
+                } catch (error) {
+                    reject(error); 
+                }
+            });
+        }
+
         $scope.runTests = async function() {
 
             $scope.pageState = "running-tests";
@@ -76,23 +111,12 @@ angular.module("umbraco")
             }
 
             let testResults = [];
-            for (let index = 0; index < $scope.testPages.length; index++) {
-                const currentPage = $scope.testPages[index];
-                $scope.currentTestUrl = currentPage.url;
-                try {
-                    const currentResult = await getTestResult(currentPage.url);     
-                    const resultFormatted = reduceTestResult(currentResult);
-                    
-                    const testResult = Object.assign({
-                        page: currentPage
-                    }, resultFormatted);
-    
-                    testResults.push(testResult);
-                    $scope.$apply();
-                } catch(error) {
-                    console.error(error);
-                    continue;
-                }
+
+            try {
+                const results = await promiseAllInBatches(runSingleTest, $scope.testPages, 5);
+                testResults = results;
+            } catch(error) {
+                console.error(error);
             }
            
             $scope.results = {

@@ -11,7 +11,7 @@ class AccessibilityReporter {
                 const testRequest = new Request(testUrl);
                 await fetch(testRequest);
 
-                const iframeId = "arTestIframe";
+                const iframeId = "arTestIframe" + crypto.randomUUID();
 
                 window.addEventListener("message", function(message) {
                     if(message.data) {
