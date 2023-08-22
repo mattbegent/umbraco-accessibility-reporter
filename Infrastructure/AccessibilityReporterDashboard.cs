@@ -1,9 +1,8 @@
 ﻿using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Dashboards;
 using Umbraco.Cms.Core;
-using AccessibilityReporter.Infrastructure.Config;
-using Microsoft.Extensions.Options;
 using System.Linq;
+using AccessibilityReporter.Core.Interfaces;
 
 namespace AccessibilityReporter.Infrastructure
 {

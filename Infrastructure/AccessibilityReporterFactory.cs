@@ -1,9 +1,9 @@
-﻿using AccessibilityReporter.Infrastructure.Config;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Umbraco.Cms.Core.Models.ContentEditing;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models;
 using System.Linq;
+using AccessibilityReporter.Core.Interfaces;
 
 namespace AccessibilityReporter.Infrastructure
 {
@@ -25,7 +25,7 @@ namespace AccessibilityReporter.Infrastructure
 				return null;
 			}
 
-			if(_accessibilityReporterSettings.Value.IncludeIfNoTemplate == false && content.TemplateId.HasValue == false) 
+			if(_settings.IncludeIfNoTemplate == false && content.TemplateId.HasValue == false) 
 			{
 				return null;
 			}

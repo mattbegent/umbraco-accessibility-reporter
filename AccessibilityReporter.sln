@@ -5,6 +5,10 @@ VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AccessibilityReporter", "AccessibilityReporter.csproj", "{9FC7250D-D3A5-45A6-B9DC-54E633516033}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessibilityReporter.Services", "..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj", "{3C167CC1-08EE-48E5-BD68-3E1BD8AD0810}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessibilityReporter.Core", "..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj", "{1CB005D1-B19E-4098-8015-C7DDB778FEFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{9FC7250D-D3A5-45A6-B9DC-54E633516033}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FC7250D-D3A5-45A6-B9DC-54E633516033}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FC7250D-D3A5-45A6-B9DC-54E633516033}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C167CC1-08EE-48E5-BD68-3E1BD8AD0810}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C167CC1-08EE-48E5-BD68-3E1BD8AD0810}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C167CC1-08EE-48E5-BD68-3E1BD8AD0810}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C167CC1-08EE-48E5-BD68-3E1BD8AD0810}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CB005D1-B19E-4098-8015-C7DDB778FEFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CB005D1-B19E-4098-8015-C7DDB778FEFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CB005D1-B19E-4098-8015-C7DDB778FEFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CB005D1-B19E-4098-8015-C7DDB778FEFA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

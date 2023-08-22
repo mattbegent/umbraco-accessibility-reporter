@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using AccessibilityReporter.Core.Interfaces;
+using System.Collections.Generic;
 
 namespace AccessibilityReporter.Infrastructure.Config
 {
