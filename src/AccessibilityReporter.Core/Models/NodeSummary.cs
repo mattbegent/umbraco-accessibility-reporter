@@ -9,12 +9,15 @@ namespace AccessibilityReporter.Core.Models
         public NodeSummary(IPublishedContent content, IPublishedUrlProvider publishedUrlProvider)
         {
 			Guid = content.Key;
+			Id = content.Id;
 			Name = content.Name!;
 			DocTypeAlias = content.ContentType.Alias;
 			Url = content.Url(publishedUrlProvider, mode: UrlMode.Absolute);
         }
 
         public Guid Guid { get; }
+
+		public int Id { get; }
 
 		public string Name { get; }
 
