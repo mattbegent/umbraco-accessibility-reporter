@@ -1,6 +1,5 @@
 ﻿using AccessibilityReporter.Core.Models;
 using AccessibilityReporter.Services.Interfaces;
-using Umbraco.Cms.Core.Routing;
 using Umbraco.Extensions;
 
 namespace AccessibilityReporter.Services
@@ -8,20 +7,20 @@ namespace AccessibilityReporter.Services
 	internal class TestableNodesSummaryService : ITestableNodesSummaryService
 	{
 		private readonly ITestableNodesService _testableNodesService;
-		private readonly IPublishedUrlProvider _publishedUrlProvider;
+		private readonly INodeUrlService _nodeUrlService;
 
 		public TestableNodesSummaryService(ITestableNodesService testableNodesService,
-			IPublishedUrlProvider publishedUrlProvider)
+			INodeUrlService nodeUrlService)
 		{
 			_testableNodesService = testableNodesService;
-			_publishedUrlProvider = publishedUrlProvider;
+			_nodeUrlService = nodeUrlService;
 		}
 
 		public IEnumerable<NodeSummary> All()
 		{
 			var content = _testableNodesService.All();
 
-			return content.Select(c => new NodeSummary(c, _publishedUrlProvider));
+			return content.Select(c => new NodeSummary(c, _nodeUrlService.AbsoluteUrl(c)));
 		}
 	}
 }

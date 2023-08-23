@@ -11,6 +11,7 @@ namespace AccessibilityReporter.Services.Infrastructure
 		{
 			builder.Services.AddScoped<ITestableNodesService, DefaultTestableNodesService>();
 			builder.Services.AddScoped<ITestableNodesSummaryService, TestableNodesSummaryService>();
+			builder.Services.AddScoped<INodeUrlService, NodeUrlService>();
 		}
 	}
 }

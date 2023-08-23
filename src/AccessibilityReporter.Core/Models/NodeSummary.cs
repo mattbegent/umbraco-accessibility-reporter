@@ -1,17 +1,15 @@
 ﻿using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Extensions;
 
 namespace AccessibilityReporter.Core.Models
 {
 	public class NodeSummary
 	{
-        public NodeSummary(IPublishedContent content, IPublishedUrlProvider publishedUrlProvider)
+        public NodeSummary(IPublishedContent content, string url)
         {
 			Guid = content.Key;
 			Name = content.Name!;
 			DocTypeAlias = content.ContentType.Alias;
-			Url = content.Url(publishedUrlProvider, mode: UrlMode.Absolute);
+			Url = url;
         }
 
         public Guid Guid { get; }
