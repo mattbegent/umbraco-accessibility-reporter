@@ -25,6 +25,12 @@ angular
                         $http.get("/umbraco/backoffice/api/config/current"),
                         "Failed to retrieve Accessibility Reporter config"
                     );
+                },
+                getPages: function () {
+                    return umbRequestHelper.resourcePromise(
+                        $http.get("/umbraco/backoffice/api/directory/pages"),
+                        "Failed to retrieve Accessibility Reporter pages to test"
+                    );
                 }
             };
         }

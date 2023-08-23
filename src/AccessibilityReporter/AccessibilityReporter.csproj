@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<Version>3.0.29-dashboard</Version>
+		<Version>3.0.32-dashboard</Version>
 		<ContentTargetFolders>.</ContentTargetFolders>
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<Product>AccessibilityReporter</Product>
@@ -31,7 +31,8 @@
 		<Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
 		<Content Include="appsettings-schema.AccessibilityReporter.json" PackagePath="" />
 		<None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
-		<None Include="logos\logo.png" Pack="true" PackagePath="\" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\logos\logo.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -50,10 +51,4 @@
 		</_PackageFiles>
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Update="README.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
 </Project>

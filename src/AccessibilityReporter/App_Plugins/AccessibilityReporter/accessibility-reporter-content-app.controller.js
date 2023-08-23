@@ -206,7 +206,7 @@ angular.module("umbraco")
                 title += 's';
             }
             if($scope.totalIncomplete() !== "0") {
-                title += ` due to ${$scope.totalIncomplete()} Error`;
+                title += ` due to ${$scope.totalIncomplete()} Violation`;
                 if($scope.totalIncomplete() !== 1) {
                     title += 's';
                 }

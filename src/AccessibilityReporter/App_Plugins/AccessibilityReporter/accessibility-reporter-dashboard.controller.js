@@ -50,55 +50,47 @@ angular.module("umbraco")
 
         }
 
-        // Checkout for getting the url!!!!
-        // https://github.com/enkelmedia/Umbraco-SeoVisualizer/blob/v9/SeoVisualizer/App_Plugins/SeoVisualizer/SeoVisualizerController.controller.js
-
         async function getTestUrls() {
-            const rootNode = appState.getTreeState("currentRootNode").root.children[0];
-            const url = await contentResource.getNiceUrl(rootNode.id);
-            $scope.testPages.push({
-              url: AccessibilityReporterService.getBaseURL() + url,
-              id: rootNode.id,
-              name: rootNode.name,
-              culture: $scope.userLocale
-            });
-            await getChildren(rootNode.id);
+
+            const pages = await AccessibilityReporterApiService.getPages();
+            $scope.testPages = pages;
+
+            return pages;
         }
 
-        async function getChildren(nodeId) {
-            const children = await contentResource.getChildren(nodeId);
 
-            if(children.items) {
-                for (let index = 0; index < children.items.length; index++) {
-                    const element = children.items[index];
-
-                    if ($scope.testPages.length >= $scope.config.maxPages) {
-                        return;
-                    }
-
-                    if(element.state === "Published") {
-                        let url = await contentResource.getNiceUrl(element.id);
-                        if (AccessibilityReporterService.isAbsoluteURL(url)) {
-                            url = new URL(data).pathname;
-                        } 
-                        if($scope.testPages.some((testPage)=> AccessibilityReporterService.getBaseURL() + testPage.url === url)) {
-                            continue;
-                        }
-                        //const content = await contentResource.getById(element.id, $scope.userLocale)
-                        $scope.testPages.push({
-                            url: AccessibilityReporterService.getBaseURL() + url,
-                            id: element.id,
-                            name: element.name
-                        });
-                    }
-                    const itemChildren = await contentResource.getChildren(element.id);
-                    if(itemChildren.items) {
-                        await getChildren(element.id);
-                    }
-                }
-                
+        async function promiseAllInBatches(task, items, batchSize) {
+            let position = 0;
+            let results = [];
+            while (position < items.length) {
+                const itemsForBatch = items.slice(position, position + batchSize);
+                const settledPromises = await Promise.allSettled(itemsForBatch.map(item => task(item)));
+                const newResults = settledPromises.filter(result=> result.status === "fulfilled").map(result => result.value);
+                results = [...results, ...newResults];
+                position += batchSize;
             }
+            return results;
+        }
 
+        async function runSingleTest(page) {
+
+            return new Promise(async (resolve, reject) => {
+
+                try {
+                    const currentResult = await getTestResult(page.url);  
+                    $scope.currentTestUrl = page.url;   
+                    const resultFormatted = reduceTestResult(currentResult);
+                    
+                    const testResult = Object.assign({
+                        page: page
+                    }, resultFormatted);
+
+                    resolve(testResult);
+
+                } catch (error) {
+                    reject(error); 
+                }
+            });
         }
 
         $scope.runTests = async function() {
@@ -119,23 +111,12 @@ angular.module("umbraco")
             }
 
             let testResults = [];
-            for (let index = 0; index < $scope.testPages.length; index++) {
-                const currentPage = $scope.testPages[index];
-                $scope.currentTestUrl = currentPage.url;
-                try {
-                    const currentResult = await getTestResult(currentPage.url);     
-                    const resultFormatted = reduceTestResult(currentResult);
 
-                    const testResult = Object.assign({
-                        page: currentPage
-                    }, resultFormatted);
-    
-                    testResults.push(testResult);
-                    $scope.$apply();
-                } catch(error) {
-                    console.error(error);
-                    continue;
-                }
+            try {
+                const results = await promiseAllInBatches(runSingleTest, $scope.testPages, 5);
+                testResults = results;
+            } catch(error) {
+                console.error(error);
             }
            
             $scope.results = {
