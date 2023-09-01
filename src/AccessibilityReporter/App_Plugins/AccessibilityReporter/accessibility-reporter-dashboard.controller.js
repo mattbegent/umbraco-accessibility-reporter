@@ -60,20 +60,6 @@ angular.module("umbraco")
             return pages;
         }
 
-
-        // async function promiseAllInBatches(task, items, batchSize) {
-        //     let position = 0;
-        //     let results = [];
-        //     while (position < items.length) {
-        //         const itemsForBatch = items.slice(position, position + batchSize);
-        //         const settledPromises = await Promise.allSettled(itemsForBatch.map(item => task(item)));
-        //         const newResults = settledPromises.filter(result=> result.status === "fulfilled").map(result => result.value);
-        //         results = [...results, ...newResults];
-        //         position += batchSize;
-        //     }
-        //     return results;
-        // }
-
         async function runSingleTest(page) {
 
             return new Promise(async (resolve, reject) => {
@@ -116,14 +102,6 @@ angular.module("umbraco")
             }
 
             let testResults = [];
-
-            // try {
-            //     const results = await promiseAllInBatches(runSingleTest, $scope.testPages, 5);
-            //     testResults = results;
-            // } catch(error) {
-            //     console.error(error);
-            // }
-
             for (let index = 0; index < $scope.testPages.length; index++) {
                 const currentPage = $scope.testPages[index];
                 const nextPage = (index + 1 <= $scope.testPages.length) ? $scope.testPages[index + 1] : null;
@@ -395,7 +373,7 @@ angular.module("umbraco")
             return 0;
         }
 
-        $scope.openDetail= function(id) {
+        $scope.openDetail = function(id) {
 
             editorService.contentEditor({
                 id: id,
