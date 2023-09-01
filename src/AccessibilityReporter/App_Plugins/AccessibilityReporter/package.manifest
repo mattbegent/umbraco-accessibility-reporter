@@ -3,11 +3,12 @@
     "version": "3.0.0",
     "allowPackageTelemetry": true,
     "javascript": [
+        "~/App_Plugins/AccessibilityReporter/accessibility-reporter.resource.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter.service.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter-content-app.controller.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter-dashboard.controller.js",
         "~/App_Plugins/AccessibilityReporter/accessibility-reporter-detail.controller.js",
-        "~/App_Plugins/AccessibilityReporter/accessibility-reporter.resource.js",
+        "~/App_Plugins/AccessibilityReporter/components/ar-score.js",
         "~/App_Plugins/AccessibilityReporter/components/ar-chart.js",
         "~/App_Plugins/AccessibilityReporter/libs/xlsx.mini.min.js",
         "~/App_Plugins/AccessibilityReporter/libs/axe-only.min.js",

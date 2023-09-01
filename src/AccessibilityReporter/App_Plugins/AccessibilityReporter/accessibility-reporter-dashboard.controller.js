@@ -1,20 +1,24 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterDashboard", function ($scope, appState, contentResource, editorService, AccessibilityReporterService, AccessibilityReporterApiService, userService) {
+	.controller("My.AccessibilityReporterDashboard", function ($scope, editorService, AccessibilityReporterService, AccessibilityReporterApiService, userService) {
 
         const dashboardStorageKey = "AR.Dashboard";
+        let preloadedUrls = new Set();
 
         $scope.pageState = "pre-test";
-        $scope.results = [];
-        $scope.pageSummary = [];
-        $scope.totalErrors = null;
-        $scope.errorsPerPage = null;
-        $scope.pagesTested = null;
-        $scope.mostCommonErrors = null;
-        $scope.currentTestUrl = "";
-        $scope.testPages = [];
         $scope.accessibilityReporterService = AccessibilityReporterService;
         $scope.pageSize = 5;
         $scope.currentPage = 1;
+        $scope.currentTestUrl = "";
+
+        $scope.results = [];
+        $scope.pagesWithViolations = [];
+        $scope.totalErrors = null;
+        $scope.averagePageScore = null;
+        $scope.pageWithLowestScore = null;
+        $scope.pagesTested = null;
+        $scope.mostCommonErrors = null;
+        $scope.currentTestNumber = null;
+        $scope.testPages = [];
 
         function init() {
             AccessibilityReporterApiService.getConfig()
@@ -40,8 +44,8 @@ angular.module("umbraco")
         }
 
         function loadDashboard() {
-            
-            var dashboardResultsFromStorage = AccessibilityReporterService.getItemFromSessionStorage(dashboardStorageKey);
+
+            const dashboardResultsFromStorage = AccessibilityReporterService.getItemFromSessionStorage(dashboardStorageKey);
             if(dashboardResultsFromStorage) {
                 $scope.results = dashboardResultsFromStorage;
                 setStats(dashboardResultsFromStorage);
@@ -51,36 +55,36 @@ angular.module("umbraco")
         }
 
         async function getTestUrls() {
-
             const pages = await AccessibilityReporterApiService.getPages();
             $scope.testPages = pages;
-
             return pages;
         }
 
 
-        async function promiseAllInBatches(task, items, batchSize) {
-            let position = 0;
-            let results = [];
-            while (position < items.length) {
-                const itemsForBatch = items.slice(position, position + batchSize);
-                const settledPromises = await Promise.allSettled(itemsForBatch.map(item => task(item)));
-                const newResults = settledPromises.filter(result=> result.status === "fulfilled").map(result => result.value);
-                results = [...results, ...newResults];
-                position += batchSize;
-            }
-            return results;
-        }
+        // async function promiseAllInBatches(task, items, batchSize) {
+        //     let position = 0;
+        //     let results = [];
+        //     while (position < items.length) {
+        //         const itemsForBatch = items.slice(position, position + batchSize);
+        //         const settledPromises = await Promise.allSettled(itemsForBatch.map(item => task(item)));
+        //         const newResults = settledPromises.filter(result=> result.status === "fulfilled").map(result => result.value);
+        //         results = [...results, ...newResults];
+        //         position += batchSize;
+        //     }
+        //     return results;
+        // }
 
         async function runSingleTest(page) {
 
             return new Promise(async (resolve, reject) => {
 
                 try {
-                    const currentResult = await getTestResult(page.url);  
-                    $scope.currentTestUrl = page.url;   
+                    $scope.currentTestUrl = page.url;
+                    $scope.$apply();
+                    const currentResult = await getTestResult(page.url);
                     const resultFormatted = reduceTestResult(currentResult);
-                    
+                    resultFormatted.score = AccessibilityReporterService.getPageScore(resultFormatted);
+
                     const testResult = Object.assign({
                         page: page
                     }, resultFormatted);
@@ -88,7 +92,7 @@ angular.module("umbraco")
                     resolve(testResult);
 
                 } catch (error) {
-                    reject(error); 
+                    reject(error);
                 }
             });
         }
@@ -98,7 +102,8 @@ angular.module("umbraco")
             $scope.pageState = "running-tests";
             $scope.results = [];
             $scope.currentTestUrl = "";
-            $scope.pageSummary = [];
+            $scope.currentTestNumber = null;
+            $scope.pagesWithViolations = [];
             $scope.testPages = [];
 
             var startTime = new Date();
@@ -112,13 +117,37 @@ angular.module("umbraco")
 
             let testResults = [];
 
-            try {
-                const results = await promiseAllInBatches(runSingleTest, $scope.testPages, 5);
-                testResults = results;
-            } catch(error) {
-                console.error(error);
+            // try {
+            //     const results = await promiseAllInBatches(runSingleTest, $scope.testPages, 5);
+            //     testResults = results;
+            // } catch(error) {
+            //     console.error(error);
+            // }
+
+            for (let index = 0; index < $scope.testPages.length; index++) {
+                const currentPage = $scope.testPages[index];
+                const nextPage = (index + 1 <= $scope.testPages.length) ? $scope.testPages[index + 1] : null;
+                try {
+                    if(nextPage) {
+                        preload(nextPage.url);
+                    }
+                    $scope.currentTestNumber = index + 1;
+                    const result = await runSingleTest(currentPage);
+                    testResults.push(result);
+                    if($scope.pageState !== "running-tests") {
+                        break;
+                    }
+                } catch(error) {
+                    console.error(error);
+                    continue;
+                }
             }
-           
+
+
+            if($scope.pageState !== "running-tests") {
+                return;
+            }
+
             $scope.results = {
                 startTime: startTime,
                 endTime: new Date(),
@@ -147,13 +176,13 @@ angular.module("umbraco")
             let totalAAAViolations = 0;
             let totalOtherViolations = 0;
 
-            let pageSummary = [];
+            let pagesWithViolations = [];
             for (let index = 0; index < testResults.pages.length; index++) {
                 const currentResult = testResults.pages[index];
                 totalErrors += currentResult.violations.length;
                 allErrors = allErrors.concat(currentResult.violations);
                 if (currentResult.violations.length) {
-                    
+
                     let totalViolationsForPage = 0;
 
                     for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
@@ -177,14 +206,15 @@ angular.module("umbraco")
                         totalViolationsForPage += currentViolation.nodes.length;
                     }
 
-                    pageSummary.push({
+                    pagesWithViolations.push({
                         url: currentResult.page.url,
                         name: currentResult.page.name,
                         id: currentResult.page.id,
-                        numberOfErrors: totalViolationsForPage
+                        numberOfErrors: totalViolationsForPage,
+                        score: currentResult.score
                     });
                 }
-                
+
             }
 
             $scope.pagesTested = testResults.pages.length;
@@ -195,29 +225,56 @@ angular.module("umbraco")
             $scope.totalAAViolations = totalAAViolations;
             $scope.totalAViolations = totalAViolations;
             $scope.totalOtherViolations = totalOtherViolations;
+
             $scope.reportSummaryText = getReportSummaryText();
 
-            $scope.errorsPerPage = (totalViolations / testResults.pages.length).toFixed(2);
-            const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
-            const sortedByViolations = allErrors.sort(AccessibilityReporterService.sortByViolations);
-            $scope.mostCommonErrors = getUniqueErrors(sortedByViolations).slice(0, 6);
-       
-            $scope.pageSummary = pageSummary.sort(soryPageSummary);
+            $scope.averagePageScore = getAveragePageScore(testResults.pages);
+            $scope.pageWithLowestScore = getPageWithLowestScore(testResults.pages);
 
-            $scope.pageWithMostViolations = $scope.pageSummary[0].name;
-            $scope.pageWithMostViolationsNumber = $scope.pageSummary[0].numberOfErrors;
+            const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
+            $scope.mostCommonErrors = getErrorsSortedByViolations(allErrors).slice(0, 6);
+
+            $scope.pagesWithViolations = pagesWithViolations.sort(sortPagesWithViolations);
 
             displaySeverityChart(sortedByImpact);
             topViolationsChart();
 
             paginateResults();
-           
+
+        }
+
+        function getAveragePageScore(results) {
+            let totalScore = 0;
+            for (let index = 0; index < results.length; index++) {
+                const result = results[index];
+                totalScore += result.score;
+            }
+            return Math.round(totalScore/results.length);
+        }
+
+        function getPageWithLowestScore(results) {
+            let lowestScore = 0;
+            let pageWithLowestScore = null;
+            for (let index = 0; index < results.length; index++) {
+                const result = results[index];
+                if(!pageWithLowestScore) {
+                    lowestScore = result.score;
+                    pageWithLowestScore = result;
+                    continue;
+                }
+                if(result.score < lowestScore) {
+                    lowestScore = result.score;
+                    pageWithLowestScore = result;
+                }
+            }
+
+            return pageWithLowestScore;
         }
 
         function getReportSummaryText() {
             if($scope.totalAViolations !== 0 && $scope.totalAAViolations !== 0) {
                 return `This website <strong>does not</strong> comply with <strong>WCAG AA</strong>.`;
-            } 
+            }
             return "High 5, you rock! No WCAG A or WCAG AA violations were found. Please manually test your website to check full compliance.";
         }
 
@@ -244,9 +301,9 @@ angular.module("umbraco")
                 datasets: [{
                     label: 'Violations',
                     data: [
-                        countNumberOfTestsWithImpact(sortedAllErrors, 'critical'), 
-                        countNumberOfTestsWithImpact(sortedAllErrors, 'serious'), 
-                        countNumberOfTestsWithImpact(sortedAllErrors, 'moderate'), 
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'critical'),
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'serious'),
+                        countNumberOfTestsWithImpact(sortedAllErrors, 'moderate'),
                         countNumberOfTestsWithImpact(sortedAllErrors, 'minor')
                     ],
                     backgroundColor: [
@@ -266,7 +323,7 @@ angular.module("umbraco")
                 labels: $scope.mostCommonErrors.map((error)=> error.id.replaceAll('-', ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())),
                 datasets: [{
                     label: 'Violations',
-                    data: $scope.mostCommonErrors.map((error)=> error.nodes.length),
+                    data: $scope.mostCommonErrors.map((error)=> error.errors),
                     backgroundColor: [
                         'rgba(255, 99, 132, 1)',
                         'rgba(255, 159, 64, 1)',
@@ -281,12 +338,12 @@ angular.module("umbraco")
         }
 
         async function getTestResult(testUrl) {
-            return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, testUrl, $scope.userLocale) : $scope.accessibilityReporterService.runTest(testUrl);
+            return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, testUrl, $scope.userLocale) : $scope.accessibilityReporterService.runTest(testUrl, true);
         }
 
         function reduceTestResult(testResult) {
             const { inapplicable, incomplete, passes, testEngine, testEnvironment, testRunner, toolOptions, url, timestamp, ...resultFormatted } = testResult;
-                    
+
             resultFormatted.violations = resultFormatted.violations.map((violation)=> {
                 return {
                     id: violation.id,
@@ -305,20 +362,37 @@ angular.module("umbraco")
             return resultFormatted;
         }
 
-        function getUniqueErrors(errors) {
-            var unique = [];
-            var distinct = [];
-            for( let i = 0; i < errors.length; i++ ){
-                if( !unique[errors[i].id]){
-                    distinct.push(errors[i]);
-                    unique[errors[i].id] = 1;
+        function getErrorsSortedByViolations(errors) {
+
+            let allErrors = [];
+            for (let index = 0; index < errors.length; index++) {
+                const currentError = errors[index];
+                if(!allErrors.some((error)=> error.id === currentError.id)) {
+                    allErrors.push({
+                        id: currentError.id,
+                        errors: currentError.nodes.length
+                    });
+                } else {
+                    const errorIndex = allErrors.findIndex((error => error.id == currentError.id));
+                    allErrors[errorIndex].errors += currentError.nodes.length;
                 }
             }
-            return distinct;
+
+            const sortedAllErrors = allErrors.sort((a, b)=> b.errors - a.errors);
+            return sortedAllErrors;
         }
 
-        function soryPageSummary(a, b) {
-            return b.numberOfErrors - a.numberOfErrors;
+        function sortPagesWithViolations(a, b) {
+            if (a.score === b.score) {
+                return b.numberOfErrors - a.numberOfErrors;
+            }
+            if (a.score < b.score) {
+                return -1;
+            }
+            if (a.score > b.score) {
+                return 1;
+            }
+            return 0;
         }
 
         $scope.openDetail= function(id) {
@@ -335,13 +409,17 @@ angular.module("umbraco")
 
         }
 
+        $scope.stopTests = function() {
+            $scope.pageState = "pre-test";
+        }
+
         function getDataForPagination(array, page_size, page_number) {
             return array.slice((page_number - 1) * page_size, page_number * page_size);
         }
 
         function paginateResults() {
-            $scope.pagination = paginate($scope.pageSummary.length, $scope.currentPage, $scope.pageSize, 99);
-            $scope.pageSummaryCurrentPage = getDataForPagination($scope.pageSummary, $scope.pageSize, $scope.currentPage);
+            $scope.pagination = paginate($scope.pagesWithViolations.length, $scope.currentPage, $scope.pageSize, 99);
+            $scope.pagesWithViolationsCurrentPage = getDataForPagination($scope.pagesWithViolations, $scope.pageSize, $scope.currentPage);
         }
 
         $scope.changePage = function(pageNumber) {
@@ -351,10 +429,10 @@ angular.module("umbraco")
 
         function paginate(totalItems, currentPage, pageSize) {
             let totalPages = Math.ceil(totalItems / pageSize);
-            if (currentPage < 1) { 
-                currentPage = 1; 
-            } else if (currentPage > totalPages) { 
-                currentPage = totalPages; 
+            if (currentPage < 1) {
+                currentPage = 1;
+            } else if (currentPage > totalPages) {
+                currentPage = totalPages;
             }
             return {
                 currentPage: currentPage,
@@ -362,6 +440,19 @@ angular.module("umbraco")
             };
         }
 
+        function preload(url) {
+            if(preloadedUrls.has(url)) {
+                return;
+            }
+            const linkElement = document.createElement('link');
+            linkElement.rel = 'prefetch';
+            linkElement.href = url;
+            linkElement.fetchPriority = 'high';
+            linkElement.as = 'document';
+            document.head.appendChild(linkElement);
+            preloadedUrls.add(url);
+        }
+
         init();
-   
+
     });

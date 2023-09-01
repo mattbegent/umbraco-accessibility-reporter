@@ -52,8 +52,8 @@ angular.module("umbraco")
                 // so we don't get iframe CORS issues
                 return getLocalHostname();
             }
-            for(var i=0; i < possibleUrls.length; i++){
-                var possibleCurrentUrl = possibleUrls[i].text; 
+            for(let index = 0; index < possibleUrls.length; index++){
+                var possibleCurrentUrl = possibleUrls[index].text;
                 if(isAbsoluteURL(possibleCurrentUrl)) {
                     return getHostnameFromString(possibleCurrentUrl);
                 }
@@ -71,7 +71,7 @@ angular.module("umbraco")
         }
 
         function sortResponse(results) {
-            
+
             var sortedViolations = results.violations.sort(AccessibilityReporterService.sortIssuesByImpact);
             results.violations = sortedViolations;
             var sortedIncomplete = results.incomplete.sort(AccessibilityReporterService.sortIssuesByImpact);
@@ -79,7 +79,7 @@ angular.module("umbraco")
             return results;
         }
 
-        $scope.runTests = function() {
+        $scope.runTests = function(showTestRunning) {
             $scope.pageState = "loading";
             $scope.pageName = getPageName();
 
@@ -97,11 +97,12 @@ angular.module("umbraco")
                     $scope.testPathname,
                     $scope.config.testBaseUrl
                 ).toString();
-                return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale) : AccessibilityReporterService.runTest($scope.testUrl);
+                return $scope.config.apiUrl ? AccessibilityReporterApiService.getIssues($scope.config, $scope.testUrl, $scope.userLocale) : AccessibilityReporterService.runTest($scope.testUrl, showTestRunning);
             })
             .then(function (response) {
               if (response) {
                 $scope.results = sortResponse(response);
+                $scope.score = AccessibilityReporterService.getPageScore(response);
                 $scope.model.badge = {
                   count: $scope.results.violations.length,
                   type: $scope.results.violations.length ? "alert" : "default",
@@ -116,7 +117,7 @@ angular.module("umbraco")
               } else {
                 throw new Error('Error getting test results.');
               }
-              
+
             })
             .catch(handleError);
         }
@@ -125,16 +126,16 @@ angular.module("umbraco")
             console.error(error);
             $scope.pageState = "errored";
         }
-    
+
         $scope.totalIssues = function() {
             if(!$scope.results) {
                 return 0;
             }
 
-            var total = 0;
+            let total = 0;
 
-            for(var i=0; i < $scope.results.violations.length; i++){
-                total += $scope.results.violations[i].nodes.length;
+            for(let index = 0; index < $scope.results.violations.length; index++){
+                total += $scope.results.violations[index].nodes.length;
             }
 
             return total.toString();
@@ -151,10 +152,10 @@ angular.module("umbraco")
             if(!$scope.results) {
                 return 0;
             }
-            var total = 0;
+            let total = 0;
 
-            for(var i=0; i < $scope.results.incomplete.length; i++){
-                total += $scope.results.incomplete[i].nodes.length;
+            for(let index = 0; index < $scope.results.incomplete.length; index++){
+                total += $scope.results.incomplete[index].nodes.length;
             }
 
             return total.toString();
@@ -176,7 +177,7 @@ angular.module("umbraco")
             editorService.open({
                 view: "/App_Plugins/AccessibilityReporter/accessibility-reporter-detail.html",
                 size: "medium",
-                result: result, 
+                result: result,
                 submit: function (value) {
                     editorService.close();
                 },
@@ -258,11 +259,11 @@ angular.module("umbraco")
                 const failedTitleWidth = failedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
                 const incompleteTitleWidth = incompleteRows.reduce((w, r) => Math.max(w, r.title.length), 40);
                 const passedTitleWidth = passedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
-                failedWorksheet["!cols"] = [{ width: 10 }, { width: failedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ]; 
-                incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ]; 
-                passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ]; 
+                failedWorksheet["!cols"] = [{ width: 10 }, { width: failedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
+                incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
+                passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 
-                XLSX.writeFile(workbook, 
+                XLSX.writeFile(workbook,
                     formatFileName(`accessibility-report-${$scope.pageName}-${moment($scope.results.timestamp)
                         .format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
 

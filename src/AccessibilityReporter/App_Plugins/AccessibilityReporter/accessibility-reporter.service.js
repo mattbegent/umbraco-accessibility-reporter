@@ -1,9 +1,9 @@
 class AccessibilityReporter {
 
-    static impacts = ["minor","moderate","serious","critical"];
+    static impacts = ["minor", "moderate", "serious", "critical"];
 
-    static async runTest(testUrl) {
-        
+    static async runTest(testUrl, showWhileRunning) {
+
         return new Promise(async (resolve, reject) => {
 
             try {
@@ -13,54 +13,59 @@ class AccessibilityReporter {
 
                 const iframeId = "arTestIframe" + crypto.randomUUID();
 
-                window.addEventListener("message", function(message) {
-                    if(message.data) {
+                window.addEventListener("message", function (message) {
+                    if (message.data) {
                         resolve(message.data);
                     } else {
                         reject(message);
-                    } 
+                    }
                     document.getElementById(iframeId).remove();
-                }, {once : true});
+                }, { once: true });
 
-                const container = document.getElementById('contentcolumn');
+                const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
                 const testIframe = document.createElement("iframe");
-                testIframe.setAttribute("src", testUrl);        
-                testIframe.setAttribute("id", iframeId);   
-                testIframe.style.width = "1280px";
+                testIframe.setAttribute("src", testUrl);
+                testIframe.setAttribute("id", iframeId);
                 testIframe.style.height = "800px";
-                testIframe.style.zIndex = "1";
-                testIframe.style.position = "absolute";
+                if (showWhileRunning) {
+                    testIframe.style.width = container.clientWidth + "px";
+                } else {
+                    testIframe.style.width = "1280px";
+                    testIframe.style.zIndex = "1";
+                    testIframe.style.position = "absolute";
+                }
+
                 container.appendChild(testIframe);
 
-                testIframe.onload = function() {
+                testIframe.onload = function () {
                     var scriptAxe = testIframe.contentWindow.document.createElement("script");
                     scriptAxe.type = "text/javascript";
                     scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
                     testIframe.contentWindow.document.body.appendChild(scriptAxe);
-                };        
+                };
 
             } catch (error) {
                 // Possible Security Error (another origin)
-                reject(error); 
+                reject(error);
             }
         });
     }
 
     static sortIssuesByImpact(a, b) {
-        if(a.impact === b.impact) {
-            return  b.nodes.length - a.nodes.length;
+        if (a.impact === b.impact) {
+            return b.nodes.length - a.nodes.length;
         }
-        if(AccessibilityReporter.impacts.indexOf(a.impact) > AccessibilityReporter.impacts.indexOf(b.impact)) {
+        if (AccessibilityReporter.impacts.indexOf(a.impact) > AccessibilityReporter.impacts.indexOf(b.impact)) {
             return -1;
         }
-        if(AccessibilityReporter.impacts.indexOf(a.impact) < AccessibilityReporter.impacts.indexOf(b.impact)) {
+        if (AccessibilityReporter.impacts.indexOf(a.impact) < AccessibilityReporter.impacts.indexOf(b.impact)) {
             return 1;
         }
         return 0;
     }
 
     static sortByViolations(a, b) {
-        return  b.nodes.length - a.nodes.length;
+        return b.nodes.length - a.nodes.length;
     }
 
     // https://www.deque.com/axe/core-documentation/api-documentation/
@@ -77,14 +82,14 @@ class AccessibilityReporter {
     }
 
     static impactToTag(impact) {
-        switch(impact) {
+        switch (impact) {
             case "serious":
             case "critical":
-              return "danger";
+                return "danger";
             case "moderate":
                 return "warning";
             default:
-              return "default";
+                return "default";
         };
     };
 
@@ -115,10 +120,10 @@ class AccessibilityReporter {
             default:
                 break;
         }
-        if(tag.indexOf('wcag') !== -1) {
+        if (tag.indexOf('wcag') !== -1) {
             return tag.toUpperCase();
         }
-        if(tag.indexOf('section') !== -1) {
+        if (tag.indexOf('section') !== -1) {
             return tag.replace('section', 'Section ');
         }
         return tag;
@@ -151,50 +156,50 @@ class AccessibilityReporter {
     }
 
     static getBaseURL() {
-        return location.protocol + "//"  + location.hostname + (location.port ? ":" + location.port : "");
+        return location.protocol + "//" + location.hostname + (location.port ? ":" + location.port : "");
     }
 
     static formatResultForSaving(result, nodeId, culture) {
 
         return {
-            "url":result.url,
-            "nodeId":nodeId,
-            "culture":culture,
-            "date":result.timestamp,
-            "violations": result.violations.map((test)=> {
+            "url": result.url,
+            "nodeId": nodeId,
+            "culture": culture,
+            "date": result.timestamp,
+            "violations": result.violations.map((test) => {
                 return {
                     id: test.id,
                     errors: test.nodes.length
                 }
             }),
-            "incomplete":result.violations.map((test)=> {
+            "incomplete": result.violations.map((test) => {
                 return {
                     id: test.id,
                     errors: test.nodes.length
                 }
             }),
-            "passes":result.violations.map((test)=> {
+            "passes": result.violations.map((test) => {
                 return {
                     id: test.id,
                     elements: test.nodes.length
                 }
             })
         }
-        
+
     }
 
     static saveToSessionStorage(key, value) {
         try {
             sessionStorage.setItem(key, JSON.stringify(value));
-        } catch(error) {
+        } catch (error) {
             console.error(error);
         }
-        
+
     }
 
     static getItemFromSessionStorage(key) {
         const item = sessionStorage.getItem(key);
-        if(item) {
+        if (item) {
             return JSON.parse(item);
         } else {
             return null;
@@ -205,9 +210,144 @@ class AccessibilityReporter {
         return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
     }
 
+
+    static getPageScore(result) {
+        let score = 100;
+        for (let index = 0; index < result.violations.length; index++) {
+            const currentViolation = result.violations[index];
+            score -= AccessibilityReporter.getRuleWeight(currentViolation.id);
+        }
+        return Math.max(0, score);
+    }
+
+    // https://developer.chrome.com/docs/lighthouse/accessibility/scoring/
+    static getRuleWeight(ruleId) {
+
+        switch (ruleId) {
+            case "accesskeys":
+                return 7;
+            case "aria-allowed-attr":
+                return 10;
+            case "aria-allowed-role":
+                return 1;
+            case "aria-command-name":
+                return 7;
+            case "aria-dialog-name":
+                return 7;
+            case "aria-hidden-body":
+                return 10;
+            case "aria-hidden-focus":
+                return 7;
+            case "aria-input-field-name":
+                return 7;
+            case "aria-meter-name":
+                return 7;
+            case "aria-progressbar-name":
+                return 7;
+            case "aria-required-attr":
+                return 10;
+            case "aria-required-children":
+                return 10;
+            case "aria-required-parent":
+                return 10;
+            case "aria-roles":
+                return 7;
+            case "aria-text":
+                return 7;
+            case "aria-toggle-field-name":
+                return 7;
+            case "aria-tooltip-name":
+                return 7;
+            case "aria-treeitem-name":
+                return 7;
+            case "aria-valid-attr-value":
+                return 10;
+            case "aria-valid-attr":
+                return 10;
+            case "button-name":
+                return 10;
+            case "bypass":
+                return 7;
+            case "color-contrast":
+                return 7;
+            case "definition-list":
+                return 7;
+            case "dlitem":
+                return 7;
+            case "document-title":
+                return 7;
+            case "duplicate-id-active":
+                return 7;
+            case "duplicate-id-aria":
+                return 10;
+            case "form-field-multiple-labels":
+                return 3;
+            case "frame-title":
+                return 7;
+            case "heading-order":
+                return 3;
+            case "html-has-lang":
+                return 7;
+            case "html-lang-valid":
+                return 7;
+            case "html-xml-lang-mismatch":
+                return 3;
+            case "image-alt":
+                return 10;
+            case "image-redundant-alt":
+                return 1;
+            case "input-button-name":
+                return 10;
+            case "input-image-alt":
+                return 10;
+            case "label-content-name-mismatch":
+                return 7;
+            case "label":
+                return 7;
+            case "link-in-text-block":
+                return 7;
+            case "link-name":
+                return 7;
+            case "list":
+                return 7;
+            case "listitem":
+                return 7;
+            case "meta-refresh":
+                return 10;
+            case "meta-viewport":
+                return 10;
+            case "object-alt":
+                return 7;
+            case "select-name":
+                return 7;
+            case "skip-link":
+                return 3;
+            case "tabindex":
+                return 7;
+            case "table-duplicate-name":
+                return 1;
+            case "table-fake-caption":
+                return 7;
+            case "td-has-header":
+                return 10;
+            case "td-headers-attr":
+                return 7;
+            case "th-has-data-cells":
+                return 7;
+            case "valid-lang":
+                return 7;
+            case "video-caption":
+                return 10;
+            default:
+                return 0;
+        };
+
+    }
+
+
 }
 
 angular.module("umbraco")
-.factory('AccessibilityReporterService', function() {
-    return AccessibilityReporter
-  });
+    .factory('AccessibilityReporterService', function () {
+        return AccessibilityReporter
+    });
