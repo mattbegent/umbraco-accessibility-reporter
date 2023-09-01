@@ -12,7 +12,7 @@
             </div>
             <p>Start running accessibility tests against multiple pages by using the button below.</p>
             <p style="margin-bottom: 20px;">While the tests are running please stay on this page.</p>
-            <uui-button look="primary" color="default" ng-click="runTests()" label="Run accessibility tests on current live pages" class="c-summary__button">Run Tests</uui-button>
+            <uui-button look="primary" color="default" ng-click="runTests()" label="Run accessibility tests on current live pages" class="c-summary__button">Run tests</uui-button>
         </uui-box>
 
         <uui-box ng-if="pageState === 'running-tests'">
@@ -41,7 +41,7 @@
             </div>
             <p>Accessibility Reporter only works for URLs that are accessible publicly.</p>
             <p>If your page is publicly accessible, please try using the "Rerun Tests" button below or refreshing this page to run the accessibility report again.</p>
-            <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page">Rerun Tests</uui-button>
+            <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun accessibility tests on current live page">Rerun tests</uui-button>
         </uui-box>
 
         <div class="c-dashboard-grid" ng-if="pageState === 'has-results'">
@@ -78,7 +78,7 @@
                             </div>
                         </div>
                     </div>
-                    <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun full website accessibility tests" class="c-summary__button">Rerun Tests</uui-button>
+                    <uui-button look="primary" color="default" ng-click="runTests()" label="Rerun full website accessibility tests" class="c-summary__button">Rerun tests</uui-button>
                     <span class="c-summary__time">Started at <strong>{{formatTime(results.startTime)}}</strong> and ended at <strong>{{formatTime(results.endTime)}}</strong></span>
                 </div>
             </uui-box>
