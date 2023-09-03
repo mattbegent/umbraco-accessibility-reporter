@@ -39,14 +39,6 @@ angular.module("umbraco")
             return editorState.current && editorState.current.variants.length ? editorState.current.variants[0].name : 'Current page';
         }
 
-        function isAbsoluteURL(urlString) {
-            return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
-        }
-
-        function getHostnameFromString(url) {
-            return new URL(url).hostname;
-        }
-
         function getHostname(possibleUrls) {
             if (!$scope.config.apiUrl) {
                 // so we don't get iframe CORS issues
@@ -54,8 +46,8 @@ angular.module("umbraco")
             }
             for(let index = 0; index < possibleUrls.length; index++){
                 var possibleCurrentUrl = possibleUrls[index].text;
-                if(isAbsoluteURL(possibleCurrentUrl)) {
-                    return getHostnameFromString(possibleCurrentUrl);
+                if(AccessibilityReporterService.isAbsoluteURL(possibleCurrentUrl)) {
+                    return AccessibilityReporterService.getHostnameFromString(possibleCurrentUrl);
                 }
             }
             // fallback if hostnames not set assume current host
@@ -85,7 +77,7 @@ angular.module("umbraco")
 
             return contentResource.getNiceUrl(editorState.current.id)
             .then(function (data) {
-                if (isAbsoluteURL(data)) {
+                if (AccessibilityReporterService.isAbsoluteURL(data)) {
                     $scope.testPathname = new URL(data).pathname;
                 } else {
                     $scope.testPathname = data;
@@ -230,10 +222,6 @@ angular.module("umbraco")
             return formattedRows;
         }
 
-        function formatFileName(name) {
-            return name.replace(/\s+/g, '-').toLowerCase();
-        }
-
         $scope.exportResults = function() {
 
             try {
@@ -264,7 +252,7 @@ angular.module("umbraco")
                 passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 
                 XLSX.writeFile(workbook,
-                    formatFileName(`accessibility-report-${$scope.pageName}-${moment($scope.results.timestamp)
+                    AccessibilityReporterService.formatFileName(`accessibility-report-${$scope.pageName}-${moment($scope.results.timestamp)
                         .format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
 
             } catch(error) {

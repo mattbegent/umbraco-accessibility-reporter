@@ -10,8 +10,9 @@ class AccessibilityReporter {
 
                 const testRequest = new Request(testUrl);
                 await fetch(testRequest);
-
                 const iframeId = "arTestIframe" + crypto.randomUUID();
+                const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
+                let testIframe = document.createElement("iframe");
 
                 window.addEventListener("message", function (message) {
                     if (message.data) {
@@ -19,11 +20,11 @@ class AccessibilityReporter {
                     } else {
                         reject(message);
                     }
-                    document.getElementById(iframeId).remove();
+                    testIframe.src = "";
+                    testIframe.remove();
+                    testIframe = null;
                 }, { once: true });
 
-                const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
-                const testIframe = document.createElement("iframe");
                 testIframe.setAttribute("src", testUrl);
                 testIframe.setAttribute("id", iframeId);
                 testIframe.style.height = "800px";
@@ -35,13 +36,16 @@ class AccessibilityReporter {
                     testIframe.style.position = "absolute";
                 }
 
-                container.appendChild(testIframe);
+                requestAnimationFrame(()=> {
+                    container.appendChild(testIframe);
+                });
 
                 testIframe.onload = function () {
-                    var scriptAxe = testIframe.contentWindow.document.createElement("script");
+                    let scriptAxe = testIframe.contentWindow.document.createElement("script");
                     scriptAxe.type = "text/javascript";
                     scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
                     testIframe.contentWindow.document.body.appendChild(scriptAxe);
+                    scriptAxe = null;
                 };
 
             } catch (error) {
@@ -210,6 +214,9 @@ class AccessibilityReporter {
         return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
     }
 
+    static getHostnameFromString(url) {
+        return new URL(url).hostname;
+    }
 
     static getPageScore(result) {
         let score = 100;
@@ -342,6 +349,10 @@ class AccessibilityReporter {
                 return 0;
         };
 
+    }
+
+    static formatFileName(name) {
+        return name.replace(/\s+/g, '-').toLowerCase();
     }
 
 

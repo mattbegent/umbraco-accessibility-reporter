@@ -1,8 +1,7 @@
 angular.module("umbraco")
-	.controller("My.AccessibilityReporterDashboard", function ($scope, editorService, AccessibilityReporterService, AccessibilityReporterApiService, userService) {
+	.controller("My.AccessibilityReporterDashboard", function ($scope, editorService, AccessibilityReporterService, AccessibilityReporterApiService, userService, notificationsService) {
 
         const dashboardStorageKey = "AR.Dashboard";
-        let preloadedUrls = new Set();
 
         $scope.pageState = "pre-test";
         $scope.accessibilityReporterService = AccessibilityReporterService;
@@ -11,11 +10,11 @@ angular.module("umbraco")
         $scope.currentTestUrl = "";
 
         $scope.results = [];
-        $scope.pagesWithViolations = [];
+        $scope.pagesTestResults = [];
         $scope.totalErrors = null;
         $scope.averagePageScore = null;
         $scope.pageWithLowestScore = null;
-        $scope.pagesTested = null;
+        $scope.numberOfPagesTested = null;
         $scope.mostCommonErrors = null;
         $scope.currentTestNumber = null;
         $scope.testPages = [];
@@ -62,25 +61,24 @@ angular.module("umbraco")
 
         async function runSingleTest(page) {
 
-            return new Promise(async (resolve, reject) => {
+            const testRun = new Promise(async (resolve, reject) => {
 
                 try {
                     $scope.currentTestUrl = page.url;
                     $scope.$apply();
                     const currentResult = await getTestResult(page.url);
-                    const resultFormatted = reduceTestResult(currentResult);
+                    let resultFormatted = reduceTestResult(currentResult);
                     resultFormatted.score = AccessibilityReporterService.getPageScore(resultFormatted);
-
-                    const testResult = Object.assign({
-                        page: page
-                    }, resultFormatted);
-
-                    resolve(testResult);
-
+                    resultFormatted.page = page;
+                    resolve(resultFormatted);
                 } catch (error) {
                     reject(error);
                 }
             });
+
+            const timer = new Promise((resolve, reject) => setTimeout(() => reject("Test run exceeded timeout"), 10000));
+
+            return await Promise.race([testRun, timer]);
         }
 
         $scope.runTests = async function() {
@@ -89,10 +87,10 @@ angular.module("umbraco")
             $scope.results = [];
             $scope.currentTestUrl = "";
             $scope.currentTestNumber = null;
-            $scope.pagesWithViolations = [];
+            $scope.pagesTestResults = [];
             $scope.testPages = [];
 
-            var startTime = new Date();
+            const startTime = new Date();
 
             try {
                 await getTestUrls();
@@ -101,14 +99,10 @@ angular.module("umbraco")
                 return;
             }
 
-            let testResults = [];
+            var testResults = [];
             for (let index = 0; index < $scope.testPages.length; index++) {
                 const currentPage = $scope.testPages[index];
-                const nextPage = (index + 1 <= $scope.testPages.length) ? $scope.testPages[index + 1] : null;
                 try {
-                    if(nextPage) {
-                        preload(nextPage.url);
-                    }
                     $scope.currentTestNumber = index + 1;
                     const result = await runSingleTest(currentPage);
                     testResults.push(result);
@@ -154,48 +148,45 @@ angular.module("umbraco")
             let totalAAAViolations = 0;
             let totalOtherViolations = 0;
 
-            let pagesWithViolations = [];
+            let pagesTestResults = [];
             for (let index = 0; index < testResults.pages.length; index++) {
                 const currentResult = testResults.pages[index];
                 totalErrors += currentResult.violations.length;
                 allErrors = allErrors.concat(currentResult.violations);
-                if (currentResult.violations.length) {
 
-                    let totalViolationsForPage = 0;
+                let totalViolationsForPage = 0;
 
-                    for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
-                        const currentViolation = currentResult.violations[indexVoilations];
-                        const violationWCAGLevel = AccessibilityReporterService.getWCAGLevel(currentViolation.tags);
-                        switch (violationWCAGLevel) {
-                            case 'AAA':
-                                totalAAAViolations += currentViolation.nodes.length;
-                                break;
-                            case 'AA':
-                                totalAAViolations += currentViolation.nodes.length;
-                                break;
-                            case 'A':
-                                totalAViolations += currentViolation.nodes.length;
-                                break;
-                            case 'Other':
-                                totalOtherViolations += currentViolation.nodes.length;
-                                break;
-                        }
-                        totalViolations += currentViolation.nodes.length;
-                        totalViolationsForPage += currentViolation.nodes.length;
+                for (let indexVoilations = 0; indexVoilations < currentResult.violations.length; indexVoilations++) {
+                    const currentViolation = currentResult.violations[indexVoilations];
+                    const violationWCAGLevel = AccessibilityReporterService.getWCAGLevel(currentViolation.tags);
+                    switch (violationWCAGLevel) {
+                        case 'AAA':
+                            totalAAAViolations += currentViolation.nodes.length;
+                            break;
+                        case 'AA':
+                            totalAAViolations += currentViolation.nodes.length;
+                            break;
+                        case 'A':
+                            totalAViolations += currentViolation.nodes.length;
+                            break;
+                        case 'Other':
+                            totalOtherViolations += currentViolation.nodes.length;
+                            break;
                     }
-
-                    pagesWithViolations.push({
-                        url: currentResult.page.url,
-                        name: currentResult.page.name,
-                        id: currentResult.page.id,
-                        numberOfErrors: totalViolationsForPage,
-                        score: currentResult.score
-                    });
+                    totalViolations += currentViolation.nodes.length;
+                    totalViolationsForPage += currentViolation.nodes.length;
                 }
 
+                pagesTestResults.push({
+                    id: currentResult.page.id,
+                    name: currentResult.page.name,
+                    url: currentResult.page.url,
+                    score: currentResult.score,
+                    violations: totalViolationsForPage
+                });
             }
 
-            $scope.pagesTested = testResults.pages.length;
+            $scope.numberOfPagesTested = testResults.pages.length;
             $scope.totalErrors = totalErrors;
 
             $scope.totalViolations = totalViolations;
@@ -212,7 +203,7 @@ angular.module("umbraco")
             const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
             $scope.mostCommonErrors = getErrorsSortedByViolations(allErrors).slice(0, 6);
 
-            $scope.pagesWithViolations = pagesWithViolations.sort(sortPagesWithViolations);
+            $scope.pagesTestResults = pagesTestResults.sort(sortPageTestResults);
 
             displaySeverityChart(sortedByImpact);
             topViolationsChart();
@@ -325,7 +316,6 @@ angular.module("umbraco")
             resultFormatted.violations = resultFormatted.violations.map((violation)=> {
                 return {
                     id: violation.id,
-                    help: violation.help,
                     impact: violation.impact,
                     tags: violation.tags,
                     nodes: violation.nodes.map((node)=> {
@@ -360,9 +350,9 @@ angular.module("umbraco")
             return sortedAllErrors;
         }
 
-        function sortPagesWithViolations(a, b) {
+        function sortPageTestResults(a, b) {
             if (a.score === b.score) {
-                return b.numberOfErrors - a.numberOfErrors;
+                return b.violations - a.violations;
             }
             if (a.score < b.score) {
                 return -1;
@@ -396,8 +386,8 @@ angular.module("umbraco")
         }
 
         function paginateResults() {
-            $scope.pagination = paginate($scope.pagesWithViolations.length, $scope.currentPage, $scope.pageSize, 99);
-            $scope.pagesWithViolationsCurrentPage = getDataForPagination($scope.pagesWithViolations, $scope.pageSize, $scope.currentPage);
+            $scope.pagination = paginate($scope.pagesTestResults.length, $scope.currentPage, $scope.pageSize, 99);
+            $scope.pagesTestResultsCurrentPage = getDataForPagination($scope.pagesTestResults, $scope.pageSize, $scope.currentPage);
         }
 
         $scope.changePage = function(pageNumber) {
@@ -418,18 +408,45 @@ angular.module("umbraco")
             };
         }
 
-        function preload(url) {
-            if(preloadedUrls.has(url)) {
-                return;
-            }
-            const linkElement = document.createElement('link');
-            linkElement.rel = 'prefetch';
-            linkElement.href = url;
-            linkElement.fetchPriority = 'high';
-            linkElement.as = 'document';
-            document.head.appendChild(linkElement);
-            preloadedUrls.add(url);
+        function formatPageResultsForExport() {
+
+           return $scope.pagesTestResults.map((page)=> {
+                return {
+                    name: page.name,
+                    url: page.url,
+                    score: page.score,
+                    violations: page.violations
+                }
+            });
         }
+
+        $scope.exportResults = function() {
+
+            try {
+
+                const resultsFormatted = formatPageResultsForExport();
+                const resultsWorksheet = XLSX.utils.json_to_sheet(resultsFormatted);
+
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, resultsWorksheet, "Results");
+
+                const headers = [["Name", "URL", "Score", "Violations"]];
+                XLSX.utils.sheet_add_aoa(resultsWorksheet, headers, { origin: "A1" });
+
+                const nameWidth = resultsFormatted.reduce((w, r) => Math.max(w, r.name.length), 40);
+                const urlWidth = resultsFormatted.reduce((w, r) => Math.max(w, r.url.length), 40);
+                resultsWorksheet["!cols"] = [{ width: nameWidth }, { width: urlWidth }, { width: 12 }, { width: 12 }  ];
+
+                XLSX.writeFile(workbook,
+                    AccessibilityReporterService.formatFileName(`website-accessibility-report-${moment($scope.results.endTime)
+                        .format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
+
+            } catch(error) {
+                console.error(error);
+                notificationsService.error("Failed", "An error occurred exporting the report. Please try again later.");
+            }
+
+        };
 
         init();
 
