@@ -32,15 +32,16 @@ class ARChart extends HTMLElement {
 
             if(this.getAttribute('type') === 'pie') {
                 chartSettings.options = {};
-                chartSettings.options.plugins = {  
+                chartSettings.options.plugins = {
                     tooltip: {
-                        enabled: false
+                        enabled: true
                     },
                     datalabels: {
                         clip : true,
                         backgroundColor: '#FFF',
                         font: labelFontStyles,
                         align: 'top',
+                        display: 'auto',
                         formatter: ((context, args)=> {
                             if(context) {
                                 const index = args.dataIndex;
@@ -54,7 +55,7 @@ class ARChart extends HTMLElement {
             }
 
             if(this.getAttribute('type') === 'bar') {
-                chartSettings.options = {  
+                chartSettings.options = {
                     scales: {
                         y: {
                             ticks: {
