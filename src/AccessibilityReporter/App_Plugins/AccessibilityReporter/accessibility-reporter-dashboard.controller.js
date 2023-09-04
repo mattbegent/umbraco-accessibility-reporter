@@ -409,15 +409,18 @@ angular.module("umbraco")
         }
 
         function formatPageResultsForExport() {
+            const resultsArray = [["Name", "URL", "Score", "Violations"]];
+            for (let index = 0; index < $scope.pagesTestResults.length; index++) {
+                const page = $scope.pagesTestResults[index];
+                resultsArray.push([
+                    page.name,
+                    page.url,
+                    page.score,
+                    page.violations
+                ]);
+            }
 
-           return $scope.pagesTestResults.map((page)=> {
-                return {
-                    name: page.name,
-                    url: page.url,
-                    score: page.score,
-                    violations: page.violations
-                }
-            });
+            return resultsArray;
         }
 
         $scope.exportResults = function() {
@@ -425,16 +428,13 @@ angular.module("umbraco")
             try {
 
                 const resultsFormatted = formatPageResultsForExport();
-                const resultsWorksheet = XLSX.utils.json_to_sheet(resultsFormatted);
+                const resultsWorksheet = XLSX.utils.aoa_to_sheet(resultsFormatted);
 
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, resultsWorksheet, "Results");
 
-                const headers = [["Name", "URL", "Score", "Violations"]];
-                XLSX.utils.sheet_add_aoa(resultsWorksheet, headers, { origin: "A1" });
-
-                const nameWidth = resultsFormatted.reduce((w, r) => Math.max(w, r.name.length), 40);
-                const urlWidth = resultsFormatted.reduce((w, r) => Math.max(w, r.url.length), 40);
+                const nameWidth = $scope.pagesTestResults.reduce((w, r) => Math.max(w, r.name.length), 40);
+                const urlWidth = $scope.pagesTestResults.reduce((w, r) => Math.max(w, r.url.length), 40);
                 resultsWorksheet["!cols"] = [{ width: nameWidth }, { width: urlWidth }, { width: 12 }, { width: 12 }  ];
 
                 XLSX.writeFile(workbook,

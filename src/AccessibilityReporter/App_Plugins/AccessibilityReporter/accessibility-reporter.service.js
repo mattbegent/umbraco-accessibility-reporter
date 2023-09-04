@@ -14,15 +14,20 @@ class AccessibilityReporter {
                 const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
                 let testIframe = document.createElement("iframe");
 
+                function cleanUpIframe() {
+                    testIframe.src = "";
+                    testIframe.remove();
+                    testIframe = null;
+                }
+
                 window.addEventListener("message", function (message) {
+                    cleanUpIframe();
                     if (message.data) {
                         resolve(message.data);
                     } else {
                         reject(message);
                     }
-                    testIframe.src = "";
-                    testIframe.remove();
-                    testIframe = null;
+                    message = null;
                 }, { once: true });
 
                 testIframe.setAttribute("src", testUrl);
@@ -41,11 +46,16 @@ class AccessibilityReporter {
                 });
 
                 testIframe.onload = function () {
-                    let scriptAxe = testIframe.contentWindow.document.createElement("script");
-                    scriptAxe.type = "text/javascript";
-                    scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
-                    testIframe.contentWindow.document.body.appendChild(scriptAxe);
-                    scriptAxe = null;
+                    if(testIframe.contentWindow.document.body) {
+                        let scriptAxe = testIframe.contentWindow.document.createElement("script");
+                        scriptAxe.type = "text/javascript";
+                        scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
+                        testIframe.contentWindow.document.body.appendChild(scriptAxe);
+                        scriptAxe = null;
+                    } else {
+                        cleanUpIframe();
+                        reject('Test page has no body.');
+                    }
                 };
 
             } catch (error) {
