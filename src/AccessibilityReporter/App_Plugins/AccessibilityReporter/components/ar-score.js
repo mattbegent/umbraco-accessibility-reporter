@@ -30,8 +30,8 @@ class ARScore extends HTMLElement {
             <style>
             .c-score {
                 position: relative;
-                width: 120px;
-                height: 120px;
+                width: 130px;
+                height: 130px;
                 margin: 0 auto;
             }
 

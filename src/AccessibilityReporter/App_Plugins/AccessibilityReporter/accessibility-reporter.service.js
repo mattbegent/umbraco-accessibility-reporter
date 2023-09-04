@@ -365,6 +365,9 @@ class AccessibilityReporter {
         return name.replace(/\s+/g, '-').toLowerCase();
     }
 
+    static formatNumber(numberToFormat) {
+        return numberToFormat.toLocaleString();
+    }
 
 }
 
