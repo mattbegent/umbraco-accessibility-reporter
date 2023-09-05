@@ -240,11 +240,28 @@ angular.module("umbraco")
             return pageWithLowestScore;
         }
 
-        function getReportSummaryText() {
-            if($scope.totalAViolations !== 0 && $scope.totalAAViolations !== 0) {
-                return `This website <strong>does not</strong> comply with <strong>WCAG AA</strong>.`;
+        function getHighestLevelOfNonCompliance() {
+            if($scope.totalAAAViolations !== 0) {
+                return 'AAA';
             }
-            return "High 5, you rock! No WCAG A or WCAG AA violations were found. Please manually test your website to check full compliance.";
+            if($scope.totalAAViolations !== 0) {
+                return'AA';
+            }
+            if($scope.totalAViolations !== 0) {
+                return 'A';
+            }
+            return null;
+        }
+
+        function getReportSummaryText() {
+            const highestLevelOfNonCompliance = getHighestLevelOfNonCompliance();
+            if(highestLevelOfNonCompliance) {
+                return `This website <strong>does not</strong> comply with <strong>WCAG ${highestLevelOfNonCompliance}</strong>.`;
+            }
+            if($scope.totalOtherViolations !== 0) {
+                return "High 5, you rock! No WCAG violations were found. However, some other issues were found. Please manually test your website to check full compliance.";
+            }
+            return "High 5, you rock! No WCAG violations were found. Please manually test your website to check full compliance.";
         }
 
         function displaySeverityChart(sortedAllErrors) {
@@ -361,6 +378,18 @@ angular.module("umbraco")
                 return 1;
             }
             return 0;
+        }
+
+        $scope.showViolationsForLevel = function(level) {
+            for (let index = 0; index < $scope.config.testsToRun.length; index++) {
+                const currentLevel = $scope.config.testsToRun[index];
+                if(currentLevel.endsWith(`2${level}`) ||
+                currentLevel.endsWith(`21${level}`) ||
+                currentLevel.endsWith(`22${level}`)) {
+                    return true;
+                }
+            }
+            return false;;
         }
 
         $scope.openDetail = function(id) {

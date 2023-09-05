@@ -53,19 +53,19 @@
                 <div>
                     <p ng-bind-html="reportSummaryText"></p>
                     <div class="c-summary__container">
-                        <div class="c-summary" ng-class="{'c-summary--error': totalAViolations, 'c-summary--info': !totalAViolations}">
+                        <div class="c-summary" ng-if="showViolationsForLevel('a')" ng-class="{'c-summary--error': totalAViolations, 'c-summary--info': !totalAViolations}">
                             <div class="c-summary__circle">
                                 {{accessibilityReporterService.formatNumber(totalAViolations)}}
                                 <span class="c-summary__title">A Issues</span>
                             </div>
                         </div>
-                        <div class="c-summary" ng-class="{'c-summary--error': totalAAViolations, 'c-summary--info': !totalAAViolations}">
+                        <div class="c-summary" ng-if="showViolationsForLevel('aa')" ng-class="{'c-summary--error': totalAAViolations, 'c-summary--info': !totalAAViolations}">
                             <div class="c-summary__circle">
                                 {{accessibilityReporterService.formatNumber(totalAAViolations)}}
                                 <span class="c-summary__title">AA Issues</span>
                             </div>
                         </div>
-                        <div class="c-summary" ng-class="{'c-summary--error': totalAAAViolations, 'c-summary--info': !totalAAAViolations}">
+                        <div class="c-summary" ng-if="showViolationsForLevel('aaa')" ng-class="{'c-summary--error': totalAAAViolations, 'c-summary--info': !totalAAAViolations}">
                             <div class="c-summary__circle">
                                 {{accessibilityReporterService.formatNumber(totalAAAViolations)}}
                                 <span class="c-summary__title">AAA Issues</span>
