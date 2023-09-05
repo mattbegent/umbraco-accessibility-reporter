@@ -171,8 +171,17 @@
     border-color: #1C824A;
 }
 
+/* The default Umbraco font Lato renders differently between operating systems, so we are using the system default to vertically align */
 .c-circle__text {
-    margin: 3px 0 0 0;
+    font-family:
+		system-ui,
+		'Segoe UI',
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif,
+		'Apple Color Emoji',
+		'Segoe UI Emoji';
 }
 
 .c-incident-number {
