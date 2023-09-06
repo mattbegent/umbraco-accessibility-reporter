@@ -76,7 +76,8 @@ angular.module("umbraco")
                 }
             });
 
-            const timer = new Promise((resolve, reject) => setTimeout(() => reject("Test run exceeded timeout"), 10000));
+            const testTimeout = $scope.config.apiUrl ? 30000 : 10000;
+            const timer = new Promise((resolve, reject) => setTimeout(() => reject("Test run exceeded timeout"), testTimeout));
 
             return await Promise.race([testRun, timer]);
         }
