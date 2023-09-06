@@ -1,57 +1,63 @@
 {
-    "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
-    "AlternatePackageNames": [
-      "Accessibility Reporter"
-    ],
-    "AuthorDetails": {
-      "Description": "A front-end developer who wants to improve the accessibility of the web.",
-      "Url": "https://mattbegent.co.uk/",
-      "ImageUrl": "https://www.gravatar.com/avatar/830b3844a7476427cd3f8225c83833c3?d=404&s=150",
-      "Contributors": []
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "AlternatePackageNames": [
+    "Accessibility Reporter"
+  ],
+  "AuthorDetails": {
+    "Description": "A front-end developer who wants to improve the accessibility of the web.",
+    "Url": "https://mattbegent.co.uk/",
+    "ImageUrl": "https://www.gravatar.com/avatar/830b3844a7476427cd3f8225c83833c3?d=404&s=150",
+    "Contributors": []
+  },
+  "Category": "Editor Tools",
+  "DiscussionForumUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/discussions",
+  "DocumentationUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/",
+  "IssueTrackerUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/issues",
+  "LicenseTypes": [
+    "Free"
+  ],
+  "PackageType": "Package",
+  "PackagesByAuthor": [],
+  "RelatedPackages": [],
+  "Screenshots": [
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/results.png",
+      "Caption": "Dashboard of accessibility test results for a single page"
     },
-    "Category": "Editor Tools",
-    "DiscussionForumUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/discussions",
-    "DocumentationUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/",
-    "IssueTrackerUrl": "https://github.com/mattbegent/umbraco-accessibility-reporter/issues",
-    "LicenseTypes": [ "Free" ],
-    "PackageType": "Package",
-    "PackagesByAuthor": [],
-    "RelatedPackages": [],
-    "Screenshots": [
-      {
-        "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/results.png",
-        "Caption": "Dashboard of accessibility audit results"
-      },
-      {
-        "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/detail.png",
-        "Caption": "Detailed view showing accessibility issues and how to fix them"
-      }
-    ],
-    "Tags": [
-      "accessibility",
-      "backoffice",
-      "accessibility reporter",
-      "WCAG",
-      "WCAG 2.1",
-      "WCAG 2.2",
-      "a11y",
-      "content app"
-    ],
-    "Title": "Accessibility Reporter",
-    "Description": "Accessibility Reporter helps you make sure that your website is accessible to all.",
-    "VersionSpecificPackageIds": [
-      {
-        "UmbracoMajorVersion": 10,
-        "PackageId": "Umbraco.Community.AccessibilityReporter"
-      },
-      {
-        "UmbracoMajorVersion": 11,
-        "PackageId": "Umbraco.Community.AccessibilityReporter"
-      },
-      {
-        "UmbracoMajorVersion": 12,
-        "PackageId": "Umbraco.Community.AccessibilityReporter"
-      }
-    ]
-  }
-  
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/detail.png",
+      "Caption": "Detailed view showing accessibility issues and how to fix them"
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/dashboard.png",
+      "Caption": "Dashboard showing the results of a multipage accessibility test"
+    }
+  ],
+  "Tags": [
+    "accessibility",
+    "backoffice",
+    "accessibility reporter",
+    "WCAG",
+    "WCAG 2.1",
+    "WCAG 2.2",
+    "a11y",
+    "content app",
+    "dashboard"
+  ],
+  "Title": "Accessibility Reporter",
+  "Description": "Accessibility Reporter helps you make sure that your website is accessible to all.",
+  "VersionSpecificPackageIds": [
+    {
+      "UmbracoMajorVersion": 10,
+      "PackageId": "Umbraco.Community.AccessibilityReporter"
+    },
+    {
+      "UmbracoMajorVersion": 11,
+      "PackageId": "Umbraco.Community.AccessibilityReporter"
+    },
+    {
+      "UmbracoMajorVersion": 12,
+      "PackageId": "Umbraco.Community.AccessibilityReporter"
+    }
+  ]
+}

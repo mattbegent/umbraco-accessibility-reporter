@@ -4,7 +4,7 @@
 
 ## What is it?
 
-Accessibility Reporter for Umbraco is a content app that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
+Accessibility Reporter for Umbraco is a content app and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
 
 ## Why should I use it?
 
@@ -31,6 +31,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
 - **ExcludedDocTypes** (optional) - Use this option if you want to exclude Accessibility Reporter from showing on certain document types.
 - **RunTestsAutomatically** (optional) - By default Accessibility Reporter runs as soon as you open up a content node. If you instead want Accessibility Reporter to run on demand via a button click, set this option to false.
 - **IncludeIfNoTemplate** (optional) - By default Accessibility Reporter does not run on content without templates. However, if you are using Umbraco in a headless way you will was to set this to true.
+- **MaxPages** (optional) - This sets the maximum number of pages that the dashboard will test against. The default is set to 50.
 
 ### Example options
 
@@ -42,8 +43,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
             "wcag2aa", 
             "wcag21a", 
             "wcag21aa", 
-            "wcag22aa",
-            "wcag***"
+            "wcag22aa"
         ],
         "UserGroups": [
             "admin",
@@ -53,7 +53,8 @@ You can run Accessibility Reporter without adding any configuration options, as 
         "ExcludedDocTypes": [
             "excludedPage"
         ],
-        "RunTestsAutomatically": false
+        "RunTestsAutomatically": false,
+        "MaxPages": 20
     }
 
 ### Defaults
@@ -79,12 +80,13 @@ All options are completely optional and if you don't set them, they default to t
             "sensitiveData"
         ],
         "RunTestsAutomatically": true,
-        "IncludeIfNoTemplate": false 
+        "IncludeIfNoTemplate": false,
+        "MaxPages": 50
     }
 
 ## How to use with a headless setup
 
-If you use Umbraco in a headless way you will have to setup an azure function in order to get Accessibility Reporter working. This is due to cross domain security restrictions within iframes.
+If you use Umbraco in a headless way and you do not have a way of previewing the published page within Umbraco, you will have to setup an azure function in order to get Accessibility Reporter working. This is due to cross domain security restrictions within iframes.
 
 To do this deploying the following azure function https://github.com/mattbegent/azure-function-accessibility-reporter and update your websites `appsettings.json` file. Here is an example:
 
@@ -99,12 +101,14 @@ It's worth noting that if you are using Accessibility Reporter in this way the t
 
 ## Limitations
 
-The accessibility report runs on the current page URL you are editing.
+The accessibility report runs on the current published page URL you are editing.
 
 Automated accessibility testing is no substitute for manual testing and testing using real users. In a [UK government blog article](https://accessibility.blog.gov.uk/2017/02/24/what-we-found-when-we-tested-tools-on-the-worlds-least-accessible-webpage/) they created a test page with 143 accessibility issues on it and the best automated tool only discovered 37% of the issues. However, automated accessibility testing does help to find common issues and technical failures.
 
 ## Roadmap
 
+- History. This will mean the dashboard is automatically populated.
+- Scheduling.
 - Support for multisite setups.
 - Manual test recommendations.
 - Localization - if anyone speaks any languages other than English it would be super to get some help.
@@ -123,5 +127,7 @@ All source code is licensed under the [Mozilla Public License](https://github.co
 ## Third party licensing
 
 [axe-core](https://github.com/dequelabs/axe-core) is licensed under the [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+
+[Chart.js](https://github.com/chartjs/Chart.js) is licensed under the [MIT License](https://github.com/chartjs/Chart.js/blob/master/LICENSE.md).
 
 [SheetJS Community Edition](https://docs.sheetjs.com/) is licensed under the [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0).

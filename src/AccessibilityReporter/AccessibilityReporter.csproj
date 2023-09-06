@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<Version>3.0.0</Version>
+		<ContentTargetFolders>.</ContentTargetFolders>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<Product>AccessibilityReporter</Product>
+		<PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
+		<Title>AccessibilityReporter</Title>
+		<Description>Accessibility Reporter for Umbraco helps you to make your website accessible.</Description>
+		<PackageTags>Accessibility; WCAG; Umbraco; Content App; dashboard; umbraco-marketplace;</PackageTags>
+		<PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Copyright>Matt Begent</Copyright>
+		<PackageIcon>logo.png</PackageIcon>
+		<PackageReleaseNotes>Added a fancy dashboard showing the results of multiple pages.</PackageReleaseNotes>
+		<RepositoryType>git</RepositoryType>
+		<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Umbraco.Cms.Web.Website" Version="10.0.0" />
+		<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
+		<Content Include="appsettings-schema.AccessibilityReporter.json" PackagePath="" />
+		<None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\logos\logo.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" PrivateAssets="All" />
+		<ProjectReference Include="..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj" PrivateAssets="All" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<_PackageFiles Include="$(OutputPath)\AccessibilityReporter.Core.dll">
+			<BuildAction>None</BuildAction>
+			<PackagePath>lib\net6.0</PackagePath>
+		</_PackageFiles>
+		<_PackageFiles Include="$(OutputPath)\AccessibilityReporter.Services.dll">
+			<BuildAction>None</BuildAction>
+			<PackagePath>lib\net6.0</PackagePath>
+		</_PackageFiles>
+	</ItemGroup>
+
+</Project>
