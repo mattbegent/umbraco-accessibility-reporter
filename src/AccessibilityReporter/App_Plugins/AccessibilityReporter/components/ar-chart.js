@@ -30,7 +30,16 @@ class ARChart extends HTMLElement {
                 plugins: [ChartDataLabels]
             };
 
-            if(this.getAttribute('type') === 'pie') {
+            if (this.getAttribute('type') === 'pie') {
+
+                for (let index = 0; index < chartSettings.data.datasets.length; index++) {
+                    chartSettings.data.datasets[index].backgroundColor = chartSettings.data.datasets[index].backgroundColor.map((color, colorIndex) => {
+                        if (colorIndex === 0) {
+                            return color;
+                        }
+                        return pattern.draw(this.getPattern(colorIndex), color);
+                    });
+                }
                 chartSettings.options = {};
                 chartSettings.options.plugins = {
                     tooltip: {
@@ -39,6 +48,9 @@ class ARChart extends HTMLElement {
                     datalabels: {
                         clip : true,
                         backgroundColor: '#FFF',
+                        color: '#000',
+                        borderColor: "#000",
+                        borderWidth: 2,
                         font: labelFontStyles,
                         align: 'top',
                         display: 'auto',
@@ -65,14 +77,17 @@ class ARChart extends HTMLElement {
                     },
                     plugins: {
                         tooltip: {
-                            enabled: false
+                            enabled: true
                         },
                         legend: {
                             display: false
                         },
                         datalabels: {
                             backgroundColor: '#FFF',
+                            color: '#000',
                             font: labelFontStyles,
+                            borderColor: "#000",
+                            borderWidth: 2,
                             padding: {
                                 left: 6,
                                 right: 6,
@@ -87,6 +102,25 @@ class ARChart extends HTMLElement {
             new Chart(ctx, chartSettings);
         }, 100);
 
+    }
+
+    getPattern(index) {
+        switch (index) {
+            case 1:
+                return "diagonal";
+            case 2:
+                return "zigzag-horizontal";
+            case 3:
+                return "circle";
+            case 4:
+                return "zigzag-vertical";
+            case 5:
+                return "triangle";
+            case 6:
+                return "dot";
+            default:
+                return "diamond";
+        };
     }
 
 }
