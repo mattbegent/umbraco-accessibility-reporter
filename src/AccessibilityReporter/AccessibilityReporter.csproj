@@ -17,7 +17,7 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Copyright>Matt Begent</Copyright>
 		<PackageIcon>logo.png</PackageIcon>
-		<PackageReleaseNotes>Added a fancy dashboard showing the results of multiple pages.</PackageReleaseNotes>
+		<PackageReleaseNotes>Accessibility improvements.</PackageReleaseNotes>
 		<RepositoryType>git</RepositoryType>
 		<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
 	</PropertyGroup>
