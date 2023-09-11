@@ -34,10 +34,11 @@ class ARChart extends HTMLElement {
 
                 for (let index = 0; index < chartSettings.data.datasets.length; index++) {
                     chartSettings.data.datasets[index].backgroundColor = chartSettings.data.datasets[index].backgroundColor.map((color, colorIndex) => {
-                        if (colorIndex === 0) {
+                        const currentPattern = chartSettings.data.patterns[colorIndex];
+                        if (!currentPattern) {
                             return color;
                         }
-                        return pattern.draw(this.getPattern(colorIndex), color);
+                        return pattern.draw(currentPattern, color);
                     });
                 }
                 chartSettings.options = {};
@@ -53,8 +54,10 @@ class ARChart extends HTMLElement {
                         borderWidth: 2,
                         font: labelFontStyles,
                         align: 'top',
-                        display: 'auto',
                         formatter: ((context, args)=> {
+                            if (context < 5) {
+                                return null;
+                            }
                             if(context) {
                                 const index = args.dataIndex;
                                 return context + " " + args.chart.data.labels[index];
@@ -102,25 +105,6 @@ class ARChart extends HTMLElement {
             new Chart(ctx, chartSettings);
         }, 100);
 
-    }
-
-    getPattern(index) {
-        switch (index) {
-            case 1:
-                return "diagonal";
-            case 2:
-                return "zigzag-horizontal";
-            case 3:
-                return "circle";
-            case 4:
-                return "zigzag-vertical";
-            case 5:
-                return "triangle";
-            case 6:
-                return "dot";
-            default:
-                return "diamond";
-        };
     }
 
 }

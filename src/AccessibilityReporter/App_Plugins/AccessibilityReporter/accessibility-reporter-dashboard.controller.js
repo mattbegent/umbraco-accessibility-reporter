@@ -301,7 +301,13 @@ angular.module("umbraco")
                     ],
                     hoverOffset: 4,
                     rotation: 0
-                }]
+                }],
+                patterns: [
+                    '',
+                    'diagonal',
+                    'zigzag-horizontal',
+                    'dot'
+                ]
             });
         }
 
