@@ -41,9 +41,9 @@ class AccessibilityReporter {
                     testIframe.style.position = "absolute";
                 }
 
-                requestAnimationFrame(()=> {
+                setTimeout(()=> {
                     container.appendChild(testIframe);
-                });
+                }, 0);
 
                 testIframe.onload = function () {
                     if(testIframe.contentWindow.document.body) {

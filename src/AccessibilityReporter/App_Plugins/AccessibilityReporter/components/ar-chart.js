@@ -30,7 +30,17 @@ class ARChart extends HTMLElement {
                 plugins: [ChartDataLabels]
             };
 
-            if(this.getAttribute('type') === 'pie') {
+            if (this.getAttribute('type') === 'pie') {
+
+                for (let index = 0; index < chartSettings.data.datasets.length; index++) {
+                    chartSettings.data.datasets[index].backgroundColor = chartSettings.data.datasets[index].backgroundColor.map((color, colorIndex) => {
+                        const currentPattern = chartSettings.data.patterns[colorIndex];
+                        if (!currentPattern) {
+                            return color;
+                        }
+                        return pattern.draw(currentPattern, color);
+                    });
+                }
                 chartSettings.options = {};
                 chartSettings.options.plugins = {
                     tooltip: {
@@ -39,10 +49,15 @@ class ARChart extends HTMLElement {
                     datalabels: {
                         clip : true,
                         backgroundColor: '#FFF',
+                        color: '#000',
+                        borderColor: "#000",
+                        borderWidth: 2,
                         font: labelFontStyles,
                         align: 'top',
-                        display: 'auto',
                         formatter: ((context, args)=> {
+                            if (context < 5) {
+                                return null;
+                            }
                             if(context) {
                                 const index = args.dataIndex;
                                 return context + " " + args.chart.data.labels[index];
@@ -65,14 +80,17 @@ class ARChart extends HTMLElement {
                     },
                     plugins: {
                         tooltip: {
-                            enabled: false
+                            enabled: true
                         },
                         legend: {
                             display: false
                         },
                         datalabels: {
                             backgroundColor: '#FFF',
+                            color: '#000',
                             font: labelFontStyles,
+                            borderColor: "#000",
+                            borderWidth: 2,
                             padding: {
                                 left: 6,
                                 right: 6,

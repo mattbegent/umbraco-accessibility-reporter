@@ -33,6 +33,8 @@ angular.module("umbraco")
 
                 })
                 .catch(handleError);
+
+            detectMac();
         }
 
         function getPageName() {
@@ -222,6 +224,12 @@ angular.module("umbraco")
             return formattedRows;
         }
 
+        function detectMac() {
+            if (navigator.userAgent.indexOf('Macintosh') !== -1) {
+                document.querySelector('.js-accessibility-reporter').classList.add('mac');
+            }
+        }
+
         $scope.exportResults = function() {
 
             try {
@@ -238,8 +246,8 @@ angular.module("umbraco")
                 XLSX.utils.book_append_sheet(workbook, incompleteWorksheet, "Incomplete Tests");
                 XLSX.utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
 
-                const headers = [["Impact", "Title", "Description", "Standard", "Violations"]];
-                const passedHeaders = [["Impact", "Title", "Description", "Standard", "Elements"]];
+                const headers = [["Impact", "Title", "Description", "Accessibility Standard", "Violations"]];
+                const passedHeaders = [["Impact", "Title", "Description", "Accessibility Standard", "Elements"]];
                 XLSX.utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
                 XLSX.utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });
                 XLSX.utils.sheet_add_aoa(passedWorksheet, passedHeaders, { origin: "A1" });

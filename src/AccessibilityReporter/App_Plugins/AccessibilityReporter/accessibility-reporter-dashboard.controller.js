@@ -294,14 +294,20 @@ angular.module("umbraco")
                         countNumberOfTestsWithImpact(sortedAllErrors, 'minor')
                     ],
                     backgroundColor: [
-                        'rgb(153,23,61)',
+                        'rgb(120,0,0)',
                         'rgb(212, 32, 84)',
                         'rgb(250, 214, 52)',
-                        'rgb(27, 38, 79)'
+                        'rgb(49, 68, 142)'
                     ],
                     hoverOffset: 4,
                     rotation: 0
-                }]
+                }],
+                patterns: [
+                    '',
+                    'diagonal',
+                    'zigzag-horizontal',
+                    'dot'
+                ]
             });
         }
 
