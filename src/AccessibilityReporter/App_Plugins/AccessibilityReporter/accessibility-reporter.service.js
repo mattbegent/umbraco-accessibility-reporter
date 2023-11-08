@@ -10,7 +10,7 @@ class AccessibilityReporter {
 
                 const testRequest = new Request(testUrl);
                 await fetch(testRequest);
-                const iframeId = "arTestIframe" + crypto.randomUUID();
+                const iframeId = "arTestIframe" + AccessibilityReporter.randomUUID();
                 const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
                 let testIframe = document.createElement("iframe");
 
@@ -367,6 +367,13 @@ class AccessibilityReporter {
 
     static formatNumber(numberToFormat) {
         return numberToFormat.toLocaleString();
+    }
+
+    static randomUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+			return v.toString(16);
+		});
     }
 
 }
