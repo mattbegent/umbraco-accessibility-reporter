@@ -54,10 +54,8 @@ class ARChart extends HTMLElement {
                         borderWidth: 2,
                         font: labelFontStyles,
                         align: 'top',
+                        display: 'auto',
                         formatter: ((context, args)=> {
-                            if (context < 5) {
-                                return null;
-                            }
                             if(context) {
                                 const index = args.dataIndex;
                                 return context + " " + args.chart.data.labels[index];
