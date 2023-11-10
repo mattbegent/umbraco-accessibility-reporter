@@ -22,7 +22,7 @@ class AccessibilityReporter {
                     }
                 }
 
-                const handleTestResultMessageRecieved = function (message) {
+                const handleTestResultMessage = function (message) {
                     if (!message.data.testRunner) {
                         return;
                     }
@@ -36,9 +36,9 @@ class AccessibilityReporter {
                         reject(message);
                     }
                     message = null;
-                    window.removeEventListener("message", handleTestResultMessageRecieved, true);
+                    window.removeEventListener("message", handleTestResultMessage, true);
                 }
-                window.addEventListener("message", handleTestResultMessageRecieved, true);
+                window.addEventListener("message", handleTestResultMessage, true);
 
                 testIframe.setAttribute("src", testUrl);
                 testIframe.setAttribute("id", iframeId);
