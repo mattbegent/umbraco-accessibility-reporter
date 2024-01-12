@@ -10,3 +10,5 @@ Thumbs.db
 .DS_Store
 *.log
 .vs
+
+node_modules

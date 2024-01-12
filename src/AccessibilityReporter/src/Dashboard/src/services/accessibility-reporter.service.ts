@@ -1,8 +1,8 @@
-class AccessibilityReporter {
+export default class AccessibilityReporterService {
 
     static impacts = ["minor", "moderate", "serious", "critical"];
 
-    static async runTest(testUrl, showWhileRunning) {
+    static async runTest(rootElement: any, testUrl: string, showWhileRunning: boolean) {
 
         return new Promise(async (resolve, reject) => {
 
@@ -10,19 +10,20 @@ class AccessibilityReporter {
 
                 const testRequest = new Request(testUrl);
                 await fetch(testRequest);
-                const iframeId = "arTestIframe" + AccessibilityReporter.randomUUID();
-                const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
-                let testIframe = document.createElement("iframe");
+                const iframeId = "arTestIframe" + AccessibilityReporterService.randomUUID();
+                const container = rootElement.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn') as HTMLElement;
+                let testIframe = document.createElement("iframe") as HTMLIFrameElement;
 
                 function cleanUpIframe() {
                     if (testIframe) {
                         testIframe.src = "";
                         testIframe.remove();
+                        /*@ts-ignore*/
                         testIframe = null;
                     }
                 }
 
-                const handleTestResultMessage = function (message) {
+                const handleTestResultMessage = function (message: any) {
                     if (!message.data.testRunner) {
                         return;
                     }
@@ -56,11 +57,12 @@ class AccessibilityReporter {
                 }, 0);
 
                 testIframe.onload = function () {
-                    if (testIframe.contentWindow.document.body) {
+                    if (testIframe?.contentWindow?.document.body) {
                         let scriptAxe = testIframe.contentWindow.document.createElement("script");
                         scriptAxe.type = "text/javascript";
                         scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
                         testIframe.contentWindow.document.body.appendChild(scriptAxe);
+                        /*@ts-ignore*/
                         scriptAxe = null;
                     } else {
                         cleanUpIframe();
@@ -75,37 +77,37 @@ class AccessibilityReporter {
         });
     }
 
-    static sortIssuesByImpact(a, b) {
+    static sortIssuesByImpact(a: any, b: any) {
         if (a.impact === b.impact) {
             return b.nodes.length - a.nodes.length;
         }
-        if (AccessibilityReporter.impacts.indexOf(a.impact) > AccessibilityReporter.impacts.indexOf(b.impact)) {
+        if (AccessibilityReporterService.impacts.indexOf(a.impact) > AccessibilityReporterService.impacts.indexOf(b.impact)) {
             return -1;
         }
-        if (AccessibilityReporter.impacts.indexOf(a.impact) < AccessibilityReporter.impacts.indexOf(b.impact)) {
+        if (AccessibilityReporterService.impacts.indexOf(a.impact) < AccessibilityReporterService.impacts.indexOf(b.impact)) {
             return 1;
         }
         return 0;
     }
 
-    static sortByViolations(a, b) {
+    static sortByViolations(a: any, b: any) {
         return b.nodes.length - a.nodes.length;
     }
 
     // https://www.deque.com/axe/core-documentation/api-documentation/
-    static mapTagsToStandard(tags) {
+    static mapTagsToStandard(tags: string[]) {
         var catTagsRemoved = tags.filter(tag => {
             return tag.indexOf('cat.') === -1 && !tag.startsWith('TT') && !tag.startsWith('ACT');
         });
-        var formattedTags = catTagsRemoved.map(AccessibilityReporter.axeTagToStandard);
+        var formattedTags = catTagsRemoved.map(AccessibilityReporterService.axeTagToStandard);
         return formattedTags;
     }
 
-    static upperCaseFirstLetter(word) {
+    static upperCaseFirstLetter(word: string) {
         return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
-    static impactToTag(impact) {
+    static impactToTag(impact: string) {
         switch (impact) {
             case "serious":
             case "critical":
@@ -117,7 +119,7 @@ class AccessibilityReporter {
         };
     };
 
-    static axeTagToStandard(tag) {
+    static axeTagToStandard(tag: string) {
         switch (tag) {
             case "wcag2a":
                 return "WCAG 2.0 A";
@@ -153,7 +155,7 @@ class AccessibilityReporter {
         return tag;
     }
 
-    static getWCAGLevel(tags) {
+    static getWCAGLevel(tags: string[]) {
         for (let index = 0; index < tags.length; index++) {
             const tag = tags[index];
             switch (tag) {
@@ -174,35 +176,37 @@ class AccessibilityReporter {
         return 'Other';
     }
 
-    static getRule(ruleId) {
+    static getRule(ruleId: string) {
+        // TODO: Include axe???
+        /*@ts-ignore*/
         const allRules = axe.getRules();
-        return allRules.find(rule => rule.ruleId = ruleId);
+        return allRules.find((rule: any) => rule.ruleId = ruleId);
     }
 
     static getBaseURL() {
         return location.protocol + "//" + location.hostname + (location.port ? ":" + location.port : "");
     }
 
-    static formatResultForSaving(result, nodeId, culture) {
+    static formatResultForSaving(result: any, nodeId: string, culture: string) {
 
         return {
             "url": result.url,
             "nodeId": nodeId,
             "culture": culture,
             "date": result.timestamp,
-            "violations": result.violations.map((test) => {
+            "violations": result.violations.map((test: any) => {
                 return {
                     id: test.id,
                     errors: test.nodes.length
                 }
             }),
-            "incomplete": result.violations.map((test) => {
+            "incomplete": result.violations.map((test: any) => {
                 return {
                     id: test.id,
                     errors: test.nodes.length
                 }
             }),
-            "passes": result.violations.map((test) => {
+            "passes": result.violations.map((test: any) => {
                 return {
                     id: test.id,
                     elements: test.nodes.length
@@ -212,7 +216,7 @@ class AccessibilityReporter {
 
     }
 
-    static saveToSessionStorage(key, value) {
+    static saveToSessionStorage(key: string, value: object) {
         try {
             sessionStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
@@ -221,7 +225,7 @@ class AccessibilityReporter {
 
     }
 
-    static getItemFromSessionStorage(key) {
+    static getItemFromSessionStorage(key: string) {
         const item = sessionStorage.getItem(key);
         if (item) {
             return JSON.parse(item);
@@ -230,25 +234,25 @@ class AccessibilityReporter {
         }
     }
 
-    static isAbsoluteURL(urlString) {
+    static isAbsoluteURL(urlString: string) {
         return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
     }
 
-    static getHostnameFromString(url) {
+    static getHostnameFromString(url: string) {
         return new URL(url).hostname;
     }
 
-    static getPageScore(result) {
+    static getPageScore(result: any) {
         let score = 100;
         for (let index = 0; index < result.violations.length; index++) {
             const currentViolation = result.violations[index];
-            score -= AccessibilityReporter.getRuleWeight(currentViolation.id);
+            score -= AccessibilityReporterService.getRuleWeight(currentViolation.id);
         }
         return Math.max(0, score);
     }
 
     // https://developer.chrome.com/docs/lighthouse/accessibility/scoring/
-    static getRuleWeight(ruleId) {
+    static getRuleWeight(ruleId: string) {
 
         switch (ruleId) {
             case "accesskeys":
@@ -371,11 +375,11 @@ class AccessibilityReporter {
 
     }
 
-    static formatFileName(name) {
+    static formatFileName(name: string) {
         return name.replace(/\s+/g, '-').toLowerCase();
     }
 
-    static formatNumber(numberToFormat) {
+    static formatNumber(numberToFormat: number) {
         return numberToFormat.toLocaleString();
     }
 
@@ -387,8 +391,3 @@ class AccessibilityReporter {
     }
 
 }
-
-angular.module("umbraco")
-    .factory('AccessibilityReporterService', function () {
-        return AccessibilityReporter
-    });
