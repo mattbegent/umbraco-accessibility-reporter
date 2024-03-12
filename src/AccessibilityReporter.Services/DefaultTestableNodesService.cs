@@ -1,4 +1,4 @@
-﻿using AccessibilityReporter.Core.Interfaces;
+using AccessibilityReporter.Core.Interfaces;
 using AccessibilityReporter.Services.Interfaces;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
@@ -26,7 +26,7 @@ namespace AccessibilityReporter.Services
 			using (var contextReference = _contextFactory.EnsureUmbracoContext())
 			{
 				// TODO: *not this*. Perhaps use an examine search. Note - need to think about how we handle cases where ExamineX is used. 
-				// This is currenttly only suitable for small sites.
+				// This is currently only suitable for small sites.
 				// Aside: Whatever we do here will not be suitable for everyone. We should ensure this implementation can be overriden in userspace. 
 				var everything = contextReference.UmbracoContext.Content!.GetAtRoot()
 					.DescendantsOrSelf<IPublishedContent>(_variationContextAccessor);
