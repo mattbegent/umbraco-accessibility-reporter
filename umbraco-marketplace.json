@@ -21,16 +21,16 @@
   "RelatedPackages": [],
   "Screenshots": [
     {
+      "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/dashboard.png",
+      "Caption": "Dashboard showing the results of a multipage accessibility test"
+    },
+    {
       "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/results.png",
       "Caption": "Dashboard of accessibility test results for a single page"
     },
     {
       "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/detail.png",
       "Caption": "Detailed view showing accessibility issues and how to fix them"
-    },
-    {
-      "ImageUrl": "https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/screenshots/dashboard.png",
-      "Caption": "Dashboard showing the results of a multipage accessibility test"
     }
   ],
   "Tags": [
@@ -57,6 +57,10 @@
     },
     {
       "UmbracoMajorVersion": 12,
+      "PackageId": "Umbraco.Community.AccessibilityReporter"
+    },
+    {
+      "UmbracoMajorVersion": 13,
       "PackageId": "Umbraco.Community.AccessibilityReporter"
     }
   ]
