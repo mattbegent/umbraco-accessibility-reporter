@@ -12,3 +12,4 @@ Thumbs.db
 .vs
 
 node_modules
+src/AccessibilityReporter/wwwroot/App_Plugins/AccessibilityReporter
