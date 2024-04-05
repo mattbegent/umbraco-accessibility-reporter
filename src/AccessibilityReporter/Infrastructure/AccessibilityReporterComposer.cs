@@ -1,4 +1,4 @@
-﻿using AccessibilityReporter.Infrastructure.Config;
+using AccessibilityReporter.Infrastructure.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
@@ -16,8 +16,6 @@ namespace AccessibilityReporter.Infrastructure
 
 			builder.Services.AddSingleton(AccessibilityReporterSettingsFactory.Make(config ?? new AccessibilityReporterAppSettings()));
 
-			builder.AddContentApp<AccessibilityReporterFactory>();
-			builder.AddDashboard<AccessibilityReporterDashboard>();
 		}
 	}
 }
