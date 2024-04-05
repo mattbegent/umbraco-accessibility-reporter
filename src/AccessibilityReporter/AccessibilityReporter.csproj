@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<Version>4.0.0-alpha-2</Version>
 		<ContentTargetFolders>.</ContentTargetFolders>
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<Product>AccessibilityReporter</Product>
@@ -35,8 +34,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" PrivateAssets="All" />
-		<ProjectReference Include="..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj" PrivateAssets="All" />
+	  <ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" />
+	  <ProjectReference Include="..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
