@@ -7,6 +7,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
   render() {
     return html`
       <uui-box headline="Hello">
+        <ar-logo></ar-logo>
         <p>This is the Accessibility Reporter Dashboard</p>
       </uui-box>
     `;
