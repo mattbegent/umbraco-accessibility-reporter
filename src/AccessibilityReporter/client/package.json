@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc && vite build --emptyOutDir",
     "watch": "vite build --watch --emptyOutDir",
-    "openapi-ts": "openapi-ts --input https://localhost:44312/umbraco/swagger/AccessibilityReporter/swagger.json --output src/Api"
+    "openapi-ts": "openapi-ts --input http://localhost:24066/umbraco/swagger/AccessibilityReporter/swagger.json --output src/Api"
   },
   "dependencies": {
     "chart.js": "^4.4.2",
@@ -17,6 +17,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.34.5",
     "@types/xlsx": "^0.0.36",
     "@umbraco-cms/backoffice": "^14.0.0-beta002",
     "typescript": "^5.2.2",
