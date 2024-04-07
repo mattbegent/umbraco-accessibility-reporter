@@ -19,7 +19,6 @@
   "devDependencies": {
     "@types/xlsx": "^0.0.36",
     "@umbraco-cms/backoffice": "^14.0.0-beta002",
-    "openapi-typescript-codegen": "^0.28.0",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   }
