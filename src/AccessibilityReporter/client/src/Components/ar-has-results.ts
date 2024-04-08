@@ -98,7 +98,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		// 	// }, {
 		// 	// 	key: 123
 		// 	// });
-			
+
 		// 	// modalContext?.onSubmit().then((data) => {
 		// 	// 		this.value = data.key;
 		// 	// }).catch(() => undefined);
@@ -536,7 +536,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 						<div slot="headline">
 							<h2 class="c-title">Violation Severity</h2>
 						</div>
-						<ar-chart .data="${this.severityChartData}" type="pie" width="300" height="300"></ar-chart> 
+						<ar-chart .data="${this.severityChartData}" type="pie" width="300" height="300"></ar-chart>
 					</uui-box>
 
 					<uui-box ng-if="totalViolations" class="c-dashboard-grid__23">
