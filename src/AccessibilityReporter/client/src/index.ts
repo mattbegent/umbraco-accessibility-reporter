@@ -1,6 +1,8 @@
 import { UmbEntryPointOnInit } from '@umbraco-cms/backoffice/extension-api';
 import { manifests as dashboardManifests } from './Dashboards/manifests';
 import { manifests as workspaceViewManifests } from './WorkspaceView/manifests';
+import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
+import { OpenAPI } from "./Api";
 
 export * from "./Components/index";
 
@@ -13,4 +15,16 @@ export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
         ...dashboardManifests,
         ...workspaceViewManifests
     ]);
+
+     // Do the OAuth token handshake stuff
+     _host.consumeContext(UMB_AUTH_CONTEXT, (authContext) => {
+        const config = authContext.getOpenApiConfiguration();
+
+        console.log('OpenAPI Configuration', config);
+
+        OpenAPI.BASE = config.base;
+        OpenAPI.WITH_CREDENTIALS = config.withCredentials;
+        OpenAPI.CREDENTIALS = config.credentials;
+        OpenAPI.TOKEN = config.token;
+    });
 };
