@@ -18,7 +18,7 @@ export class ConfigService {
 	 * @returns unknown Success
 	 * @throws ApiError
 	 */
-	public static getUmbracoAccessibilityreporterApiV1ConfigCurrent(): CancelablePromise<Array<NodeSummary>> {
+	public static current(): CancelablePromise<Array<NodeSummary>> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/umbraco/accessibilityreporter/api/v1/config/current',
@@ -36,7 +36,7 @@ export class DirectoryService {
 	 * @returns unknown Success
 	 * @throws ApiError
 	 */
-	public static getUmbracoAccessibilityreporterApiV1Pages(): CancelablePromise<Array<NodeSummary>> {
+	public static pages(): CancelablePromise<Array<NodeSummary>> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/umbraco/accessibilityreporter/api/v1/pages',

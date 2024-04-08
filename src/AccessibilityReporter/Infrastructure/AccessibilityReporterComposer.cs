@@ -33,6 +33,12 @@ namespace AccessibilityReporter.Infrastructure
                 // https://docs.umbraco.com/umbraco-cms/v/14.latest-beta/reference/custom-swagger-api
                 // PR: https://github.com/umbraco/Umbraco-CMS/pull/15699
                 opt.OperationFilter<MyBackOfficeSecurityRequirementsOperationFilter>();
+
+                // Rather than very verbose names from generated TS client, we simplify them a bit
+                // https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/README.md#operation-filters
+                // https://docs.umbraco.com/umbraco-cms/reference/api-versioning-and-openapi#adding-custom-operation-ids
+                // https://g-mariano.medium.com/generate-readable-apis-clients-by-setting-unique-and-meaningful-operationid-in-swagger-63d404f32ff8
+                opt.CustomOperationIds(apiDesc => $"{apiDesc.ActionDescriptor.RouteValues["action"]}");
             });
 
 
