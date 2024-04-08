@@ -6,6 +6,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
   render() {
     return html`
+      <umb-debug visible></umb-debug>
       <uui-box headline="Hello">
         <ar-logo></ar-logo>
         <p>This is the Accessibility Reporter Workspace view</p>

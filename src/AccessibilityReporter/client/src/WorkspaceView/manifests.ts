@@ -1,4 +1,5 @@
 import { ManifestWorkspaceView } from "@umbraco-cms/backoffice/extension-registry";
+import { TemplateSetConditionConfig } from "../Conditions/accessibiltyreporter.condition.templateset.js";
 
 const workspaceView: ManifestWorkspaceView = {
     alias: 'accessibilityreporter.workspaceview',
@@ -16,6 +17,10 @@ const workspaceView: ManifestWorkspaceView = {
             alias: 'Umb.Condition.WorkspaceAlias',
             match: 'Umb.Workspace.Document',
         },
+        {
+            alias: 'AccessibilityReporter.Condition.TemplateSet',
+            hasTemplateSet: true
+        } as TemplateSetConditionConfig
     ],
 }
 export const manifests = [workspaceView];
