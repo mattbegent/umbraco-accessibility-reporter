@@ -42,7 +42,9 @@ export class ARChartElement extends UmbElementMixin(LitElement) {
 		let chartSettings: any = {
 			type: this.type,
 			data: this.data,
-			plugins: [ChartDataLabels]
+			plugins: [ChartDataLabels],
+			responsive: true,
+    		maintainAspectRatio: false
 		};
 
 		if (this.type === 'pie') {
@@ -121,7 +123,7 @@ export class ARChartElement extends UmbElementMixin(LitElement) {
 
 	render() {
 		return html`
-		<div class="chart-container" style="position: relative; height: ${this.height}px; width: ${this.width}px; margin: 0 auto;">
+		<div class="chart-container" style="position: relative; max-height: ${this.height}px; max-width: ${this.width}px; margin: 0 auto;">
             <canvas></canvas>
         </div>
 		`;
