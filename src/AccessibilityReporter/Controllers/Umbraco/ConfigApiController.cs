@@ -1,8 +1,6 @@
 using AccessibilityReporter.Core.Interfaces;
-using AccessibilityReporter.Core.Models;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 
 namespace AccessibilityReporter.Controllers.Umbraco
 {
@@ -22,7 +20,7 @@ namespace AccessibilityReporter.Controllers.Umbraco
         /// </summary>
         /// <returns code="200">The Accessibility Reporter Settings</returns>
         [HttpGet("config/current")]
-        [ProducesResponseType<IEnumerable<NodeSummary>>(200)]
+        [ProducesResponseType<IAccessibilityReporterSettings>(200)]
         public IAccessibilityReporterSettings Current()
         {
             return _settings;
