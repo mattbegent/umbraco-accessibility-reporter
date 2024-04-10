@@ -2,7 +2,7 @@ import { LitElement, css, html, customElement, state, ifDefined } from "@umbraco
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from '@umbraco-cms/backoffice/current-user';
 import { tryExecuteAndNotify } from '@umbraco-cms/backoffice/resources';
-import { ConfigService, DirectoryService } from '../Api';
+import { AccessibilityReporterAppSettings, ConfigService, DirectoryService } from '../Api';
 
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 
@@ -202,7 +202,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		return data;
 	}
 
-	private async getConfig(): Promise<IConfig[] | undefined> {
+	private async getConfig(): Promise<AccessibilityReporterAppSettings | undefined> {
 		const { data, error } = await tryExecuteAndNotify(this, ConfigService.current())
 		if (error) {
 			console.error(error);

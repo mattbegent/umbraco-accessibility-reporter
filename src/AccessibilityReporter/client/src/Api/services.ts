@@ -1,17 +1,15 @@
-import IConfig from '../Interface/IConfig';
-import ITestPage from '../Interface/ITestPage';
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-//import type { NodeSummary } from './models';
+import type { AccessibilityReporterAppSettings,NodeSummary } from './models';
 
 export type ConfigData = {
-
+        
     }
 
 export type DirectoryData = {
-
+        
     }
 
 export class ConfigService {
@@ -20,7 +18,7 @@ export class ConfigService {
 	 * @returns unknown Success
 	 * @throws ApiError
 	 */
-	public static current(): CancelablePromise<Array<IConfig>> {
+	public static current(): CancelablePromise<AccessibilityReporterAppSettings> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/umbraco/accessibilityreporter/api/v1/config/current',
@@ -38,7 +36,7 @@ export class DirectoryService {
 	 * @returns unknown Success
 	 * @throws ApiError
 	 */
-	public static pages(): CancelablePromise<Array<ITestPage>> {
+	public static pages(): CancelablePromise<Array<NodeSummary>> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/umbraco/accessibilityreporter/api/v1/pages',

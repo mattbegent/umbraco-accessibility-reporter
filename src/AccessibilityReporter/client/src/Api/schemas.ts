@@ -1,3 +1,50 @@
+export const $AccessibilityReporterAppSettings = {
+	properties: {
+		apiUrl: {
+	type: 'string',
+	isRequired: true,
+},
+		testBaseUrl: {
+	type: 'string',
+	isRequired: true,
+},
+		runTestsAutomatically: {
+	type: 'boolean',
+	isRequired: true,
+},
+		includeIfNoTemplate: {
+	type: 'boolean',
+	isRequired: true,
+},
+		maxPages: {
+	type: 'number',
+	isRequired: true,
+	format: 'int32',
+},
+		userGroups: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isRequired: true,
+},
+		testsToRun: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isRequired: true,
+},
+		excludedDocTypes: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $NodeSummary = {
 	properties: {
 		guid: {
