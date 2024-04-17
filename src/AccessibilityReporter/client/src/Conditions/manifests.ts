@@ -4,14 +4,14 @@ import { UserGroupHasAccesstCondition } from "./accessibiltyreporter.condition.u
 
 const templateSet: ManifestCondition = {
     type: "condition",
-    name: "Accessbility Reporter - Template Set Condition",
+    name: "Accessibility Reporter - Template Set Condition",
     alias: "AccessibilityReporter.Condition.TemplateSet",
     api: TemplateSetCondition    
 };
 
 const userGroupHasAccess: ManifestCondition = {
     type: "condition",
-    name: "Accessbility Reporter - User Group Has Access Condition",
+    name: "Accessibility Reporter - User Group Has Access Condition",
     alias: "AccessibilityReporter.Condition.UserGroupHasAccess",
     api: UserGroupHasAccesstCondition
 }

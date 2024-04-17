@@ -2,6 +2,7 @@ import { UmbEntryPointOnInit } from '@umbraco-cms/backoffice/extension-api';
 import { manifests as conditionManifests } from './Conditions/manifests';
 import { manifests as dashboardManifests } from './Dashboards/manifests';
 import { manifests as workspaceViewManifests } from './WorkspaceView/manifests';
+import { manifests as modalManifests } from './Modals/manifests';
 import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
 import { OpenAPI } from "./Api";
 
@@ -15,7 +16,8 @@ export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
     extensionRegistry.registerMany([
         ...conditionManifests,
         ...dashboardManifests,
-        ...workspaceViewManifests
+        ...workspaceViewManifests,
+        ...modalManifests
     ]);
 
      // Do the OAuth token handshake stuff

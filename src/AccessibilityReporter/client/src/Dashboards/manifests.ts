@@ -1,7 +1,7 @@
 import { ManifestDashboard } from "@umbraco-cms/backoffice/extension-registry";
 
 const dashboard: ManifestDashboard = {
-    alias: 'accessibilityreporter.dashboard',
+    alias: 'AccessibilityReporter.Dashboard',
     name: 'Accessibility Reporter Dashboard',
     type: 'dashboard',
     weight: 400,

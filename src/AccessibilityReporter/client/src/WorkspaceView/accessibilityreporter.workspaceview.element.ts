@@ -10,6 +10,8 @@ import { MediaUrlInfoModel } from "@umbraco-cms/backoffice/external/backend-api"
 import { generalStyles } from "../Styles/general";
 import AccessibilityReporterAPIService from "../Services/accessibility-reporter-api.service";
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
+import { UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
+import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibilityreporter.detail.modal.token";
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -55,6 +57,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
 
+	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
+
 	constructor() {
 		super();
 		this.pageState = PageState.ManuallyRun;
@@ -77,6 +81,10 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this._workspaceContext = context;
 			this._observeContent();
 		});
+
+        this.consumeContext(UMB_MODAL_MANAGER_CONTEXT, (context) => {
+            this._modalManagerContext = context;
+        });
 
 		this.config = await this.getConfig();
 
@@ -215,19 +223,25 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		this.incompleteOpen = !this.incompleteOpen;
 	};
 
-	private openDetail(result: any) {
-		alert('TODO: Open detail modal');
-		// editorService.open({
-		// 	view: "/App_Plugins/AccessibilityReporter/accessibility-reporter-detail.html",
-		// 	size: "medium",
-		// 	result: result,
-		// 	submit: function (value) {
-		// 		editorService.close();
-		// 	},
-		// 	close: function () {
-		// 		editorService.close();
-		// 	}
-		// });
+	private async openDetail(result: any) {
+
+		console.log('data to pass to modal', result);
+
+		const modal = this._modalManagerContext?.open(this, ACCESSIBILITY_REPORTER_MODAL_DETAIL, {
+			data: {
+				result: result
+			}
+		});
+
+        await modal?.onSubmit()
+			.then((submittedData) => {
+				alert(submittedData.thing);
+			})
+			.catch((_rejected) => {
+            	// User clicked close/cancel and no data was submitted
+            	console.log('rejected', _rejected)
+            	return;
+        	});
 	};
 
 	private failedTitle() {

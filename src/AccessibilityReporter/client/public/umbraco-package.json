@@ -6,7 +6,7 @@
     "extensions": [
         {
             "name": "Accessibility Reporter EntryPoint",
-            "alias": "accessibilityreporter.entrypoint",
+            "alias": "AccessibilityReporter.EntryPoint",
             "type": "entryPoint",
             "js": "/App_Plugins/AccessibilityReporter/accessibility-reporter.js"
         }
