@@ -21,7 +21,9 @@ const workspaceView: ManifestWorkspaceView = {
             alias: 'AccessibilityReporter.Condition.TemplateSet',
             hasTemplateSet: true
         } as TemplateSetConditionConfig,
-        
+        // {
+        //     alias: 'AccessibilityReporter.Condition.UserGroupHasAccess' // This has no config as we check against user config calling the C# API
+        // }
     ],
 }
 export const manifests = [workspaceView];

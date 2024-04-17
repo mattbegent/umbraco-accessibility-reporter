@@ -14,6 +14,6 @@ export interface DetailModalValue {
 export const ACCESSIBILITY_REPORTER_MODAL_DETAIL = new UmbModalToken<DetailModalData, DetailModalValue>('AccessibilityReporter.Modal.Detail', {
     modal: {
         type: 'sidebar',
-        size: 'medium' // full, large, medium, small
+        size: 'full' // full, large, medium, small
     }
 });
