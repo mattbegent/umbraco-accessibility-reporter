@@ -33,7 +33,7 @@
         <None Include="appsettings-schema.AccessibilityReporter.json" PackagePath="\" />
         <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <!-- Dont include the client folder as part of packaging nuget build -->
         <Content Remove="Client\**" />
@@ -62,8 +62,8 @@
 
     <!-- Nuget References -->
     <ItemGroup>
-        <PackageReference Include="Umbraco.Cms.Api.Management" Version="14.0.0-beta002" />
-        <PackageReference Include="Umbraco.Cms.Web.Website" Version="14.0.0-beta002" />
+        <PackageReference Include="Umbraco.Cms.Api.Management" Version="14.0.0-rc1" />
+        <PackageReference Include="Umbraco.Cms.Web.Website" Version="14.0.0-rc1" />
     </ItemGroup>
 
 </Project>

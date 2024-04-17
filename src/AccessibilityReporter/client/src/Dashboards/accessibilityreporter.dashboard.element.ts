@@ -13,7 +13,6 @@ import "../Components/ar-running-tests";
 import "../Components/ar-has-results";
 
 import PageState from "../Enums/page-state";
-import IConfig from "../Interface/IConfig";
 import IResults from "../Interface/IResults";
 import ITestPage from "../Interface/ITestPage";
 
@@ -42,7 +41,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	private testPages: ITestPage[];
 
 	@state()
-	config: IConfig | undefined;
+	config: AccessibilityReporterAppSettings | undefined;
 
 	@state()
 	currentUser: UmbCurrentUserModel | undefined;
@@ -65,7 +64,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			);
 		});
 
-		this.config = await this.getConfig() as unknown as IConfig;
+		this.config = await this.getConfig();
 
 		/* TODO: Temp */
 		/*@ts-ignore*/
@@ -239,12 +238,12 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			`;
 		}
 
-		if (this.pageState === PageState.HasResults && this.results) {
+		if (this.pageState === PageState.HasResults && this.results && this.config) {
 			return html`
 				<ar-has-results
 				.onRunTests=${this.runTests.bind(this)}
 				.results=${this.results}
-				.config=${this.config as IConfig}
+				.config=${this.config}
 				></ar-has-results>
 			`;
 		}

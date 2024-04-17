@@ -1,8 +1,8 @@
-import IConfig from "../Interface/IConfig";
+import { AccessibilityReporterAppSettings } from "../Api";
 
 export default class AccessibilityReporterAPIService {
 
-	static async getIssues(config: IConfig, testUrl: string, language: string) {
+	static async getIssues(config: AccessibilityReporterAppSettings, testUrl: string, language: string) {
 		let requestUrl = new URL(config.apiUrl);
 		requestUrl.searchParams.append("url", testUrl);
 		if (language) {

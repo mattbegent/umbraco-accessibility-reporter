@@ -10,11 +10,11 @@ import './ar-chart';
 import './ar-score';
 
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
-import IConfig from "../Interface/IConfig";
 import IResults from "../Interface/IResults";
 
 import { generalStyles } from "../Styles/general";
 import {UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
+import { AccessibilityReporterAppSettings } from "../Api";
 
 @customElement("ar-has-results")
 export class ARHasResultsElement extends UmbElementMixin(LitElement) {
@@ -26,7 +26,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	public results: IResults | undefined;
 
 	@property({attribute: false})
-	public config: IConfig;
+	public config: AccessibilityReporterAppSettings;
 
 	@state()
 	private pageSize = 5;

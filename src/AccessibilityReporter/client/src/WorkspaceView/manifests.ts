@@ -10,7 +10,7 @@ const workspaceView: ManifestWorkspaceView = {
     meta: {
         icon: 'icon-people',
         label: 'Accessibility',
-        pathname: 'accessibility-reporter'
+        pathname: 'accessibility-reporter',
     },
     conditions: [
         {
