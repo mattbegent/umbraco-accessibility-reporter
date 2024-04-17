@@ -20,7 +20,10 @@ const workspaceView: ManifestWorkspaceView = {
         {
             alias: 'AccessibilityReporter.Condition.TemplateSet',
             hasTemplateSet: true
-        } as TemplateSetConditionConfig
+        } as TemplateSetConditionConfig,
+        {
+            alias: 'AccessibilityReporter.Condition.UserGroupHasAccess'
+        }
     ],
 }
 export const manifests = [workspaceView];
