@@ -12,6 +12,8 @@ import AccessibilityReporterAPIService from "../Services/accessibility-reporter-
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 import { UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
 import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibilityreporter.detail.modal.token";
+import { utils, writeFile } from "xlsx";
+import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -59,6 +61,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
+	private _notificationContext?: UmbNotificationContext;
+
 	constructor() {
 		super();
 		this.pageState = PageState.ManuallyRun;
@@ -86,6 +90,10 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
             this._modalManagerContext = context;
         });
 
+		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
+			this._notificationContext = _instance;
+		});
+
 		this.config = await this.getConfig();
 
 		/* TODO: Temp */
@@ -99,6 +107,10 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		if (!this.config?.testBaseUrl) {
 			this.config.testBaseUrl = this.getFallbackBaseUrl();
+		}
+
+		if(this.config.runTestsAutomatically) {
+			this.runTests(false);
 		}
 
 	}
@@ -156,10 +168,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	private async runTests(showTestRunning: boolean): Promise<void> {
 
-		console.log(showTestRunning);
-
 		this.pageState = PageState.Loading;
-		this.pageName = "Homepage"; // TODO: Get page name
 
 		const pathToTest = this._urls?.[0].url || "/"; // TODO: Get path to test
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
@@ -235,7 +244,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
         await modal?.onSubmit()
 			.then((submittedData) => {
-				alert(submittedData.thing);
+				//alert(submittedData.thing);
 			})
 			.catch((_rejected) => {
             	// User clicked close/cancel and no data was submitted
@@ -273,45 +282,57 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	};
 
 
+	private formattedResultsForExport(results: any) {
+		let formattedRows = [];
+		for (let index = 0; index < results.length; index++) {
+			const currentResult = results[index];
+			formattedRows.push({
+				impact: currentResult.impact ? AccessibilityReporterService.upperCaseFirstLetter(currentResult.impact) : '',
+				title: currentResult.help,
+				description: currentResult.description,
+				standard: AccessibilityReporterService.mapTagsToStandard(currentResult.tags).join(', '),
+				errors: currentResult.nodes.length
+			});
+		}
+		return formattedRows;
+	}
+
 	private exportResults() {
 
-		alert('TODO: Export results');
+		try {
 
-		// try {
+			const failedRows = this.formattedResultsForExport(this.results.violations);
+			const incompleteRows = this.formattedResultsForExport(this.results.incomplete);
+			const passedRows = this.formattedResultsForExport(this.results.passes);
 
-		// 	const failedRows = formattedResultsForExport($scope.results.violations);
-		// 	const incompleteRows = formattedResultsForExport($scope.results.incomplete);
-		// 	const passedRows = formattedResultsForExport($scope.results.passes);
+			const failedWorksheet = utils.json_to_sheet(failedRows);
+			const incompleteWorksheet = utils.json_to_sheet(incompleteRows);
+			const passedWorksheet = utils.json_to_sheet(passedRows);
+			const workbook = utils.book_new();
+			utils.book_append_sheet(workbook, failedWorksheet, "Failed Tests");
+			utils.book_append_sheet(workbook, incompleteWorksheet, "Incomplete Tests");
+			utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
 
-		// 	const failedWorksheet = XLSX.utils.json_to_sheet(failedRows);
-		// 	const incompleteWorksheet = XLSX.utils.json_to_sheet(incompleteRows);
-		// 	const passedWorksheet = XLSX.utils.json_to_sheet(passedRows);
-		// 	const workbook = XLSX.utils.book_new();
-		// 	XLSX.utils.book_append_sheet(workbook, failedWorksheet, "Failed Tests");
-		// 	XLSX.utils.book_append_sheet(workbook, incompleteWorksheet, "Incomplete Tests");
-		// 	XLSX.utils.book_append_sheet(workbook, passedWorksheet, "Passed Tests");
+			const headers = [["Impact", "Title", "Description", "Accessibility Standard", "Violations"]];
+			const passedHeaders = [["Impact", "Title", "Description", "Accessibility Standard", "Elements"]];
+			utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
+			utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });
+			utils.sheet_add_aoa(passedWorksheet, passedHeaders, { origin: "A1" });
 
-		// 	const headers = [["Impact", "Title", "Description", "Accessibility Standard", "Violations"]];
-		// 	const passedHeaders = [["Impact", "Title", "Description", "Accessibility Standard", "Elements"]];
-		// 	XLSX.utils.sheet_add_aoa(failedWorksheet, headers, { origin: "A1" });
-		// 	XLSX.utils.sheet_add_aoa(incompleteWorksheet, headers, { origin: "A1" });
-		// 	XLSX.utils.sheet_add_aoa(passedWorksheet, passedHeaders, { origin: "A1" });
+			const failedTitleWidth = failedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
+			const incompleteTitleWidth = incompleteRows.reduce((w, r) => Math.max(w, r.title.length), 40);
+			const passedTitleWidth = passedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
+			failedWorksheet["!cols"] = [{ width: 10 }, { width: failedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
+			incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
+			passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 
-		// 	const failedTitleWidth = failedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
-		// 	const incompleteTitleWidth = incompleteRows.reduce((w, r) => Math.max(w, r.title.length), 40);
-		// 	const passedTitleWidth = passedRows.reduce((w, r) => Math.max(w, r.title.length), 40);
-		// 	failedWorksheet["!cols"] = [{ width: 10 }, { width: failedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
-		// 	incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
-		// 	passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
+			writeFile(workbook,
+				AccessibilityReporterService.formatFileName(`accessibility-report-${this.pageName}-${format(this.results.timestamp, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
 
-		// 	XLSX.writeFile(workbook,
-		// 		AccessibilityReporterService.formatFileName(`accessibility-report-${$scope.pageName}-${moment($scope.results.timestamp)
-		// 			.format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
-
-		// } catch(error) {
-		// 	console.error(error);
-		// 	notificationsService.error("Failed", "An error occurred exporting the report. Please try again later.");
-		// }
+		} catch(error) {
+			console.error(error);
+			this._notificationContext?.peek('danger', { data: { message: 'An error occurred exporting the report. Please try again later.' } });
+		}
 
 	};
 

@@ -13,7 +13,7 @@ import AccessibilityReporterService from "../Services/accessibility-reporter.ser
 import IResults from "../Interface/IResults";
 
 import { generalStyles } from "../Styles/general";
-import {UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
+import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import { AccessibilityReporterAppSettings } from "../Api";
 
 @customElement("ar-has-results")
@@ -575,7 +575,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 											</span>
 										</span>
 									</button> -->
-									<a href="/section/content/workspace/document/edit/${page.guid}" class="c-detail-button c-detail-button--active">
+									<a href="/section/content/workspace/document/edit/${page.guid}/invariant/view/accessibility-reporter" class="c-detail-button c-detail-button--active">
 										<span class="c-detail-button__group">
 											<uui-icon-registry-essential>
 												<uui-icon name="see"></uui-icon>

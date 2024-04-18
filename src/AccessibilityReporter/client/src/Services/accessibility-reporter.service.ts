@@ -11,7 +11,7 @@ export default class AccessibilityReporterService {
                 const testRequest = new Request(testUrl);
                 await fetch(testRequest);
                 const iframeId = "arTestIframe" + AccessibilityReporterService.randomUUID();
-                const container = rootElement.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn') as HTMLElement;
+                const container = showWhileRunning ? rootElement.getElementById('dashboard-ar-tests') : rootElement as HTMLElement;
                 let testIframe = document.createElement("iframe") as HTMLIFrameElement;
 
                 function cleanUpIframe() {
