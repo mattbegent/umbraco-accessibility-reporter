@@ -9,6 +9,7 @@ import AccessibilityReporterService from "../Services/accessibility-reporter.ser
 import "../Components/ar-chart";
 import "../Components/ar-score";
 import "../Components/ar-pre-test";
+import "../Components/ar-errored";
 import "../Components/ar-running-tests";
 import "../Components/ar-has-results";
 
@@ -138,9 +139,13 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 					break;
 				}
 			} catch (error) {
-				console.error(error);
 				continue;
 			}
+		}
+
+		if(!testResults.length) {
+			this.pageState = PageState.Errored;
+			return;
 		}
 
 
