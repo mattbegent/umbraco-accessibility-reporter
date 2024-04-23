@@ -2,7 +2,7 @@ import { LitElement, css, html, customElement, state, ifDefined } from "@umbraco
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from '@umbraco-cms/backoffice/current-user';
 import { tryExecuteAndNotify } from '@umbraco-cms/backoffice/resources';
-import { AccessibilityReporterAppSettings, ConfigService, DirectoryService } from '../Api';
+import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummary } from '../Api';
 
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 
@@ -14,7 +14,6 @@ import "../Components/ar-has-results";
 
 import PageState from "../Enums/page-state";
 import IResults from "../Interface/IResults";
-import ITestPage from "../Interface/ITestPage";
 
 import { generalStyles } from "../Styles/general";
 import IPageResult from "../Interface/IPageResult";
@@ -38,7 +37,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	private currentTestNumber: number | undefined;
 
 	@state()
-	private testPages: ITestPage[];
+	private testPages: NodeSummary[];
 
 	@state()
 	config: AccessibilityReporterAppSettings | undefined;
@@ -66,7 +65,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 
 		this.config = await this.getConfig();
 
-		/* TODO: Temp */
+		/* Expose config to child iframe for tests */
 		/*@ts-ignore*/
 		window.ACCESSIBILITY_REPORTER_CONFIG = this.config;
 
@@ -186,7 +185,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		this.pageState = PageState.PreTest;
 	}
 
-	private async getTestPages(): Promise<ITestPage[] | undefined> {
+	private async getTestPages(): Promise<NodeSummary[] | undefined> {
 		const { data, error } = await tryExecuteAndNotify(this, DirectoryService.pages())
 		if (error) {
 			console.error(error);

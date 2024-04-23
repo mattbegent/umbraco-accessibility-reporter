@@ -9,18 +9,10 @@ export class DetailModalElement extends UmbModalBaseElement<DetailModalData, Det
 {
     constructor() {
         super();
-        // If any contexts needed consume them in ctor
     }
 
     connectedCallback() {
         super.connectedCallback();
-    }
-
-    private submitSomething() {
-    //     this.modalContext?.setValue({
-    //         thing: 'What up Bege'
-    //     });
-    //     this.modalContext?.submit();
     }
 
     private handleClose() {
@@ -39,10 +31,6 @@ export class DetailModalElement extends UmbModalBaseElement<DetailModalData, Det
 
         return html`
             <umb-body-layout headline="${ifDefined(this.data?.result.help)}">
-
-                <!-- <uui-box headline="Data">
-                    <pre>${JSON.stringify(this.data, null, 2)}</pre>
-                </uui-box> -->
 
 				${this.data?.result.nodes.map((issue, index) => html`
 				<uui-box>
@@ -75,7 +63,6 @@ export class DetailModalElement extends UmbModalBaseElement<DetailModalData, Det
 				`)}
 
                 <div slot="actions">
-                    <!-- <uui-button label="Submit" look="primary" @click="${this.submitSomething}">Submit</uui-button> -->
                     <uui-button label="Close" @click="${this.handleClose}">Close</uui-button>
                 </div>
             </umb-body-layout>

@@ -4,7 +4,7 @@ import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 @customElement("ar-score")
 export class ARScoreElement extends UmbElementMixin(LitElement) {
 
-	@property()
+	@property({type: Number})
 	score: number;
 
 	@property({ type: Boolean })

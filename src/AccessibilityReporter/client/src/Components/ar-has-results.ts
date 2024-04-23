@@ -1,9 +1,8 @@
 import { LitElement, html, customElement, property, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
-//import { UmbModalManagerContext, UMB_MODAL_MANAGER_CONTEXT_TOKEN, UMB_DATA_TYPE_PICKER_MODAL } from '@umbraco-cms/backoffice/modal';
 
-import * as XLSX from 'xlsx';
-import moment from "moment";
+import { utils, writeFile } from "xlsx";
+import { format } from 'date-fns'
 
 import './ar-logo';
 import './ar-chart';
@@ -22,10 +21,10 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@property()
 	onRunTests = () => { };
 
-	@property({attribute: false})
+	@property({ attribute: false })
 	public results: IResults | undefined;
 
-	@property({attribute: false})
+	@property({ attribute: false })
 	public config: AccessibilityReporterAppSettings;
 
 	@state()
@@ -82,28 +81,10 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private reportSummaryText: string = "";
 
-	//#modalManagerContext?: UmbModalManagerContext;
-
 	private _notificationContext?: UmbNotificationContext;
 
 	constructor() {
 		super();
-		// this.consumeContext(UMB_MODAL_MANAGER_CONTEXT_TOKEN, (instance) => {
-		// 	this.#modalManagerContext = instance;
-		// 	// modalManagerContext is now ready to be used.
-
-		// 	// const modalContext = this._modalContext?.open({
-		// 	// 	type: 'sidebar',
-		// 	// 	size: 'small'
-		// 	// }, {
-		// 	// 	key: 123
-		// 	// });
-
-		// 	// modalContext?.onSubmit().then((data) => {
-		// 	// 		this.value = data.key;
-		// 	// }).catch(() => undefined);
-		// });
-
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
 		});
@@ -115,15 +96,12 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	private formatTime(dateToFormat: Date) {
-		return moment(dateToFormat).format(
-			"HH:mm:ss"
-		);
+		return format(dateToFormat, "HH:mm:ss");
 	}
 
 	private setStats(testResults: any) {
 		let totalErrors = 0;
 		let allErrors: any = [];
-
 		let totalViolations = 0;
 		let totalAViolations = 0;
 		let totalAAViolations = 0;
@@ -360,23 +338,6 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		return false;;
 	}
 
-	private openDetail(id: any) {
-
-		//const modalContext = this.#modalManagerContext?.open(UMB_DATA_TYPE_PICKER_MODAL);
-		console.log(id);
-
-		// editorService.contentEditor({
-		// 	id: id,
-		// 	submit: function (model) {
-		// 		editorService.close();
-		// 	},
-		// 	close: function () {
-		// 		editorService.close();
-		// 	}
-		// });
-
-	}
-
 	private getDataForPagination(array: any, page_size: any, page_number: any) {
 		return array.slice((page_number - 1) * page_size, page_number * page_size);
 	}
@@ -384,7 +345,6 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	private paginateResults() {
 		this.pagination = this.paginate(this.pagesTestResults.length, this.currentPage, this.pageSize);
 		this.pagesTestResultsCurrentPage = this.getDataForPagination(this.pagesTestResults, this.pageSize, this.currentPage);
-		console.log(this.pagesTestResultsCurrentPage);
 	}
 
 	private changePage(pageNumber: number) {
@@ -429,19 +389,17 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		try {
 
 			const resultsFormatted = this.formatPageResultsForExport();
-			const resultsWorksheet = XLSX.utils.aoa_to_sheet(resultsFormatted);
+			const resultsWorksheet = utils.aoa_to_sheet(resultsFormatted);
 
-			const workbook = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(workbook, resultsWorksheet, "Results");
+			const workbook = utils.book_new();
+			utils.book_append_sheet(workbook, resultsWorksheet, "Results");
 
 			const nameWidth = this.pagesTestResults.reduce((w: any, r: any) => Math.max(w, r.name.length), 40);
 			const urlWidth = this.pagesTestResults.reduce((w: any, r: any) => Math.max(w, r.url.length), 40);
 			resultsWorksheet["!cols"] = [{ width: nameWidth }, { width: urlWidth }, { width: 12 }, { width: 12 }];
 
-			// TODO: move away from moment
-			XLSX.writeFile(workbook,
-				AccessibilityReporterService.formatFileName(`website-accessibility-report-${moment(this.results.endTime)
-					.format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
+			writeFile(workbook,
+				AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
 
 		} catch (error) {
 			console.error(error);
@@ -463,7 +421,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							<p>${unsafeHTML(this.reportSummaryText)}</p>
 							<div class="c-summary__container">
 								${this.showViolationsForLevel('a') ?
-				html`
+								html`
 								<div class="c-summary ${this.totalAViolations ? "c-summary--error" : ""} ${!this.totalAViolations ? "c-summary--info" : ""}">
 									<div class="c-summary__circle">
 										${AccessibilityReporterService.formatNumber(this.totalAViolations || 0)}
@@ -472,7 +430,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 								</div>
 								` : null}
 								${this.showViolationsForLevel('aa') ?
-				html`
+								html`
 									<div class="c-summary ${this.totalAAViolations ? "c-summary--error" : ""} ${!this.totalAAViolations ? "c-summary--info" : ""}">
 										<div class="c-summary__circle">
 											${AccessibilityReporterService.formatNumber(this.totalAAViolations || 0)}
@@ -481,7 +439,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 									</div>
 								` : null}
 								${this.showViolationsForLevel('aaa') ?
-				html`
+								html`
 									<div class="c-summary ${this.totalAAAViolations ? "c-summary--error" : ""} ${!this.totalAAAViolations ? "c-summary--info" : ""}">
 										<div class="c-summary__circle">
 											${AccessibilityReporterService.formatNumber(this.totalAAAViolations || 0)}
@@ -499,8 +457,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="Rerun full website accessibility tests" class="c-summary__button">Rerun tests</uui-button>
 							<uui-button look="secondary" color="default" @click="${this.exportResults}" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export results</uui-button>
 							${this.results ?
-				html`<span class="c-summary__time">Started at <strong>${this.formatTime(this.results.startTime)}</strong> and ended at <strong>${this.formatTime(this.results.endTime)}</strong></span>`
-				: null}
+							html`<span class="c-summary__time">Started at <strong>${this.formatTime(this.results.startTime)}</strong> and ended at <strong>${this.formatTime(this.results.endTime)}</strong></span>`
+							: null}
 						</div>
 					</uui-box>
 
@@ -559,22 +517,12 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 								<uui-table-head-cell>Action</uui-table-head-cell>
 							</uui-table-head>
 							${this.pagesTestResultsCurrentPage.map((page: any) =>
-					html`<uui-table-row>
+							html`<uui-table-row>
 								<uui-table-cell>${page.name}</uui-table-cell>
 								<uui-table-cell><a href="${page.url}" target="_blank">${page.url} <span class="sr-only">Opens in a new window</span></a></uui-table-cell>
 								<uui-table-cell>${page.score}</uui-table-cell>
 								<uui-table-cell>${page.violations}</uui-table-cell>
 								<uui-table-cell>
-									<!-- <button type="button" class="c-detail-button c-detail-button--active" @click="${this.openDetail.bind(page.id)}">
-										<span class="c-detail-button__group">
-											<uui-icon-registry-essential>
-												<uui-icon name="see"></uui-icon>
-											</uui-icon-registry-essential>
-											<span class="c-detail-button__text">
-												View Page
-											</span>
-										</span>
-									</button> -->
 									<a href="/section/content/workspace/document/edit/${page.guid}/invariant/view/accessibility-reporter" class="c-detail-button c-detail-button--active">
 										<span class="c-detail-button__group">
 											<uui-icon-registry-essential>
@@ -587,7 +535,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 									</a>
 								</uui-table-cell>
 							</uui-table-row>`
-				)}
+							)}
 						</uui-table>
 						<umb-pagination
 							page-number="${this.pagination.currentPage}"

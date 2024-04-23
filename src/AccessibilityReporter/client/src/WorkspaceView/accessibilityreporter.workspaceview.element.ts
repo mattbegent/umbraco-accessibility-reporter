@@ -14,6 +14,7 @@ import { UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
 import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibilityreporter.detail.modal.token";
 import { utils, writeFile } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
+import '../Components/ar-score';
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -96,7 +97,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.config = await this.getConfig();
 
-		/* TODO: Temp */
+		/* Expose config to child iframe for tests */
 		/*@ts-ignore*/
 		window.ACCESSIBILITY_REPORTER_CONFIG = this.config;
 
@@ -139,13 +140,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	}
 
 	private _observeContent() {
-		console.log(this._workspaceContext);
 		if (!this._workspaceContext) return;
 
 		this.pageName = this._workspaceContext.getName() as string;
 
 		this.observe((this._workspaceContext as UmbDocumentWorkspaceContext).urls, (urls) => {
-			console.log(urls);
 			this._urls = urls;
 		});
 
@@ -170,7 +169,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.pageState = PageState.Loading;
 
-		const pathToTest = this._urls?.[0].url || "/"; // TODO: Get path to test
+		const pathToTest = this._urls?.[0].url || "/";
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
 
 		try {
@@ -180,9 +179,6 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.pageState = PageState.Loaded;
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
-			console.log(this.results);
-			console.log(this.score);
-
 		} catch (error) {
 			this.pageState = PageState.Errored;
 			console.error(error);
@@ -233,24 +229,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	};
 
 	private async openDetail(result: any) {
-
-		console.log('data to pass to modal', result);
-
 		const modal = this._modalManagerContext?.open(this, ACCESSIBILITY_REPORTER_MODAL_DETAIL, {
 			data: {
 				result: result
 			}
 		});
-
-        await modal?.onSubmit()
-			.then((submittedData) => {
-				//alert(submittedData.thing);
-			})
-			.catch((_rejected) => {
-            	// User clicked close/cancel and no data was submitted
-            	console.log('rejected', _rejected)
-            	return;
-        	});
 	};
 
 	private failedTitle() {
@@ -442,13 +425,13 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 							<h2 class="c-accordion-header__title c-title">
 								${this.failedTitle()}
 								${this.results.violations.length ?
-					html`
+								html`
 									${this.violationsOpen ?
-							html`<uui-symbol-expand open></uui-symbol-expand>`
-							: html`<uui-symbol-expand></uui-symbol-expand>`
-						}
-									`
-					: null}
+										html`<uui-symbol-expand open></uui-symbol-expand>`
+										: html`<uui-symbol-expand></uui-symbol-expand>`
+									}
+												`
+								: null}
 							</h2>
 						</div>
 

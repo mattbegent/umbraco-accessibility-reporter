@@ -6,12 +6,10 @@ import { manifests as modalManifests } from './Modals/manifests';
 import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
 import { OpenAPI } from "./Api";
 
-export * from "./Components/index";
-
 // load up the manifests here
 export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
-    
-    // We can register many manifests at once via code 
+
+    // We can register many manifests at once via code
     // as opposed to a long umbraco-package.json file
     extensionRegistry.registerMany([
         ...conditionManifests,

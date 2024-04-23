@@ -177,7 +177,6 @@ export default class AccessibilityReporterService {
     }
 
     static getRule(ruleId: string) {
-        // TODO: Include axe???
         /*@ts-ignore*/
         const allRules = axe.getRules();
         return allRules.find((rule: any) => rule.ruleId = ruleId);
