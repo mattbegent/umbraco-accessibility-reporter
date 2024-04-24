@@ -18,9 +18,8 @@ const workspaceView: ManifestWorkspaceView = {
             match: 'Umb.Workspace.Document',
         },
         {
-            alias: 'AccessibilityReporter.Condition.TemplateSet',
-            hasTemplateSet: true
-        } as TemplateSetConditionConfig,
+            alias: 'AccessibilityReporter.Condition.TemplateSet' // This has no config as we check against user config calling the C# API
+        },
         // {
         //     alias: 'AccessibilityReporter.Condition.UserGroupHasAccess' // This has no config as we check against user config calling the C# API
         // }
