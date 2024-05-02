@@ -1,17 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Umbraco.Cms.Core" Version="10.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Umbraco.Cms.Core" Version="14.0.0-rc1" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackageId>Umbraco.Community.AccessibilityReporter.Services</PackageId>
+        <IncludeSymbols>True</IncludeSymbols>
+    </PropertyGroup>
 
 </Project>

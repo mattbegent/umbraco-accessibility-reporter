@@ -1,54 +1,69 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<Version>4.0.0-alpha-2</Version>
-		<ContentTargetFolders>.</ContentTargetFolders>
-		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-		<Product>AccessibilityReporter</Product>
-		<PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
-		<Title>AccessibilityReporter</Title>
-		<Description>Accessibility Reporter for Umbraco helps you to make your website accessible.</Description>
-		<PackageTags>Accessibility; WCAG; Umbraco; Content App; dashboard; umbraco-marketplace;</PackageTags>
-		<PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
-		<RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Copyright>Matt Begent</Copyright>
-		<PackageIcon>logo.png</PackageIcon>
-		<PackageReleaseNotes>Update axe-core to version 4.8.2.</PackageReleaseNotes>
-		<RepositoryType>git</RepositoryType>
-		<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
-	</PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
-	<ItemGroup>
-		<PackageReference Include="Umbraco.Cms.Web.Website" Version="10.0.0" />
-		<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.0.0" />
-	</ItemGroup>
+    <!-- General -->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<Content Include="App_Plugins\AccessibilityReporter\**" ExcludeFromSingleFile="true" CopyToPublishDirectory="Always" />
-		<Content Include="appsettings-schema.AccessibilityReporter.json" PackagePath="" />
-		<None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
-		<None Include="..\..\logos\logo.png" Pack="true" PackagePath="\" />
-	</ItemGroup>
+    <!-- Nuget Properties -->
+    <PropertyGroup>
+        <Product>AccessibilityReporter</Product>
+        <PackageId>Umbraco.Community.AccessibilityReporter</PackageId>
+        <Title>Accessibility Reporter</Title>
+        <Description>Accessibility Reporter for Umbraco helps you to make your website accessible.</Description>
+        <PackageTags>Accessibility; WCAG; Umbraco; Content App; dashboard; umbraco-marketplace;</PackageTags>
+        <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Copyright>Matt Begent</Copyright>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageReleaseNotes>Update axe-core to version 4.8.2.</PackageReleaseNotes>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" PrivateAssets="All" />
-		<ProjectReference Include="..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj" PrivateAssets="All" />
-	</ItemGroup>
+    <!-- Razor Class Library -->
+    <PropertyGroup>
+        <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<_PackageFiles Include="$(OutputPath)\AccessibilityReporter.Core.dll">
-			<BuildAction>None</BuildAction>
-			<PackagePath>lib\net6.0</PackagePath>
-		</_PackageFiles>
-		<_PackageFiles Include="$(OutputPath)\AccessibilityReporter.Services.dll">
-			<BuildAction>None</BuildAction>
-			<PackagePath>lib\net6.0</PackagePath>
-		</_PackageFiles>
-	</ItemGroup>
+    <!-- MSBuild file -->
+    <ItemGroup>
+        <None Include="appsettings-schema.AccessibilityReporter.json" PackagePath="\" />
+        <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Dont include the client folder as part of packaging nuget build -->
+        <Content Remove="Client\**" />
+
+        <!-- However make the Umbraco-package.json not part of the nuget package but visible to the solution -->
+        <None Include="Client\public\umbraco-package.json" Pack="false" />
+    </ItemGroup>
+
+    <!-- Readme, Logo etc needed for Nuget Package -->
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\logos\logo.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <!-- Create Nuget on Build with snupkg (symbols/debug/pdbs) -->
+    <PropertyGroup>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <IncludeSymbols>True</IncludeSymbols>
+    </PropertyGroup>
+
+    <!-- Project References -->
+    <ItemGroup>
+        <ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" />
+        <ProjectReference Include="..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj" />
+    </ItemGroup>
+
+    <!-- Nuget References -->
+    <ItemGroup>
+        <PackageReference Include="Umbraco.Cms.Api.Management" Version="14.0.0-rc1" />
+        <PackageReference Include="Umbraco.Cms.Web.Website" Version="14.0.0-rc1" />
+    </ItemGroup>
 
 </Project>

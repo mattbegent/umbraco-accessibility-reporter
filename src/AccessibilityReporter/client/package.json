@@ -1,0 +1,27 @@
+{
+  "name": "accessibility-reporter-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build --emptyOutDir",
+    "watch": "vite build --watch --emptyOutDir",
+    "openapi-ts": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts --input https://localhost:44312/umbraco/swagger/AccessibilityReporter/swagger.json --output src/Api"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.2",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "date-fns": "^3.6.0",
+    "lit": "^3.1.2",
+    "patternomaly": "^1.3.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.34.5",
+    "@types/xlsx": "^0.0.36",
+    "@umbraco-cms/backoffice": "^14.0.0-rc1",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
+  }
+}
