@@ -133,6 +133,10 @@ Automated accessibility testing is no substitute for manual testing and testing 
 - Manual test recommendations.
 - Localization - if anyone speaks any languages other than English it would be super to get some help.
 
+## Umbraco 14+ version
+
+An Umbraco 14+ version of Accessibility Reporter is currently in PR https://github.com/mattbegent/umbraco-accessibility-reporter/pull/26 and will be released shortly.
+
 ## Contributors
 
 - [Matt Begent](https://github.com/mattbegent)
