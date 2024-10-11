@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<Version>3.2.1</Version>
+		<Version>3.3.0</Version>
 		<ContentTargetFolders>.</ContentTargetFolders>
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<Product>AccessibilityReporter</Product>
@@ -17,7 +17,7 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Copyright>Matt Begent</Copyright>
 		<PackageIcon>logo.png</PackageIcon>
-		<PackageReleaseNotes>Test base URL fix.</PackageReleaseNotes>
+		<PackageReleaseNotes>Update axe-core to 4.10.0.</PackageReleaseNotes>
 		<RepositoryType>git</RepositoryType>
 		<StaticWebAssetBasePath>App_Plugins/AccessibilityReporter</StaticWebAssetBasePath>
 	</PropertyGroup>
