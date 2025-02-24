@@ -7,8 +7,15 @@ class AccessibilityReporter {
         return new Promise(async (resolve, reject) => {
 
             try {
-
-                const testRequest = new Request(testUrl);
+                const headers = new Headers({
+                    'User-Agent': 'AccessibilityReporter/1.0'
+                });
+                
+                const testRequest = new Request(testUrl, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
                 await fetch(testRequest);
                 const iframeId = "arTestIframe" + AccessibilityReporter.randomUUID();
                 const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
