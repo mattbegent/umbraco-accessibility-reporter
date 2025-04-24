@@ -1,4 +1,5 @@
-﻿using AccessibilityReporter.Infrastructure.Config;
+﻿using System.Net.Http;
+using AccessibilityReporter.Infrastructure.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
@@ -15,6 +16,15 @@ namespace AccessibilityReporter.Infrastructure
 				.Get<AccessibilityReporterAppSettings>();
 
 			builder.Services.AddSingleton(AccessibilityReporterSettingsFactory.Make(config ?? new AccessibilityReporterAppSettings()));
+
+            builder.Services.AddHttpClient("AccessibilityReporterProxy")
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+                UseCookies = true,
+                CookieContainer = new System.Net.CookieContainer()
+            });
 
 			builder.AddContentApp<AccessibilityReporterFactory>();
 			builder.AddDashboard<AccessibilityReporterDashboard>();

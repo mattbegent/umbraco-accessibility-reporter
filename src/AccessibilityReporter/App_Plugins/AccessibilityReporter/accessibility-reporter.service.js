@@ -3,19 +3,23 @@ class AccessibilityReporter {
     static impacts = ["minor", "moderate", "serious", "critical"];
 
     static async runTest(testUrl, showWhileRunning) {
-
         return new Promise(async (resolve, reject) => {
-
             try {
+                const isExternalUrl = !testUrl.startsWith(window.location.origin);
+
+                const urlToTest = isExternalUrl
+                    ? `/umbraco/backoffice/api/proxy/fetchpage?url=${encodeURIComponent(testUrl)}`
+                    : testUrl;
+
                 const headers = new Headers({
                     'User-Agent': 'AccessibilityReporter/1.0'
                 });
-                
-                const testRequest = new Request(testUrl, {
+
+                const testRequest = new Request(urlToTest, {
                     method: 'GET',
                     headers: headers
                 });
-                
+
                 await fetch(testRequest);
                 const iframeId = "arTestIframe" + AccessibilityReporter.randomUUID();
                 const container = document.getElementById(showWhileRunning ? 'dashboard-ar-tests' : 'contentcolumn');
@@ -47,7 +51,7 @@ class AccessibilityReporter {
                 }
                 window.addEventListener("message", handleTestResultMessage, true);
 
-                testIframe.setAttribute("src", testUrl);
+                testIframe.setAttribute("src", urlToTest);
                 testIframe.setAttribute("id", iframeId);
                 testIframe.style.height = "800px";
                 if (showWhileRunning) {
@@ -66,7 +70,7 @@ class AccessibilityReporter {
                     if (testIframe.contentWindow.document.body) {
                         let scriptAxe = testIframe.contentWindow.document.createElement("script");
                         scriptAxe.type = "text/javascript";
-                        scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
+                        scriptAxe.src = `${AccessibilityReporter.getBaseURL()}/App_Plugins/AccessibilityReporter/libs/axe.min.js`;
                         testIframe.contentWindow.document.body.appendChild(scriptAxe);
                         scriptAxe = null;
                     } else {
