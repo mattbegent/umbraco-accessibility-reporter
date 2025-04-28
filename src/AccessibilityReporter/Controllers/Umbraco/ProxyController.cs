@@ -112,30 +112,7 @@ namespace AccessibilityReporter.Controllers.Umbraco
                 {
                     var attr = match.Groups[1].Value;
                     var path = match.Groups[2].Value;
-                    string absoluteUrl;
-
-                    // Convert to absolute URL first
-                    if (path.StartsWith("http://") || path.StartsWith("https://"))
-                    {
-                        // Already an absolute URL
-                        absoluteUrl = path;
-                    }
-                    else if (path.StartsWith("//"))
-                    {
-                        // Protocol-relative URL
-                        absoluteUrl = "https:" + path;
-                    }
-                    else if (path.StartsWith("/"))
-                    {
-                        // Root-relative URL
-                        absoluteUrl = baseUrl + path;
-                    }
-                    else
-                    {
-                        // Directory-relative URL
-                        absoluteUrl = baseUrl + baseDirectory + path;
-                    }
-
+                    var absoluteUrl = ToAbsoluteUrl(path, baseUrl, baseDirectory);
                     return $"{attr}=\"{_proxyPath}{HttpUtility.UrlEncode(absoluteUrl)}\"";
                 },
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -146,35 +123,33 @@ namespace AccessibilityReporter.Controllers.Umbraco
                 match =>
                 {
                     var path = match.Groups[1].Value;
-                    string absoluteUrl;
-
-                    // Convert to absolute URL first
-                    if (path.StartsWith("http://") || path.StartsWith("https://"))
-                    {
-                        // Already an absolute URL
-                        absoluteUrl = path;
-                    }
-                    else if (path.StartsWith("//"))
-                    {
-                        // Protocol-relative URL
-                        absoluteUrl = "https:" + path;
-                    }
-                    else if (path.StartsWith("/"))
-                    {
-                        // Root-relative URL
-                        absoluteUrl = baseUrl + path;
-                    }
-                    else
-                    {
-                        // Directory-relative URL
-                        absoluteUrl = baseUrl + baseDirectory + path;
-                    }
-
+                    var absoluteUrl = ToAbsoluteUrl(path, baseUrl, baseDirectory);
                     return $"url(\"{_proxyPath}{HttpUtility.UrlEncode(absoluteUrl)}\")";
                 },
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             return html;
+        }
+
+        /// <summary>
+        /// Converts a URL to an absolute URL based on the base URL and directory
+        /// </summary>
+        private string ToAbsoluteUrl(string path, string baseUrl, string baseDirectory)
+        {
+            // Already an absolute URL
+            if (path.StartsWith("http://") || path.StartsWith("https://"))
+                return path;
+
+            // Protocol-relative URL
+            if (path.StartsWith("//"))
+                return "https:" + path;
+
+            // Root-relative URL
+            if (path.StartsWith("/"))
+                return baseUrl + path;
+
+            // Directory-relative URL
+            return baseUrl + baseDirectory + path;
         }
     }
 }
