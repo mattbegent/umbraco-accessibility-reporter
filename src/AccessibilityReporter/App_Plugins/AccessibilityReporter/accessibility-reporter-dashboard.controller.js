@@ -44,11 +44,14 @@ angular.module("umbraco")
 
         function loadDashboard() {
 
-            const dashboardResultsFromStorage = AccessibilityReporterService.getItemFromSessionStorage(dashboardStorageKey);
+            const dashboardResultsFromStorage = AccessibilityReporterService.getItemFromLocalStorage(dashboardStorageKey);
             if(dashboardResultsFromStorage) {
                 $scope.results = dashboardResultsFromStorage;
                 setStats(dashboardResultsFromStorage);
                 $scope.pageState = "has-results";
+                if(moment($scope.results.endTime).isBefore(moment().subtract(7, 'days'))) {
+                    notificationsService.warning("Outdated Results", "The results shown are older than 7 days. Please run a new test to get the latest results.");
+                }
             }
 
         }
@@ -126,7 +129,7 @@ angular.module("umbraco")
                 endTime: new Date(),
                 pages: testResults
             };
-            AccessibilityReporterService.saveToSessionStorage(dashboardStorageKey, $scope.results);
+            AccessibilityReporterService.saveToLocalStorage(dashboardStorageKey, $scope.results);
             setStats($scope.results);
             $scope.pageState = "has-results";
 
@@ -135,7 +138,7 @@ angular.module("umbraco")
 
         $scope.formatTime = function(dateToFormat) {
             return moment(dateToFormat).format(
-                "HH:mm:ss"
+                "HH:mm:ss DD/MM/YY"
             );
         }
 
@@ -342,6 +345,8 @@ angular.module("umbraco")
                     id: violation.id,
                     impact: violation.impact,
                     tags: violation.tags,
+                    title: violation.help,
+                    description: violation.description,
                     nodes: violation.nodes.map((node)=> {
                         return {
                             impact: node.impact
@@ -444,38 +449,78 @@ angular.module("umbraco")
             };
         }
 
-        function formatPageResultsForExport() {
-            const resultsArray = [["Name", "URL", "Score", "Violations"]];
-            for (let index = 0; index < $scope.pagesTestResults.length; index++) {
-                const page = $scope.pagesTestResults[index];
-                resultsArray.push([
-                    page.name,
-                    page.url,
-                    page.score,
-                    page.violations
-                ]);
-            }
-
-            return resultsArray;
-        }
-
         $scope.exportResults = function() {
 
             try {
 
-                const resultsFormatted = formatPageResultsForExport();
-                const resultsWorksheet = XLSX.utils.aoa_to_sheet(resultsFormatted);
-
                 const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, resultsWorksheet, "Results");
 
-                const nameWidth = $scope.pagesTestResults.reduce((w, r) => Math.max(w, r.name.length), 40);
-                const urlWidth = $scope.pagesTestResults.reduce((w, r) => Math.max(w, r.url.length), 40);
-                resultsWorksheet["!cols"] = [{ width: nameWidth }, { width: urlWidth }, { width: 12 }, { width: 12 }  ];
+                const pagesRows = $scope.pagesTestResults.map(page => ({
+                    name: page.name,
+                    url: page.url,
+                    score: page.score,
+                    violations: page.violations
+                }));
 
-                XLSX.writeFile(workbook,
-                    AccessibilityReporterService.formatFileName(`website-accessibility-report-${moment($scope.results.endTime)
-                        .format("DD-MM-YYYY")}`) + ".xlsx", { compression: true });
+                const pagesWorksheet = XLSX.utils.json_to_sheet(pagesRows);
+                XLSX.utils.book_append_sheet(workbook, pagesWorksheet, "Pages Summary");
+
+                const pagesHeaders = [["Name", "URL", "Accessibility Score", "Total Violations"]];
+                XLSX.utils.sheet_add_aoa(pagesWorksheet, pagesHeaders, { origin: "A1" });
+
+                pagesWorksheet["!cols"] = [
+                    { width: 30 }, // Name
+                    { width: 40 }, // URL
+                    { width: 20 }, // Score
+                    { width: 15 }  // Violations
+                ];
+
+
+                let allViolations = [];
+
+                $scope.results.pages.forEach(pageResult => {
+                    const pageName = pageResult.page.name;
+                    const pageUrl = pageResult.page.url;
+
+                    pageResult.violations.forEach(violation => {
+                        allViolations.push({
+                            pageName: pageName,
+                            pageUrl: pageUrl,
+                            impact: violation.impact ? AccessibilityReporterService.upperCaseFirstLetter(violation.impact) : '',
+                            title: violation.title || '',
+                            description: violation.description || '',
+                            standard: AccessibilityReporterService.mapTagsToStandard(violation.tags).join(', '),
+                            nodeCount: violation.nodes ? violation.nodes.length : 0
+                        });
+                    });
+                });
+
+                if (allViolations.length > 0) {
+                    const violationsWorksheet = XLSX.utils.json_to_sheet(allViolations);
+                    XLSX.utils.book_append_sheet(workbook, violationsWorksheet, "All Violations");
+
+                    const violationsHeaders = [["Name", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]];
+                    XLSX.utils.sheet_add_aoa(violationsWorksheet, violationsHeaders, { origin: "A1" });
+
+                    const titleWidth = allViolations.reduce((w, r) => Math.max(w, r.title ? r.title.length : 0), 40);
+                    violationsWorksheet["!cols"] = [
+                        { width: 25 }, // Name
+                        { width: 40 }, // URL
+                        { width: 10 }, // Impact
+                        { width: titleWidth }, // Title
+                        { width: 50 }, // Description
+                        { width: 25 }, // Standard
+                        { width: 10 }  // Count
+                    ];
+                }
+
+                XLSX.writeFile(
+                    workbook,
+                    AccessibilityReporterService.formatFileName(
+                        `website-accessibility-report-${moment($scope.results.endTime).format("DD-MM-YYYY")}`
+                    ) + ".xlsx",
+                    { compression: true }
+                );
 
             } catch(error) {
                 console.error(error);
