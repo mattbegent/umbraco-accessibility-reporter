@@ -49,6 +49,9 @@ angular.module("umbraco")
                 $scope.results = dashboardResultsFromStorage;
                 setStats(dashboardResultsFromStorage);
                 $scope.pageState = "has-results";
+                if(moment($scope.results.endTime).isBefore(moment().subtract(7, 'days'))) {
+                    notificationsService.warning("Outdated Results", "The results shown are older than 7 days. Please run a new test to get the latest results.");
+                }
             }
 
         }
@@ -135,7 +138,7 @@ angular.module("umbraco")
 
         $scope.formatTime = function(dateToFormat) {
             return moment(dateToFormat).format(
-                "HH:mm:ss"
+                "HH:mm:ss DD/MM/YY"
             );
         }
 
