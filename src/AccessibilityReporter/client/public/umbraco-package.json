@@ -7,7 +7,7 @@
         {
             "name": "Accessibility Reporter EntryPoint",
             "alias": "AccessibilityReporter.EntryPoint",
-            "type": "entryPoint",
+            "type": "backofficeEntryPoint",
             "js": "/App_Plugins/AccessibilityReporter/accessibility-reporter.js"
         }
     ]

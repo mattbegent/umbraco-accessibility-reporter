@@ -1,11 +1,9 @@
-import { ManifestDashboard } from "@umbraco-cms/backoffice/extension-registry";
-
-const dashboard: ManifestDashboard = {
+const dashboard: UmbExtensionManifest = {
     alias: 'AccessibilityReporter.Dashboard',
     name: 'Accessibility Reporter Dashboard',
     type: 'dashboard',
     weight: 400,
-    js: () => import('./accessibilityreporter.dashboard.element.js'),
+	element: () => import('./accessibilityreporter.dashboard.element.js'),
     meta: {
         label: 'Accessibility Reporter',
         pathname: 'accessibility-reporter'
@@ -16,6 +14,6 @@ const dashboard: ManifestDashboard = {
             match: 'Umb.Section.Content'
         }
     ]
-   
+
 }
 export const manifests = [dashboard];

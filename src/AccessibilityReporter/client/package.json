@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc && vite build --emptyOutDir",
     "watch": "vite build --watch --emptyOutDir",
-    "openapi-ts": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts --input https://localhost:44312/umbraco/swagger/AccessibilityReporter/swagger.json --output src/Api"
+    "openapi-ts": "node scripts/generate-openapi.js https://localhost:44312/umbraco/swagger/AccessibilityReporter/swagger.json --output src/Api"
   },
   "dependencies": {
     "chart.js": "^4.4.2",
@@ -17,11 +17,14 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.34.5",
+    "@hey-api/client-fetch": "^0.10.1",
+    "@hey-api/openapi-ts": "^0.67.6",
     "@types/xlsx": "^0.0.36",
-    "@umbraco-cms/backoffice": "^14.0.0-rc1",
+    "@umbraco-cms/backoffice": "^16.0.0",
     "cross-env": "^7.0.3",
-    "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+	"chalk": "^5.3.0",
+	"node-fetch": "^3.3.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   }
 }

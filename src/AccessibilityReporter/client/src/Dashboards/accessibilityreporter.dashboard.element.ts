@@ -1,8 +1,8 @@
 import { LitElement, css, html, customElement, state, ifDefined } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from '@umbraco-cms/backoffice/current-user';
-import { tryExecuteAndNotify } from '@umbraco-cms/backoffice/resources';
-import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummary } from '../Api';
+import { tryExecute } from '@umbraco-cms/backoffice/resources';
+import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummaryReadable } from '../api';
 
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 
@@ -38,7 +38,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	private currentTestNumber: number | undefined;
 
 	@state()
-	private testPages: NodeSummary[];
+	private testPages: NodeSummaryReadable[];
 
 	@state()
 	config: AccessibilityReporterAppSettings | undefined;
@@ -55,6 +55,9 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	private async init() {
 
 		this.consumeContext(UMB_CURRENT_USER_CONTEXT, (context) => {
+			if(!context) {
+				return;
+			}
 			this.observe(
 				context.currentUser,
 				(currentUser) => {
@@ -124,6 +127,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		}
 
 		if (!this.testPages) {
+			console.log('error', this.testPages);
 			this.pageState = PageState.Errored;
 			return;
 		}
@@ -144,6 +148,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		}
 
 		if(!testResults.length) {
+			console.log('error test results', testResults);
 			this.pageState = PageState.Errored;
 			return;
 		}
@@ -190,8 +195,8 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		this.pageState = PageState.PreTest;
 	}
 
-	private async getTestPages(): Promise<NodeSummary[] | undefined> {
-		const { data, error } = await tryExecuteAndNotify(this, DirectoryService.pages())
+	private async getTestPages(): Promise<NodeSummaryReadable[] | undefined> {
+		const { data, error } = await tryExecute(this, DirectoryService.pages())
 		if (error) {
 			console.error(error);
 			this.pageState = PageState.Errored;
@@ -206,7 +211,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	}
 
 	private async getConfig(): Promise<AccessibilityReporterAppSettings | undefined> {
-		const { data, error } = await tryExecuteAndNotify(this, ConfigService.current())
+		const { data, error } = await tryExecute(this, ConfigService.current())
 		if (error) {
 			console.error(error);
 			this.pageState = PageState.Errored;

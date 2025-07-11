@@ -4,8 +4,8 @@ import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT, UmbDocumentWorkspaceContext } from '@umbraco-cms/backoffice/document';
-import { tryExecuteAndNotify } from "@umbraco-cms/backoffice/resources";
-import { AccessibilityReporterAppSettings, ConfigService } from "../Api";
+import { tryExecute } from "@umbraco-cms/backoffice/resources";
+import { AccessibilityReporterAppSettings, ConfigService } from "../api";
 import { MediaUrlInfoModel } from "@umbraco-cms/backoffice/external/backend-api";
 import { generalStyles } from "../Styles/general";
 import AccessibilityReporterAPIService from "../Services/accessibility-reporter-api.service";
@@ -73,6 +73,9 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private async init() {
 
 		this.consumeContext(UMB_CURRENT_USER_CONTEXT, (context) => {
+			if(!context) {
+				return;
+			}
 			this.observe(
 				context.currentUser,
 				(currentUser) => {
@@ -88,6 +91,9 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		});
 
         this.consumeContext(UMB_MODAL_MANAGER_CONTEXT, (context) => {
+			if(!context) {
+				return;
+			}
             this._modalManagerContext = context;
         });
 
@@ -144,6 +150,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.pageName = this._workspaceContext.getName() as string;
 
+		//@ts-ignore
 		this.observe((this._workspaceContext as UmbDocumentWorkspaceContext).urls, (urls) => {
 			this._urls = urls;
 		});
@@ -151,7 +158,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	}
 
 	private async getConfig(): Promise<AccessibilityReporterAppSettings | undefined> {
-		const { data, error } = await tryExecuteAndNotify(this, ConfigService.current())
+		const { data, error } = await tryExecute(this, ConfigService.current())
 		if (error) {
 			console.error(error);
 			this.pageState = PageState.Errored;
@@ -229,7 +236,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	};
 
 	private async openDetail(result: any) {
-		const modal = this._modalManagerContext?.open(this, ACCESSIBILITY_REPORTER_MODAL_DETAIL, {
+		this._modalManagerContext?.open(this, ACCESSIBILITY_REPORTER_MODAL_DETAIL, {
 			data: {
 				result: result
 			}

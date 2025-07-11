@@ -1,11 +1,11 @@
-import { ManifestWorkspaceView } from "@umbraco-cms/backoffice/extension-registry";
-import { TemplateSetConditionConfig } from "../Conditions/accessibiltyreporter.condition.templateset.js";
+//import { ManifestWorkspaceView } from "@umbraco-cms/backoffice/extension-registry";
+//import { TemplateSetConditionConfig } from "../Conditions/accessibiltyreporter.condition.templateset.js";
 
-const workspaceView: ManifestWorkspaceView = {
+const workspaceView: UmbExtensionManifest = {
     alias: 'AccessibilityReporter.WorkspaceView',
     name: 'Accessibility Reporter Workspace View',
     type: 'workspaceView',
-    js: () => import('./accessibilityreporter.workspaceview.element.js'),
+    element: () => import('./accessibilityreporter.workspaceview.element.js'),
     weight: 190,
     meta: {
         icon: 'icon-people',

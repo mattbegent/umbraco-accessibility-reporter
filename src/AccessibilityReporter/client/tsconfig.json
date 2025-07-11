@@ -19,7 +19,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+
+	"types": [
+     "@umbraco-cms/backoffice/extension-types"
+    ]
   },
   "include": ["src"]
 }

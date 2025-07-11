@@ -4,8 +4,8 @@ import { UmbConditionBase } from '@umbraco-cms/backoffice/extension-registry';
 import { UMB_CURRENT_USER_CONTEXT } from '@umbraco-cms/backoffice/current-user';
 import { UmbUserDetailRepository } from '@umbraco-cms/backoffice/user'
 import { UmbUserGroupItemModel, UmbUserGroupItemRepository } from '@umbraco-cms/backoffice/user-group';
-import { ConfigService } from '../Api';
-import { tryExecuteAndNotify } from '@umbraco-cms/backoffice/resources';
+import { ConfigService } from '../api';
+import { tryExecute } from '@umbraco-cms/backoffice/resources';
 
 
 /* Condition Config (The alias matches in the consuming manifest - does not require extra config */
@@ -23,6 +23,10 @@ export class UserGroupHasAccesstCondition extends UmbConditionBase<UserGroupHasA
         super(host, args);
 
         this.consumeContext(UMB_CURRENT_USER_CONTEXT, (currentUserCtx) => {
+            if (!currentUserCtx) {
+                this.permitted = false;
+                return;
+            }
             this.observe(currentUserCtx.currentUser, async (currentUser) => {
                 console.log('current user', currentUser);
 
@@ -46,7 +50,7 @@ export class UserGroupHasAccesstCondition extends UmbConditionBase<UserGroupHasA
                 }
 
                 const userGroupItemRepository = new UmbUserGroupItemRepository(this);
-                const { data: userGroups } = await userGroupItemRepository.requestItems(userGroupIds);
+                const { data: userGroups } = await userGroupItemRepository.requestItems(userGroupIds as unknown as string[]);
                 console.log('user groups', userGroups);
 
                 // Assign to the property
@@ -59,7 +63,7 @@ export class UserGroupHasAccesstCondition extends UmbConditionBase<UserGroupHasA
                 else {
                     // Look up the value we have from our own C# API
                     // If we have a match on any then permitted is true
-                    const { data, error } = await tryExecuteAndNotify(this, ConfigService.current())
+                    const { data, error } = await tryExecute(this, ConfigService.current())
                     if (error) {
                         console.error('Error fetching config via API', error);
                     }

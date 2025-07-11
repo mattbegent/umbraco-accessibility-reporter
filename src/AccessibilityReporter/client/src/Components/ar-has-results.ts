@@ -13,7 +13,7 @@ import IResults from "../Interface/IResults";
 
 import { generalStyles } from "../Styles/general";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
-import { AccessibilityReporterAppSettings } from "../Api";
+import { AccessibilityReporterAppSettings } from "../api";
 
 @customElement("ar-has-results")
 export class ARHasResultsElement extends UmbElementMixin(LitElement) {

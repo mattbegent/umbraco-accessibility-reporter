@@ -1,4 +1,4 @@
-import { AccessibilityReporterAppSettings } from "../Api";
+import { AccessibilityReporterAppSettings } from "../api";
 
 export default class AccessibilityReporterAPIService {
 
