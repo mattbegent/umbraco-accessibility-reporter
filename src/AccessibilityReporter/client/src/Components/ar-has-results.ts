@@ -2,7 +2,7 @@ import { LitElement, html, customElement, property, state, unsafeHTML } from "@u
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 
 import { utils, writeFile } from "xlsx";
-import { format } from 'date-fns'
+import { format } from 'date-fns';
 
 import './ar-logo';
 import './ar-chart';
@@ -365,21 +365,6 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		};
 	}
 
-	private formatPageResultsForExport() {
-		const resultsArray = [["Name", "URL", "Score", "Violations"]];
-		for (let index = 0; index < this.pagesTestResults.length; index++) {
-			const page = this.pagesTestResults[index];
-			resultsArray.push([
-				page.name,
-				page.url,
-				page.score,
-				page.violations
-			]);
-		}
-
-		return resultsArray;
-	}
-
 	private exportResults() {
 
 		if (!this.results) {
@@ -388,18 +373,68 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 		try {
 
-			const resultsFormatted = this.formatPageResultsForExport();
-			const resultsWorksheet = utils.aoa_to_sheet(resultsFormatted);
-
 			const workbook = utils.book_new();
-			utils.book_append_sheet(workbook, resultsWorksheet, "Results");
 
-			const nameWidth = this.pagesTestResults.reduce((w: any, r: any) => Math.max(w, r.name.length), 40);
-			const urlWidth = this.pagesTestResults.reduce((w: any, r: any) => Math.max(w, r.url.length), 40);
-			resultsWorksheet["!cols"] = [{ width: nameWidth }, { width: urlWidth }, { width: 12 }, { width: 12 }];
+			const pagesRows = this.pagesTestResults.map((page: any) => ({
+				name: page.name,
+				url: page.url,
+				score: page.score,
+				violations: page.violations
+			}));
 
-			writeFile(workbook,
-				AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
+			const pagesWorksheet = utils.json_to_sheet(pagesRows);
+			utils.book_append_sheet(workbook, pagesWorksheet, "Pages Summary");
+
+			const pagesHeaders = [["Name", "URL", "Accessibility Score", "Total Violations"]];
+			utils.sheet_add_aoa(pagesWorksheet, pagesHeaders, { origin: "A1" });
+
+			pagesWorksheet["!cols"] = [
+				{ width: 30 }, // Name
+				{ width: 40 }, // URL
+				{ width: 20 }, // Score
+				{ width: 15 }  // Violations
+			];
+
+
+			let allViolations: any[] = [];
+
+			this.results.pages.forEach(pageResult => {
+				const pageName = pageResult.page.name;
+				const pageUrl = pageResult.page.url;
+
+				pageResult.violations.forEach(violation => {
+					allViolations.push({
+						pageName: pageName,
+						pageUrl: pageUrl,
+						impact: violation.impact ? AccessibilityReporterService.upperCaseFirstLetter(violation.impact) : '',
+						title: violation.title || '',
+						description: violation.description || '',
+						standard: AccessibilityReporterService.mapTagsToStandard(violation.tags).join(', '),
+						nodeCount: violation.nodes ? violation.nodes.length : 0
+					});
+				});
+			});
+
+			if (allViolations.length > 0) {
+				const violationsWorksheet = utils.json_to_sheet(allViolations);
+				utils.book_append_sheet(workbook, violationsWorksheet, "All Violations");
+
+				const violationsHeaders = [["Name", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]];
+				utils.sheet_add_aoa(violationsWorksheet, violationsHeaders, { origin: "A1" });
+
+				const titleWidth = allViolations.reduce((w, r) => Math.max(w, r.title ? r.title.length : 0), 40);
+				violationsWorksheet["!cols"] = [
+					{ width: 25 }, // Name
+					{ width: 40 }, // URL
+					{ width: 10 }, // Impact
+					{ width: titleWidth }, // Title
+					{ width: 50 }, // Description
+					{ width: 25 }, // Standard
+					{ width: 10 }  // Count
+				];
+			}
+
+			writeFile(workbook, AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
 
 		} catch (error) {
 			console.error(error);

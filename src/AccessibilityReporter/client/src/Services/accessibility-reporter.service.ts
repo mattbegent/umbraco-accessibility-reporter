@@ -7,8 +7,13 @@ export default class AccessibilityReporterService {
         return new Promise(async (resolve, reject) => {
 
             try {
-
-                const testRequest = new Request(testUrl);
+				const headers = new Headers({
+                    'User-Agent': 'AccessibilityReporter/1.0'
+                });
+                const testRequest = new Request(testUrl, {
+                    method: 'GET',
+                    headers: headers
+                });
                 await fetch(testRequest);
                 const iframeId = "arTestIframe" + AccessibilityReporterService.randomUUID();
                 const container = showWhileRunning ? rootElement.getElementById('dashboard-ar-tests') : rootElement as HTMLElement;
@@ -215,7 +220,7 @@ export default class AccessibilityReporterService {
 
     }
 
-    static saveToSessionStorage(key: string, value: object) {
+    static saveToLocalStorage(key: string, value: object) {
         try {
             sessionStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
@@ -224,7 +229,7 @@ export default class AccessibilityReporterService {
 
     }
 
-    static getItemFromSessionStorage(key: string) {
+    static getItemFromLocalStorage(key: string) {
         const item = sessionStorage.getItem(key);
         if (item) {
             return JSON.parse(item);

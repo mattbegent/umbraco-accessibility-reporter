@@ -2,6 +2,7 @@ import { LitElement, css, html, customElement, state, ifDefined } from "@umbraco
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from '@umbraco-cms/backoffice/current-user';
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
+import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummaryReadable } from '../api';
 
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
@@ -46,6 +47,8 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	@state()
 	currentUser: UmbCurrentUserModel | undefined;
 
+		private _notificationContext?: UmbNotificationContext;
+
 	constructor() {
 		super();
 		this.pageState = PageState.PreTest;
@@ -67,6 +70,10 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			);
 		});
 
+		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
+			this._notificationContext = _instance;
+		});
+
 		this.config = await this.getConfig();
 
 		/* Expose config to child iframe for tests */
@@ -79,10 +86,16 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 
 	private loadDashboard() {
 
-		const dashboardResultsFromStorage = AccessibilityReporterService.getItemFromSessionStorage(this.DASHBOARD_STORAGE_KEY);
+		const dashboardResultsFromStorage = AccessibilityReporterService.getItemFromLocalStorage(this.DASHBOARD_STORAGE_KEY);
 		if (dashboardResultsFromStorage) {
 			this.results = dashboardResultsFromStorage;
 			this.pageState = PageState.HasResults;
+
+			if (this.results &&
+				this.results.endTime &&
+				new Date(this.results.endTime).getTime() < Date.now() - 7 * 24 * 60 * 60 * 1000) {
+				this._notificationContext?.peek('danger', { data: { message: 'The results shown are older than 7 days. Please run a new test to get the latest results.' } });
+			}
 		}
 
 	}
@@ -163,7 +176,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			endTime: new Date(),
 			pages: testResults
 		};
-		AccessibilityReporterService.saveToSessionStorage(this.DASHBOARD_STORAGE_KEY, this.results as object);
+		AccessibilityReporterService.saveToLocalStorage(this.DASHBOARD_STORAGE_KEY, this.results as object);
 		this.pageState = PageState.HasResults;
 	}
 
@@ -179,6 +192,8 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 				id: violation.id,
 				impact: violation.impact,
 				tags: violation.tags,
+				title: violation.help,
+				description: violation.description,
 				nodes: violation.nodes.map((node: any) => {
 					return {
 						impact: node.impact
