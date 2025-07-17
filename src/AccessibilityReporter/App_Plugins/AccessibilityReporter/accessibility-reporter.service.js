@@ -8,7 +8,7 @@ class AccessibilityReporter {
 
             try {
                 const headers = new Headers({
-                    'User-Agent': 'AccessibilityReporter/1.0'
+                    'X-User-Agent': 'AccessibilityReporter/1.0'
                 });
 
                 const testRequest = new Request(testUrl, {
