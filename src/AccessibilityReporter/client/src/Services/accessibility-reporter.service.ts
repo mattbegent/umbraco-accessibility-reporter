@@ -8,7 +8,7 @@ export default class AccessibilityReporterService {
 
             try {
 				const headers = new Headers({
-                    'User-Agent': 'AccessibilityReporter/1.0'
+                    'X-User-Agent': 'AccessibilityReporter/1.0'
                 });
                 const testRequest = new Request(testUrl, {
                     method: 'GET',
