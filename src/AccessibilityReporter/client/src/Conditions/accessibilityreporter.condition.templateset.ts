@@ -21,7 +21,7 @@ export class TemplateSetCondition extends UmbConditionBase<TemplateSetConditionC
 
                 // No template set === null
                 // Tempate set we get a GUID back
-                console.log('templateId', templateId);
+                //console.log('templateId', templateId);
 
                 // Look up the value we have from our own C# API
                 // If we have a match on any then permitted is true
@@ -32,7 +32,7 @@ export class TemplateSetCondition extends UmbConditionBase<TemplateSetConditionC
 
                 // Value from API controller that is the config value
                 const includeIfNoTemplateSet = data?.includeIfNoTemplate;
-                console.log('includeIfNoTemplateSet', includeIfNoTemplateSet);
+                //console.log('includeIfNoTemplateSet', includeIfNoTemplateSet);
 
                 // Passes if config says the doc SHOULD have a template set (aka NOT null)
                 if(includeIfNoTemplateSet === false && templateId !== null) {

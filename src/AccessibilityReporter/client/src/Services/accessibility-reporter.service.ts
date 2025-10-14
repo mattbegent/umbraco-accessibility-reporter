@@ -222,7 +222,7 @@ export default class AccessibilityReporterService {
 
     static saveToLocalStorage(key: string, value: object) {
         try {
-            sessionStorage.setItem(key, JSON.stringify(value));
+            localStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
             console.error(error);
         }
@@ -230,7 +230,7 @@ export default class AccessibilityReporterService {
     }
 
     static getItemFromLocalStorage(key: string) {
-        const item = sessionStorage.getItem(key);
+        const item = localStorage.getItem(key);
         if (item) {
             return JSON.parse(item);
         } else {

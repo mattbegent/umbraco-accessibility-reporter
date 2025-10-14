@@ -74,10 +74,12 @@ All options are completely optional and if you don't set them, they default to t
         ],
         "UserGroups": [
             "admin",
+            "administrators",
             "editor",
             "writer",
             "translator", 
-            "sensitiveData"
+            "sensitiveData",
+            "sensitive data"
         ],
         "RunTestsAutomatically": true,
         "IncludeIfNoTemplate": false,
@@ -117,6 +119,7 @@ Automated accessibility testing is no substitute for manual testing and testing 
 
 - [Matt Begent](https://github.com/mattbegent)
 - [Jack Durcan](https://github.com/jdurcan)
+- [Warren Buckley](https://github.com/warrenbuckley)
 
 ## License
 

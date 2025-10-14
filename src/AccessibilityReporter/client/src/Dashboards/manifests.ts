@@ -2,7 +2,7 @@ const dashboard: UmbExtensionManifest = {
     alias: 'AccessibilityReporter.Dashboard',
     name: 'Accessibility Reporter Dashboard',
     type: 'dashboard',
-    weight: 400,
+    weight: 1,
 	element: () => import('./accessibilityreporter.dashboard.element.js'),
     meta: {
         label: 'Accessibility Reporter',
@@ -12,6 +12,9 @@ const dashboard: UmbExtensionManifest = {
         {
             alias: 'Umb.Condition.SectionAlias',
             match: 'Umb.Section.Content'
+        },
+		{
+            alias: 'AccessibilityReporter.Condition.UserGroupHasAccess'
         }
     ]
 
