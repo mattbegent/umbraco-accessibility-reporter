@@ -13,6 +13,21 @@
     <PropertyGroup>
         <PackageId>Umbraco.Community.AccessibilityReporter.Core</PackageId>
         <IncludeSymbols>True</IncludeSymbols>
+        <Title>Accessibility Reporter Core</Title>
+        <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Copyright>Matt Begent</Copyright>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageReleaseNotes>Accessibility Reporter for Umbraco 16+.</PackageReleaseNotes>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
+
+     <!-- Readme, Logo etc needed for Nuget Package -->
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\logos\logo.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
 </Project>
