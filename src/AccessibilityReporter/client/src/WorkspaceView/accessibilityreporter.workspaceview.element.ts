@@ -3,10 +3,11 @@ import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
-import { UMB_DOCUMENT_WORKSPACE_CONTEXT, UmbDocumentWorkspaceContext } from '@umbraco-cms/backoffice/document';
+import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AccessibilityReporterAppSettings, ConfigService } from "../api";
-import { MediaUrlInfoModel } from "@umbraco-cms/backoffice/external/backend-api";
+import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
+import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
 import { generalStyles } from "../Styles/general";
 import AccessibilityReporterAPIService from "../Services/accessibility-reporter-api.service";
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
@@ -29,7 +30,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	currentUser: UmbCurrentUserModel | undefined;
 
 	@state()
-	private _urls?: Array<MediaUrlInfoModel>;
+	private _urls?: Array<UmbDocumentUrlModel>;
 
 	@state()
 	private pageName: string = "";
@@ -63,6 +64,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
 	private _notificationContext?: UmbNotificationContext;
+
+	private _documentUrlRepository = new UmbDocumentUrlRepository(this);
 
 	constructor() {
 		super();
@@ -150,11 +153,26 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.pageName = this._workspaceContext.getName() as string;
 
-		//@ts-ignore
-		this.observe((this._workspaceContext as UmbDocumentWorkspaceContext).urls, (urls) => {
-			this._urls = urls;
+		this.observe(this._workspaceContext.unique, async (unique) => {
+			if (unique) {
+				await this._fetchDocumentUrls(unique);
+			}
 		});
 
+	}
+
+	private async _fetchDocumentUrls(documentUnique: string) {
+		try {
+			const { data } = await this._documentUrlRepository.requestItems([documentUnique]);
+			if (data && data.length > 0) {
+				this._urls = data[0].urls;
+			} else {
+				this._urls = [];
+			}
+		} catch (error) {
+			console.error('Error fetching document URLs:', error);
+			this._urls = [];
+		}
 	}
 
 	private async getConfig(): Promise<AccessibilityReporterAppSettings | undefined> {
@@ -176,7 +194,20 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.pageState = PageState.Loading;
 
-		const pathToTest = this._urls?.[0].url || "/";
+		// Ensure we have document URLs before running tests
+		if (!this._urls || this._urls.length === 0) {
+			// Try to fetch URLs if we have a workspace context
+			if (this._workspaceContext?.getUnique()) {
+				try {
+					await this._fetchDocumentUrls(this._workspaceContext.getUnique()!);
+				} catch (error) {
+					console.error('Failed to fetch document URLs before testing:', error);
+					// Continue with fallback URL if fetching fails
+				}
+			}
+		}
+
+		const pathToTest = this._urls?.[0]?.url || "/";
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
 
 		try {

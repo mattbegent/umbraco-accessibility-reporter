@@ -6,7 +6,7 @@ $servicesProjectFile = "./AccessibilityReporter.Services/AccessibilityReporter.S
 $configuration = "Release"
 #$configuration = "Debug"
 $outputDirectory = "./build.out"
-$version = "4.0.1"
+$version = "4.0.3"
 
 ## Perhaps need to do a build of the client after updating the version in the source file
 $packageJsonPath = "./AccessibilityReporter/wwwroot/App_Plugins/AccessibilityReporter/umbraco-package.json"
@@ -23,6 +23,31 @@ if (Test-Path $packageJsonPath) {
     $packageJson | ConvertTo-Json -Depth 32 | Set-Content $packageJsonPath
 } else {
     Write-Output "The file $packageJsonPath does not exist."
+}
+
+# Build the client assets first to ensure static web assets are generated
+Write-Output "Building client assets..."
+Set-Location "./AccessibilityReporter/client"
+Write-Output "Installing npm dependencies..."
+npm install
+if ($LASTEXITCODE -ne 0) {
+    Write-Output "npm install failed."
+    exit $LASTEXITCODE
+}
+Write-Output "Building client..."
+npm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Output "Client build failed."
+    exit $LASTEXITCODE
+}
+Set-Location "../.."
+
+# Build the main project first to generate static web assets manifest
+Write-Output "Building projects..."
+dotnet build $mainProjectFile --configuration $configuration
+if ($LASTEXITCODE -ne 0) {
+    Write-Output "Build failed."
+    exit $LASTEXITCODE
 }
 
 # Pack the project into a NuGet package

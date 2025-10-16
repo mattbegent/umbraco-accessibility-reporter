@@ -19,7 +19,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Copyright>Matt Begent</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReleaseNotes>Accessibility Reporter for Umbraco 16+. Fix issue generating view details links.</PackageReleaseNotes>
+        <PackageReleaseNotes>Accessibility Reporter for Umbraco 16+. Fix issue getting correct URLs in the workspace view.</PackageReleaseNotes>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
