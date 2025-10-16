@@ -1,4 +1,4 @@
-﻿using AccessibilityReporter.Core.Interfaces;
+using AccessibilityReporter.Core.Interfaces;
 using AccessibilityReporter.Services.Interfaces;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
@@ -25,7 +25,7 @@ namespace AccessibilityReporter.Services
                 return content.Url(_publishedUrlProvider, mode: UrlMode.Absolute);
             }
 
-            return $"{_settings.TestBaseUrl.TrimEnd("/")}{content.Url(_publishedUrlProvider)}";
+            return $"{_settings.TestBaseUrl.TrimEnd("/")}{content.Url(_publishedUrlProvider, mode: UrlMode.Relative)}";
         }
     }
 }
