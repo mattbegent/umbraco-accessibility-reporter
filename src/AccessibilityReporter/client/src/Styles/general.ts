@@ -52,6 +52,7 @@ export const generalStyles = css`
 		text-decoration: none;
     	color: inherit;
 		line-height: 1;
+		cursor: pointer;
 	}
 
 	.c-detail-button__group {
@@ -307,5 +308,5 @@ export const generalStyles = css`
 		white-space: nowrap;
 		border-width: 0;
 	}
-	
+
   `;

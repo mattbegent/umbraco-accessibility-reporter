@@ -14,6 +14,7 @@
         <PackageId>Umbraco.Community.AccessibilityReporter.Core</PackageId>
         <IncludeSymbols>True</IncludeSymbols>
         <Title>Accessibility Reporter Core</Title>
+        <Description>Accessibility Reporter for Umbraco helps you to make your website accessible.</Description>
         <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</RepositoryUrl>
         <PackageProjectUrl>https://github.com/mattbegent/umbraco-accessibility-reporter</PackageProjectUrl>

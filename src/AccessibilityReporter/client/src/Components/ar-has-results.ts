@@ -14,6 +14,8 @@ import IResults from "../Interface/IResults";
 import { generalStyles } from "../Styles/general";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import { AccessibilityReporterAppSettings } from "../api";
+import { UmbDocumentDetailRepository } from "@umbraco-cms/backoffice/document";
+import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 
 @customElement("ar-has-results")
 export class ARHasResultsElement extends UmbElementMixin(LitElement) {
@@ -81,14 +83,32 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private reportSummaryText: string = "";
 
+	@state()
+	private pageUrls: Map<string, string> = new Map();
+
 	private _notificationContext?: UmbNotificationContext;
+
+	@state()
+    private _currentUser?: UmbCurrentUserModel;
 
 	constructor() {
 		super();
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
 		});
+		this.consumeContext(UMB_CURRENT_USER_CONTEXT, (instance) => {
+			if (!instance) {
+				return;
+			}
+			this._observeCurrentUser(instance);
+		});
 	}
+
+	  private async _observeCurrentUser(instance: typeof UMB_CURRENT_USER_CONTEXT.TYPE) {
+        this.observe(instance.currentUser, (currentUser) => {
+            this._currentUser = currentUser;
+        });
+    }
 
 	connectedCallback() {
 		super.connectedCallback();
@@ -365,6 +385,96 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		};
 	}
 
+	private async handleWorkspaceClick(event: Event, pageGuid: string): Promise<void> {
+		event.preventDefault();
+
+		// Check if we already have the URL cached
+		if (this.pageUrls.has(pageGuid)) {
+			window.location.href = this.pageUrls.get(pageGuid)!;
+			return;
+		}
+
+		try {
+			const url = await this.generateWorkspaceUrl(pageGuid);
+
+			// Cache the URL for future clicks
+			const newPageUrls = new Map(this.pageUrls);
+			newPageUrls.set(pageGuid, url);
+			this.pageUrls = newPageUrls;
+
+			// Navigate to the workspace
+			window.location.href = url;
+
+		} catch (error) {
+			console.error('Error generating workspace URL:', error);
+			// Fallback to invariant URL
+			const fallbackUrl = `/umbraco/section/content/workspace/document/edit/${pageGuid}/invariant/view/accessibility-reporter`;
+			window.location.href = fallbackUrl;
+		}
+	}
+
+	private async generateWorkspaceUrl(pageGuid: string): Promise<string> {
+		const baseUrl = `/umbraco/section/content/workspace/document/edit/${pageGuid}`;
+
+		try {
+			const documentRepository = new UmbDocumentDetailRepository(this);
+			const { data: document } = await documentRepository.requestByUnique(pageGuid);
+
+			if (!document) {
+				return `${baseUrl}/invariant/view/accessibility-reporter`;
+			}
+
+			const availableVariants = document.variants || [];
+			const availableCultures = availableVariants
+				.map(variant => variant.culture)
+				.filter((culture): culture is string => Boolean(culture));
+
+			let selectedCulture = 'invariant';
+
+			if (availableCultures.length === 0) {
+				selectedCulture = 'invariant';
+			} else if (availableCultures.length === 1) {
+				selectedCulture = availableCultures[0];
+			} else {
+				// Get user's culture from Umbraco user context
+				let userLanguage = 'en-US'; // Default to Umbraco default culture
+				if (this._currentUser) {
+					const currentUser = this._currentUser;
+					// Check if user has a language/culture preference
+					if (currentUser && typeof currentUser === 'object' && 'languageIsoCode' in currentUser) {
+						const userLangCode = (currentUser as any).languageIsoCode;
+						if (typeof userLangCode === 'string' && userLangCode) {
+							userLanguage = userLangCode;
+						}
+					}
+				}
+
+				const exactMatch = availableCultures.find(culture =>
+					culture && culture.toLowerCase() === userLanguage.toLowerCase()
+				);
+
+				if (exactMatch) {
+					selectedCulture = exactMatch;
+				} else {
+					const userLanguageCode = userLanguage.split('-')[0];
+					const languageMatch = availableCultures.find(culture =>
+						culture && culture.split('-')[0].toLowerCase() === userLanguageCode.toLowerCase()
+					);
+
+					selectedCulture = languageMatch || availableCultures[0] || 'invariant';
+				}
+			}
+
+			return `${baseUrl}/${selectedCulture}/view/accessibility-reporter`;
+
+		} catch (error) {
+			console.error('Error getting document details:', error);
+			return `${baseUrl}/invariant/view/accessibility-reporter`;
+		}
+	}
+
+
+
 	private exportResults() {
 
 		if (!this.results) {
@@ -558,7 +668,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 								<uui-table-cell>${page.score}</uui-table-cell>
 								<uui-table-cell>${page.violations}</uui-table-cell>
 								<uui-table-cell>
-									<a href="/section/content/workspace/document/edit/${page.guid}/invariant/view/accessibility-reporter" class="c-detail-button c-detail-button--active">
+									<button type="button" @click="${(e: Event) => this.handleWorkspaceClick(e, page.guid)}" class="c-detail-button c-detail-button--active">
 										<span class="c-detail-button__group">
 											<uui-icon-registry-essential>
 												<uui-icon name="see"></uui-icon>
@@ -567,7 +677,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 												View Page
 											</span>
 										</span>
-									</a>
+									</button>
 								</uui-table-cell>
 							</uui-table-row>`
 							)}
