@@ -5,7 +5,7 @@ import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
-import { AccessibilityReporterAppSettings, ConfigService } from "../api";
+import { AccessibilityReporterAppSettings, ConfigService, TestRun, TestRunService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
 import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
 import { generalStyles } from "../Styles/general";
@@ -58,6 +58,9 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	@state()
 	private passesOpen: boolean = false;
+
+	@state()
+	private history: TestRun[];
 
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
 
@@ -119,10 +122,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.config.testBaseUrl = this.getFallbackBaseUrl();
 		}
 
+		this.history = await this.getHistory(this._workspaceContext?.getUnique() as string);
+
 		if(this.config.runTestsAutomatically) {
 			this.runTests(false);
 		}
-
 	}
 
 	private getLocalHostname() {
@@ -186,6 +190,35 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return data;
 	}
 
+	private async getHistory(contentId: string): Promise<TestRun[] | []> {
+		const { data, error } = await tryExecute(this, TestRunService.runs({
+			path: {
+				contentId: contentId
+			}
+		}));
+
+		if (error) {
+			console.error(error);
+			this.pageState = PageState.Errored;
+			return [];
+		}
+
+		return data ?? [];
+	}
+
+	private async saveTestRun(contentId: string, resultPayload: string) {
+		const { data, error } = await tryExecute(this, TestRunService.create({
+			path: {
+				contentId: contentId,
+			},
+			body: resultPayload
+		}));
+
+		if (error) {
+			console.error(error);
+		}
+	}
+
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
 		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning);
 	}
@@ -217,6 +250,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.pageState = PageState.Loaded;
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
+			
+			this.saveTestRun(this._workspaceContext?.getUnique() as string, JSON.stringify(this.results));
 		} catch (error) {
 			this.pageState = PageState.Errored;
 			console.error(error);
@@ -627,6 +662,19 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 							`)}
 						</uui-table>
 						`: null}
+					</div>
+				</uui-box>
+
+				<uui-box style="margin-bottom: 20px;">
+					<div slot="headline" class="c-title__group">
+						<div class="c-circle">
+							<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="18" height="18" viewBox="0 0 500 500">
+								<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="2.613" stroke-width="30">
+									<path d="M8.23 18.77q-.412 0-.705-.295q-.294-.293-.294-.706v-2H10v-3.25q-.952.2-1.951-.06q-.999-.26-1.649-.917v-1.407H4.98L2.193 7.346q.862-.784 1.956-1.173q1.094-.388 2.252-.388q.961 0 1.87.273q.907.273 1.73.855V5.077h10v11.692q0 .846-.577 1.423q-.577.577-1.423.577H8.23Zm2.77-3h6v1q0 .424.288.712t.712.287q.425 0 .713-.287t.287-.713V6.077h-8v1.6l5.5 5.5v.708h-.708l-3.042-3.043l-.565.566q-.293.292-.574.49q-.282.198-.611.348v3.523ZM5.408 9.134H7.4v1.957q.512.316.952.43q.44.113.856.113q.682 0 1.241-.233t1.047-.721l.546-.546l-1.746-1.747q-.802-.801-1.798-1.202q-.996-.401-2.098-.401q-.73 0-1.421.19q-.69.19-1.237.494l1.666 1.666ZM16 16.769H8.23v1h8.074q-.171-.206-.238-.462Q16 17.051 16 16.77Zm-7.77 1v-1v1Z"></path>
+								</g>
+							</svg>
+						</div>
+						<h2 class="c-title">History</h2>
 					</div>
 				</uui-box>
 

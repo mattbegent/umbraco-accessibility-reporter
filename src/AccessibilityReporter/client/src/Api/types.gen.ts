@@ -11,6 +11,14 @@ export type AccessibilityReporterAppSettings = {
     excludedDocTypes: Array<string>;
 };
 
+export enum EventMessageTypeModel {
+    DEFAULT = 'Default',
+    INFO = 'Info',
+    ERROR = 'Error',
+    SUCCESS = 'Success',
+    WARNING = 'Warning'
+}
+
 export type NodeSummaryReadable = {
     readonly guid: string;
     readonly id: number;
@@ -21,6 +29,19 @@ export type NodeSummaryReadable = {
 
 export type NodeSummaryWritable = {
     url: string;
+};
+
+export type NotificationHeaderModel = {
+    message: string;
+    category: string;
+    type: EventMessageTypeModel;
+};
+
+export type TestRun = {
+    contentId: string;
+    runCompleted: string;
+    score: number;
+    resultPayload: string;
 };
 
 export type CurrentData = {
@@ -68,6 +89,54 @@ export type PagesResponses = {
 };
 
 export type PagesResponse = PagesResponses[keyof PagesResponses];
+
+export type CreateData = {
+    body?: string;
+    path: {
+        contentId: string;
+    };
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/test-run/{contentId}';
+};
+
+export type CreateErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type CreateResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
+
+export type RunsData = {
+    body?: never;
+    path: {
+        contentId: string;
+    };
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/test-runs/{contentId}';
+};
+
+export type RunsErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type RunsResponses = {
+    /**
+     * OK
+     */
+    200: Array<TestRun>;
+};
+
+export type RunsResponse = RunsResponses[keyof RunsResponses];
 
 export type ClientOptions = {
     baseUrl: 'https://localhost:44312' | (string & {});
