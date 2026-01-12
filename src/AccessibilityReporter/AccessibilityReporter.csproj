@@ -62,8 +62,8 @@
 
     <!-- Nuget References -->
     <ItemGroup>
-        <PackageReference Include="Umbraco.Cms.Web.Website" Version="16.0.0" />
-        <PackageReference Include="Umbraco.Cms.Api.Management" Version="16.0.0" />
+        <PackageReference Include="Umbraco.Cms.Web.Website" Version="17.0.0" />
+        <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
     </ItemGroup>
 
 </Project>
