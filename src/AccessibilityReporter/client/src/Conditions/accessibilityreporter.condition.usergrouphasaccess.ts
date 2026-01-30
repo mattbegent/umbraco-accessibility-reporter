@@ -2,7 +2,6 @@ import type { UmbControllerHost } from '@umbraco-cms/backoffice/controller-api';
 import { UmbConditionConfigBase, UmbConditionControllerArguments, UmbExtensionCondition } from "@umbraco-cms/backoffice/extension-api";
 import { UmbConditionBase } from '@umbraco-cms/backoffice/extension-registry';
 import { UMB_CURRENT_USER_CONTEXT } from '@umbraco-cms/backoffice/current-user';
-import { UmbUserDetailRepository } from '@umbraco-cms/backoffice/user'
 import { UmbUserGroupItemModel, UmbUserGroupItemRepository } from '@umbraco-cms/backoffice/user-group';
 import { ConfigService } from '../api';
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
@@ -32,10 +31,8 @@ export class UserGroupHasAccessCondition extends UmbConditionBase<UserGroupHasAc
                 }
 
                 try {
-                    // Get user details
-                    const userDetailRepository = new UmbUserDetailRepository(this);
-                    const { data: userDetail } = await userDetailRepository.requestByUnique(currentUser.unique);
-                    const userGroupIds = userDetail?.userGroupUniques;
+                    // Get user group IDs directly from the current user context
+                    const userGroupIds = currentUser.userGroupUniques;
 
                     if (!userGroupIds || userGroupIds.length === 0) {
                         console.warn('Current User has no user group IDs assigned');
@@ -45,8 +42,7 @@ export class UserGroupHasAccessCondition extends UmbConditionBase<UserGroupHasAc
 
                     // Fetch user group details using the GUIDs
                     const userGroupItemRepository = new UmbUserGroupItemRepository(this);
-                    const userGroupUniqueIds = userGroupIds.map((ref: { unique: string }) => ref.unique);
-                    const { data: userGroups } = await userGroupItemRepository.requestItems(userGroupUniqueIds);
+                    const { data: userGroups } = await userGroupItemRepository.requestItems(userGroupIds);
 
                     this._userGroups = userGroups;
 
@@ -74,9 +70,10 @@ export class UserGroupHasAccessCondition extends UmbConditionBase<UserGroupHasAc
 
                     // Check if any of the user's groups match the allowed groups
                     // You can match by name, alias, or unique ID depending on your config
+                    const lowerCaseAllowedGroups = allowedUserGroups.map(g => g.toLowerCase());
                     const hasAccess = this._userGroups.some(userGroup => {
-                        return allowedUserGroups.includes(userGroup.name.toLowerCase()) ||
-                               allowedUserGroups.includes(userGroup.unique.toLowerCase());
+                        return lowerCaseAllowedGroups.includes(userGroup.name.toLowerCase()) ||
+                               lowerCaseAllowedGroups.includes(userGroup.unique.toLowerCase());
                     });
 
                     this.permitted = hasAccess;

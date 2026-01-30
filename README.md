@@ -76,8 +76,11 @@ All options are completely optional and if you don't set them, they default to t
             "admin",
             "administrators",
             "editor",
+            "editors",
             "writer",
-            "translator", 
+            "writers",
+            "translator",
+            "translators", 
             "sensitiveData",
             "sensitive data"
         ],
