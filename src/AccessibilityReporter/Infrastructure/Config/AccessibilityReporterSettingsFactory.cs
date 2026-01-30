@@ -10,7 +10,7 @@ namespace AccessibilityReporter.Infrastructure.Config
 		{
 			if (settings.UserGroups.Any() == false)
 			{
-				settings.UserGroups = new HashSet<string>() { "admin", "administrators", "editor", "writer", "translator", "sensitiveData", "sensitive data" };
+				settings.UserGroups = new HashSet<string>() { "admin", "administrators", "editor", "editors", "writer", "writers", "translator", "translators", "sensitiveData", "sensitive data" };
 			}
 
 			if (settings.TestsToRun.Any() == false)
