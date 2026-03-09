@@ -1,6 +1,9 @@
+using AccessibilityReporter.Core.Interfaces;
 using AccessibilityReporter.Infrastructure.Config;
+using AccessibilityReporter.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Umbraco.Cms.Api.Management.OpenApi;
@@ -18,6 +21,11 @@ namespace AccessibilityReporter.Infrastructure
 				.Get<AccessibilityReporterAppSettings>();
 
 			builder.Services.AddSingleton(AccessibilityReporterSettingsFactory.Make(config ?? new AccessibilityReporterAppSettings()));
+
+            // Register a no-op AI summary service as the default.
+            // Installing the Umbraco.Community.AccessibilityReporter.AI add-on
+            // replaces this with a real implementation backed by Umbraco.AI.
+            builder.Services.TryAddSingleton<IAiReportSummaryService, NoOpAiReportSummaryService>();
 
             builder.Services.Configure<SwaggerGenOptions>(opt =>
             {

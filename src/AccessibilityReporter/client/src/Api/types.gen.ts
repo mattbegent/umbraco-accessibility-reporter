@@ -72,3 +72,46 @@ export type PagesResponse = PagesResponses[keyof PagesResponses];
 export type ClientOptions = {
     baseUrl: 'https://localhost:44312' | (string & {});
 };
+
+export type AiViolationInfo = {
+    id: string;
+    impact: string;
+    help: string;
+    nodeCount: number;
+};
+
+export type AiSummaryRequest = {
+    pageUrl: string;
+    pageName: string;
+    score: number;
+    violations: Array<AiViolationInfo>;
+    incompleteCount: number;
+};
+
+export type AiSummaryResponseModel = {
+    available: boolean;
+    summary?: string | null;
+};
+
+export type AiSummaryData = {
+    body: AiSummaryRequest;
+    path?: never;
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/ai/summary';
+};
+
+export type AiSummaryErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type AiSummaryResponses = {
+    /**
+     * OK
+     */
+    200: AiSummaryResponseModel;
+};
+
+export type AiSummaryApiResponse = AiSummaryResponses[keyof AiSummaryResponses];
