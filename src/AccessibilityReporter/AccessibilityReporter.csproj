@@ -2,7 +2,7 @@
 
     <!-- General -->
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
@@ -19,7 +19,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Copyright>Matt Begent</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReleaseNotes>Accessibility Reporter for Umbraco 16+. Fix issue getting correct URLs in the workspace view.</PackageReleaseNotes>
+        <PackageReleaseNotes>Fix issue with user group access condition.</PackageReleaseNotes>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
@@ -63,9 +63,9 @@
 
     <!-- Nuget References -->
     <ItemGroup>
-        <PackageReference Include="Umbraco.Cms.Core" Version="16.3.4" />
-        <PackageReference Include="Umbraco.Cms.Web.Website" Version="16.3.4" />
-        <PackageReference Include="Umbraco.Cms.Api.Management" Version="16.3.4" />
+        <PackageReference Include="Umbraco.Cms.Core" Version="17.2.1" />
+        <PackageReference Include="Umbraco.Cms.Web.Website" Version="17.2.1" />
+        <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.2.1" />
     </ItemGroup>
 
 </Project>
