@@ -1,5 +1,6 @@
-import { LitElement, css, html, customElement, state } from "@umbraco-cms/backoffice/external/lit";
+import { LitElement, css, html, customElement, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
+import { marked } from 'marked';
 import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
@@ -525,7 +526,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					` : null}
 					${this.aiSummaryState === 'done' ? html`
 						<div class="c-ai-summary">
-							<p>${this.aiSummary}</p>
+							${unsafeHTML(marked.parse(this.aiSummary) as string)}
 						</div>
 						<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Regenerate AI summary of accessibility issues">Regenerate Summary</uui-button>
 					` : null}
@@ -766,8 +767,26 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
         line-height: 1.6;
       }
 
-      .c-ai-summary p {
-        margin: 0;
+      .c-ai-summary p:first-child {
+        margin-top: 0;
+      }
+
+      .c-ai-summary p:last-child {
+        margin-bottom: 0;
+      }
+
+      .c-ai-summary ul,
+      .c-ai-summary ol {
+        padding-left: 1.5em;
+        margin: 0.5em 0;
+      }
+
+      .c-ai-summary li {
+        margin-bottom: 0.25em;
+      }
+
+      .c-ai-summary strong {
+        font-weight: 600;
       }
     `,
 	];

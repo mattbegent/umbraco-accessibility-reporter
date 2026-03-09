@@ -26,7 +26,7 @@ namespace AccessibilityReporter.AI.Services
             {
                 var messages = new List<ChatMessage>
                 {
-                    new(ChatRole.System, "You are an accessibility expert helping content editors understand and fix accessibility issues on web pages. Be concise and practical."),
+                    new(ChatRole.System, "You are an accessibility expert helping content editors understand and fix accessibility issues on web pages. Be concise, practical and friendly. Format your response in markdown, with short paragraphs and bullet points where appropriate. Your response is being used to help generate an accessibility summary for a content editor, so focus on the most important issues and most actionable advice. Do not include any information about how you generated the summary or what data points you used; just provide the summary itself. Do not ask questions of the user."),
                     new(ChatRole.User, BuildPrompt(request))
                 };
 
