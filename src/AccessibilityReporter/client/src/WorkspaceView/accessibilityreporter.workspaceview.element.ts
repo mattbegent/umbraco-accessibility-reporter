@@ -3,6 +3,7 @@ import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { marked } from 'marked';
 import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
+import AiSummaryState from "../Enums/ai-summary-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
@@ -61,7 +62,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private passesOpen: boolean = false;
 
 	@state()
-	private aiSummaryState: 'idle' | 'loading' | 'done' | 'unavailable' | 'errored' = 'idle';
+	private aiSummaryState: AiSummaryState = AiSummaryState.Idle;
 
 	@state()
 	private aiSummary: string = '';
@@ -200,7 +201,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private async runTests(showTestRunning: boolean): Promise<void> {
 
 		this.pageState = PageState.Loading;
-		this.aiSummaryState = 'idle';
+		this.aiSummaryState = AiSummaryState.Idle;
 		this.aiSummary = '';
 
 		// Ensure we have document URLs before running tests
@@ -328,7 +329,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	}
 
 	private async generateAiSummary(): Promise<void> {
-		this.aiSummaryState = 'loading';
+		this.aiSummaryState = AiSummaryState.Loading;
 
 		try {
 			const request = {
@@ -347,24 +348,24 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			const { data, error } = await tryExecute(this, AiSummaryService.summary({ body: request }));
 
 			if (error || !data) {
-				this.aiSummaryState = 'errored';
+				this.aiSummaryState = AiSummaryState.Errored;
 				return;
 			}
 
 			if (!data.available) {
-				this.aiSummaryState = 'unavailable';
+				this.aiSummaryState = AiSummaryState.Unavailable;
 				return;
 			}
 
 			if (!data.summary) {
-				this.aiSummaryState = 'errored';
+				this.aiSummaryState = AiSummaryState.Errored;
 				return;
 			}
 
 			this.aiSummary = data.summary;
-			this.aiSummaryState = 'done';
+			this.aiSummaryState = AiSummaryState.Done;
 		} catch (err) {
-			this.aiSummaryState = 'errored';
+			this.aiSummaryState = AiSummaryState.Errored;
 			console.error(err);
 		}
 	}

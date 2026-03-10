@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import './ar-logo';
 import './ar-chart';
 import './ar-score';
+import AiSummaryState from "../Enums/ai-summary-state";
 
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 import IResults from "../Interface/IResults";
@@ -86,7 +87,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	private reportSummaryText: string = "";
 
 	@state()
-	private aiSummaryState: 'idle' | 'loading' | 'done' | 'unavailable' | 'errored' = 'idle';
+	private aiSummaryState: AiSummaryState = AiSummaryState.Idle;
 
 	@state()
 	private aiSummary: string = '';
@@ -482,7 +483,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	private async generateAiSummary(): Promise<void> {
-		this.aiSummaryState = 'loading';
+		this.aiSummaryState = AiSummaryState.Loading;
 
 		try {
 			// Build per-violation aggregation from page results
@@ -532,24 +533,24 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			const { data, error } = await tryExecute(this, AiSummaryService.siteSummary({ body: request }));
 
 			if (error || !data) {
-				this.aiSummaryState = 'errored';
+				this.aiSummaryState = AiSummaryState.Errored;
 				return;
 			}
 
 			if (!data.available) {
-				this.aiSummaryState = 'unavailable';
+				this.aiSummaryState = AiSummaryState.Unavailable;
 				return;
 			}
 
 			if (!data.summary) {
-				this.aiSummaryState = 'errored';
+				this.aiSummaryState = AiSummaryState.Errored;
 				return;
 			}
 
 			this.aiSummary = data.summary;
-			this.aiSummaryState = 'done';
+			this.aiSummaryState = AiSummaryState.Done;
 		} catch (err) {
-			this.aiSummaryState = 'errored';
+			this.aiSummaryState = AiSummaryState.Errored;
 			console.error(err);
 		}
 	}
@@ -695,24 +696,24 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							</svg>
 							<h2 class="c-title" style="display:inline">AI Summary</h2>
 						</div>
-						${this.aiSummaryState === 'idle' ? html`
+						${this.aiSummaryState === AiSummaryState.Idle ? html`
 							<p>Generate an AI-powered summary of the accessibility issues across the whole website, including trends and prioritised actions.</p>
 							<uui-button look="primary" color="default" @click="${this.generateAiSummary}" label="Generate AI summary of site-wide accessibility issues">Generate AI Summary</uui-button>
 						` : null}
-						${this.aiSummaryState === 'loading' ? html`
+						${this.aiSummaryState === AiSummaryState.Loading ? html`
 							<uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>
 							<p>Generating summary&hellip;</p>
 						` : null}
-						${this.aiSummaryState === 'done' ? html`
+						${this.aiSummaryState === AiSummaryState.Done ? html`
 							<div class="c-ai-summary">
 								${unsafeHTML(marked.parse(this.aiSummary) as string)}
 							</div>
 							<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Regenerate AI summary of site-wide accessibility issues">Regenerate Summary</uui-button>
 						` : null}
-						${this.aiSummaryState === 'unavailable' ? html`
+						${this.aiSummaryState === AiSummaryState.Unavailable ? html`
 							<p>AI summaries are not available. To use this feature, install <a href="https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter.AI" target="_blank" rel="noopener noreferrer">Umbraco.Community.AccessibilityReporter.AI</a> alongside <a href="https://github.com/umbraco/Umbraco.AI" target="_blank" rel="noopener noreferrer">Umbraco.AI</a> and a provider package.</p>
 						` : null}
-						${this.aiSummaryState === 'errored' ? html`
+						${this.aiSummaryState === AiSummaryState.Errored ? html`
 							<p>An error occurred generating the summary. Please ensure Umbraco.AI is configured with a default chat profile.</p>
 							<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Retry generating AI summary">Try again</uui-button>
 						` : null}
