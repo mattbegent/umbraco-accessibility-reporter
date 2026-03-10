@@ -1,6 +1,5 @@
-import { LitElement, css, html, customElement, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
+import { LitElement, css, html, customElement, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
-import { marked } from 'marked';
 import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import AiSummaryState from "../Enums/ai-summary-state";
@@ -18,6 +17,7 @@ import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibil
 import { utils, writeFile } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
+import '../Components/ar-ai-summary';
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -504,41 +504,17 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 						<uui-button look="primary" color="default" @click="${this.runTests}" label="Rerun accessibility tests on current published page" class="c-summary__button">Rerun tests</uui-button>
 						<uui-button look="secondary" color="default" @click="${this.exportResults}" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export results</uui-button>
 						<span class="c-summary__time"><strong>${this.testTime}</strong> on <strong>${this.testDate}</strong></span>
-					</p>
+				</p>
 
 				</uui-box>
 
-				<uui-box style="margin-bottom: 20px;">
-					<div slot="headline" class="c-title__group">
-						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="42" height="42">
-							<circle cx="12" cy="12" r="10" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"/>
-							<path d="M12 7v1M12 16v1M7 12h1M16 12h1M8.5 8.5l.7.7M14.8 14.8l.7.7M8.5 15.5l.7-.7M14.8 9.2l.7-.7" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round"/>
-							<circle cx="12" cy="12" r="2" style="fill:#443b52"/>
-						</svg>
-						<h2 class="c-title">AI Summary</h2>
-					</div>
-					${this.aiSummaryState === 'idle' ? html`
-						<p>Generate an AI-powered summary of the accessibility issues on this page.</p>
-						<uui-button look="primary" color="default" @click="${this.generateAiSummary}" label="Generate AI summary of accessibility issues">Generate AI Summary</uui-button>
-					` : null}
-					${this.aiSummaryState === 'loading' ? html`
-						<uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>
-						<p>Generating summary&hellip;</p>
-					` : null}
-					${this.aiSummaryState === 'done' ? html`
-						<div class="c-ai-summary">
-							${unsafeHTML(marked.parse(this.aiSummary) as string)}
-						</div>
-						<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Regenerate AI summary of accessibility issues">Regenerate Summary</uui-button>
-					` : null}
-					${this.aiSummaryState === 'unavailable' ? html`
-						<p>AI summaries are not available. To use this feature, install <a href="https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter.AI" target="_blank" rel="noopener noreferrer">Umbraco.Community.AccessibilityReporter.AI</a> alongside <a href="https://github.com/umbraco/Umbraco.AI" target="_blank" rel="noopener noreferrer">Umbraco.AI</a> and a provider package.</p>
-					` : null}
-					${this.aiSummaryState === 'errored' ? html`
-						<p>An error occurred generating the summary. Please ensure Umbraco.AI is configured with a default chat profile.</p>
-						<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Retry generating AI summary">Try again</uui-button>
-					` : null}
-				</uui-box>
+				<ar-ai-summary
+					style="margin-bottom: 20px;"
+					.state=${this.aiSummaryState}
+					.summary=${this.aiSummary}
+					.onGenerate=${this.generateAiSummary.bind(this)}
+					idleDescription="Generate an AI-powered summary of the accessibility issues on this page."
+				></ar-ai-summary>
 
 				<uui-box style="margin-bottom: 20px;">
 					<button type="button" slot="headline" class="c-accordion-header" @click="${this.toggleViolations}" aria-expanded="${this.violationsOpen === true}" id="violationsAccordion">
