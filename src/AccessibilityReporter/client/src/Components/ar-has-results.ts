@@ -1,5 +1,6 @@
-import { LitElement, html, customElement, property, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
+import { LitElement, html, css, customElement, property, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
+import { marked } from 'marked';
 
 import { utils, writeFile } from "xlsx";
 import { format } from 'date-fns';
@@ -13,7 +14,8 @@ import IResults from "../Interface/IResults";
 
 import { generalStyles } from "../Styles/general";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
-import { AccessibilityReporterAppSettings } from "../api";
+import { AccessibilityReporterAppSettings, AiSummaryService } from "../api";
+import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { UmbDocumentDetailRepository } from "@umbraco-cms/backoffice/document";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 
@@ -82,6 +84,12 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 	@state()
 	private reportSummaryText: string = "";
+
+	@state()
+	private aiSummaryState: 'idle' | 'loading' | 'done' | 'unavailable' | 'errored' = 'idle';
+
+	@state()
+	private aiSummary: string = '';
 
 	@state()
 	private pageUrls: Map<string, string> = new Map();
@@ -473,7 +481,78 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		}
 	}
 
+	private async generateAiSummary(): Promise<void> {
+		this.aiSummaryState = 'loading';
 
+		try {
+			// Build per-violation aggregation from page results
+			const violationMap = new Map<string, { impact: string; help: string; totalOccurrences: number; affectedPages: Set<string> }>();
+
+			for (const page of this.results!.pages) {
+				for (const violation of page.violations) {
+					const existing = violationMap.get(violation.id);
+					if (existing) {
+						existing.totalOccurrences += violation.nodes.length;
+						existing.affectedPages.add(page.page.url);
+					} else {
+						violationMap.set(violation.id, {
+							impact: violation.impact,
+							help: violation.title || violation.id,
+							totalOccurrences: violation.nodes.length,
+							affectedPages: new Set([page.page.url])
+						});
+					}
+				}
+			}
+
+			const mostCommonViolations = Array.from(violationMap.entries())
+				.map(([id, data]) => ({
+					id,
+					impact: data.impact,
+					help: data.help,
+					totalOccurrences: data.totalOccurrences,
+					affectedPages: data.affectedPages.size
+				}))
+				.sort((a, b) => b.totalOccurrences - a.totalOccurrences)
+				.slice(0, 10);
+
+			const request = {
+				averageScore: this.averagePageScore ?? 0,
+				totalPages: this.numberOfPagesTested ?? 0,
+				totalViolations: this.totalViolations ?? 0,
+				pages: this.pagesTestResults.map((p: any) => ({
+					name: p.name,
+					url: p.url,
+					score: p.score,
+					violationCount: p.violations
+				})),
+				mostCommonViolations
+			};
+
+			const { data, error } = await tryExecute(this, AiSummaryService.siteSummary({ body: request }));
+
+			if (error || !data) {
+				this.aiSummaryState = 'errored';
+				return;
+			}
+
+			if (!data.available) {
+				this.aiSummaryState = 'unavailable';
+				return;
+			}
+
+			if (!data.summary) {
+				this.aiSummaryState = 'errored';
+				return;
+			}
+
+			this.aiSummary = data.summary;
+			this.aiSummaryState = 'done';
+		} catch (err) {
+			this.aiSummaryState = 'errored';
+			console.error(err);
+		}
+	}
 
 	private exportResults() {
 
@@ -607,6 +686,38 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 						</div>
 					</uui-box>
 
+					<uui-box class="c-dashboard-grid__full-row">
+						<div slot="headline">
+							<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="32" height="32" style="vertical-align: middle; margin-right: 8px;">
+								<circle cx="12" cy="12" r="10" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"/>
+								<path d="M12 7v1M12 16v1M7 12h1M16 12h1M8.5 8.5l.7.7M14.8 14.8l.7.7M8.5 15.5l.7-.7M14.8 9.2l.7-.7" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round"/>
+								<circle cx="12" cy="12" r="2" style="fill:#443b52"/>
+							</svg>
+							<h2 class="c-title" style="display:inline">AI Summary</h2>
+						</div>
+						${this.aiSummaryState === 'idle' ? html`
+							<p>Generate an AI-powered summary of the accessibility issues across the whole website, including trends and prioritised actions.</p>
+							<uui-button look="primary" color="default" @click="${this.generateAiSummary}" label="Generate AI summary of site-wide accessibility issues">Generate AI Summary</uui-button>
+						` : null}
+						${this.aiSummaryState === 'loading' ? html`
+							<uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>
+							<p>Generating summary&hellip;</p>
+						` : null}
+						${this.aiSummaryState === 'done' ? html`
+							<div class="c-ai-summary">
+								${unsafeHTML(marked.parse(this.aiSummary) as string)}
+							</div>
+							<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Regenerate AI summary of site-wide accessibility issues">Regenerate Summary</uui-button>
+						` : null}
+						${this.aiSummaryState === 'unavailable' ? html`
+							<p>AI summaries are not available. To use this feature, install <a href="https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter.AI" target="_blank" rel="noopener noreferrer">Umbraco.Community.AccessibilityReporter.AI</a> alongside <a href="https://github.com/umbraco/Umbraco.AI" target="_blank" rel="noopener noreferrer">Umbraco.AI</a> and a provider package.</p>
+						` : null}
+						${this.aiSummaryState === 'errored' ? html`
+							<p>An error occurred generating the summary. Please ensure Umbraco.AI is configured with a default chat profile.</p>
+							<uui-button look="secondary" color="default" @click="${this.generateAiSummary}" label="Retry generating AI summary">Try again</uui-button>
+						` : null}
+					</uui-box>
+
 					<uui-box ng-if="totalViolations">
 						<div slot="headline">
 							<h2 class="c-title">Total Violations</h2>
@@ -698,7 +809,38 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	static styles = [
-		generalStyles
+		generalStyles,
+		css`
+      .c-ai-summary {
+        background: var(--uui-color-surface-alt, #f4f4f4);
+        border-radius: var(--uui-border-radius, 4px);
+        padding: 16px;
+        margin-bottom: 12px;
+        line-height: 1.6;
+      }
+
+      .c-ai-summary p:first-child {
+        margin-top: 0;
+      }
+
+      .c-ai-summary p:last-child {
+        margin-bottom: 0;
+      }
+
+      .c-ai-summary ul,
+      .c-ai-summary ol {
+        padding-left: 1.5em;
+        margin: 0.5em 0;
+      }
+
+      .c-ai-summary li {
+        margin-bottom: 0.25em;
+      }
+
+      .c-ai-summary strong {
+        font-weight: 600;
+      }
+    `,
 	];
 }
 

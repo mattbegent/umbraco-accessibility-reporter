@@ -29,5 +29,17 @@ namespace AccessibilityReporter.Controllers.Umbraco
         {
             return await _aiSummaryService.GetSummaryAsync(request, cancellationToken);
         }
+
+        /// <summary>
+        /// Returns an AI-generated summary of the accessibility results across the whole website.
+        /// When the Umbraco.AI add-on is not installed, returns available: false.
+        /// </summary>
+        /// <returns code="200">The AI site summary result</returns>
+        [HttpPost("ai/site-summary")]
+        [ProducesResponseType<AiSummaryResponse>(200)]
+        public async Task<AiSummaryResponse> SiteSummary([FromBody] AiSiteSummaryRequest request, CancellationToken cancellationToken)
+        {
+            return await _aiSummaryService.GetSiteSummaryAsync(request, cancellationToken);
+        }
     }
 }

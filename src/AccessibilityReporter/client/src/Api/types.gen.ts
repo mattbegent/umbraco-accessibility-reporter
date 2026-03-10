@@ -115,3 +115,49 @@ export type AiSummaryResponses = {
 };
 
 export type AiSummaryApiResponse = AiSummaryResponses[keyof AiSummaryResponses];
+
+export type AiSitePageInfo = {
+    name: string;
+    url: string;
+    score: number;
+    violationCount: number;
+};
+
+export type AiSiteViolationSummary = {
+    id: string;
+    impact: string;
+    help: string;
+    totalOccurrences: number;
+    affectedPages: number;
+};
+
+export type AiSiteSummaryRequest = {
+    averageScore: number;
+    totalPages: number;
+    totalViolations: number;
+    pages: Array<AiSitePageInfo>;
+    mostCommonViolations: Array<AiSiteViolationSummary>;
+};
+
+export type AiSiteSummaryData = {
+    body: AiSiteSummaryRequest;
+    path?: never;
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/ai/site-summary';
+};
+
+export type AiSiteSummaryErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type AiSiteSummaryResponses = {
+    /**
+     * OK
+     */
+    200: AiSummaryResponseModel;
+};
+
+export type AiSiteSummaryApiResponse = AiSiteSummaryResponses[keyof AiSiteSummaryResponses];
