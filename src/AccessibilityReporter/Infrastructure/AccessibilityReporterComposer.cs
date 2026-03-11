@@ -27,6 +27,9 @@ namespace AccessibilityReporter.Infrastructure
             // replaces this with a real implementation backed by Umbraco.AI.
             builder.Services.TryAddSingleton<IAiReportSummaryService, NoOpAiReportSummaryService>();
 
+            // Register a no-op AI readability service as the default.
+            builder.Services.TryAddSingleton<IAiReadabilityService, NoOpAiReadabilityService>();
+
             builder.Services.Configure<SwaggerGenOptions>(opt =>
             {
                 // Configure the Swagger generation options

@@ -3,6 +3,7 @@ import { manifests as conditionManifests } from './Conditions/manifests';
 import { manifests as dashboardManifests } from './Dashboards/manifests';
 import { manifests as workspaceViewManifests } from './WorkspaceView/manifests';
 import { manifests as modalManifests } from './Modals/manifests';
+import { manifests as tiptapManifests } from './TipTap/manifests';
 import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
 import { client } from "./api/client.gen.js";
 
@@ -15,7 +16,8 @@ export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
         ...conditionManifests,
         ...dashboardManifests,
         ...workspaceViewManifests,
-        ...modalManifests
+        ...modalManifests,
+        ...tiptapManifests
     ]);
 
 	_host.consumeContext(UMB_AUTH_CONTEXT, async (authContext) => {
