@@ -7,7 +7,7 @@ export const manifests: Array<UmbExtensionManifest> = [
         api: () => import('./readability.tiptap-toolbar-api.js'),
         meta: {
             alias: 'accessibilityReporterReadability',
-            icon: 'icon-school',
+            icon: 'icon-accessibility-reporter',
             label: 'Readability',
         }
     }
