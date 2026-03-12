@@ -19,7 +19,7 @@ export const ACCESSIBILITY_REPORTER_READABILITY_MODAL = new UmbModalToken<Readab
     {
         modal: {
             type: 'sidebar',
-            size: 'large'
+            size: 'full'
         }
     }
 );

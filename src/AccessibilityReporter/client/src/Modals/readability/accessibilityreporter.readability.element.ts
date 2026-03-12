@@ -110,22 +110,30 @@ export class ReadabilityModalElement extends UmbModalBaseElement<ReadabilityModa
                             </uui-box>
                         ` : null}
 
-                        <uui-box>
-                            <div slot="headline" class="c-preview-header">
-                                <span>Improved content</span>
-                                <uui-button
-                                    compact
-                                    look="secondary"
-                                    label="${this._showPreview ? 'Show HTML' : 'Show Preview'}"
-                                    @click="${this._togglePreview}">
-                                    ${this._showPreview ? 'Show HTML' : 'Show Preview'}
-                                </uui-button>
-                            </div>
-                            ${this._showPreview
-                                ? html`<div class="c-preview">${unsafeHTML(this._improvedHtml)}</div>`
-                                : html`<pre class="c-code">${this._improvedHtml}</pre>`
-                            }
-                        </uui-box>
+                        <div class="c-toggle-row">
+                            <uui-button
+                                compact
+                                look="secondary"
+                                label="${this._showPreview ? 'Show HTML' : 'Show Preview'}"
+                                @click="${this._togglePreview}">
+                                ${this._showPreview ? 'Show HTML' : 'Show Preview'}
+                            </uui-button>
+                        </div>
+
+                        <div class="c-comparison">
+                            <uui-box headline="Original content">
+                                ${this._showPreview
+                                    ? html`<div class="c-preview">${unsafeHTML(this.data!.html)}</div>`
+                                    : html`<pre class="c-code">${this.data!.html}</pre>`
+                                }
+                            </uui-box>
+                            <uui-box headline="Improved content">
+                                ${this._showPreview
+                                    ? html`<div class="c-preview">${unsafeHTML(this._improvedHtml)}</div>`
+                                    : html`<pre class="c-code">${this._improvedHtml}</pre>`
+                                }
+                            </uui-box>
+                        </div>
 
                     </div>
                 ` : null}
@@ -179,6 +187,23 @@ export class ReadabilityModalElement extends UmbModalBaseElement<ReadabilityModa
             margin-bottom: 16px;
         }
 
+        .c-toggle-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 8px;
+        }
+
+        .c-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .c-comparison uui-box {
+            margin-bottom: 0;
+            min-width: 0;
+        }
+
         .c-explanation {
             line-height: 1.6;
         }
@@ -189,13 +214,6 @@ export class ReadabilityModalElement extends UmbModalBaseElement<ReadabilityModa
 
         .c-explanation p:last-child {
             margin-bottom: 0;
-        }
-
-        .c-preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
         }
 
         .c-preview {
