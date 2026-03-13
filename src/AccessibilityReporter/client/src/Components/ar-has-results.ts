@@ -19,6 +19,8 @@ import { AccessibilityReporterAppSettings, AiSummaryService } from "../api";
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { UmbDocumentDetailRepository } from "@umbraco-cms/backoffice/document";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
+import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
+import { ACCESSIBILITY_REPORTER_STATEMENT_MODAL } from "../Modals/statement/accessibilityreporter.statement.modal.token.js";
 
 @customElement("ar-has-results")
 export class ARHasResultsElement extends UmbElementMixin(LitElement) {
@@ -92,10 +94,13 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private aiSummary: string = '';
 
+
+
 	@state()
 	private pageUrls: Map<string, string> = new Map();
 
 	private _notificationContext?: UmbNotificationContext;
+	private _modalManagerContext?: UmbModalManagerContext;
 
 	@state()
     private _currentUser?: UmbCurrentUserModel;
@@ -104,6 +109,9 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		super();
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
+		});
+		this.consumeContext(UMB_MODAL_MANAGER_CONTEXT, (_instance) => {
+			this._modalManagerContext = _instance;
 		});
 		this.consumeContext(UMB_CURRENT_USER_CONTEXT, (instance) => {
 			if (!instance) {
@@ -555,6 +563,25 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		}
 	}
 
+	private openStatementModal(): void {
+		if (!this._modalManagerContext || !this.results) return;
+
+		this._modalManagerContext.open(this, ACCESSIBILITY_REPORTER_STATEMENT_MODAL, {
+			data: {
+				results: this.results,
+				averagePageScore: this.averagePageScore ?? 0,
+				totalViolations: this.totalViolations ?? 0,
+				numberOfPagesTested: this.numberOfPagesTested ?? 0,
+				pagesTestResults: this.pagesTestResults.map((p: any) => ({
+					name: p.name,
+					url: p.url,
+					score: p.score,
+					violations: p.violations
+				}))
+			}
+		});
+	}
+
 	private exportResults() {
 
 		if (!this.results) {
@@ -681,6 +708,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							</div>
 							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="Rerun full website accessibility tests" class="c-summary__button">Rerun tests</uui-button>
 							<uui-button look="secondary" color="default" @click="${this.exportResults}" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export results</uui-button>
+							<uui-button look="secondary" color="default" @click="${this.openStatementModal}" label="Generate an AI accessibility statement" class="c-summary__button">Accessibility Statement</uui-button>
 							${this.results ?
 							html`<span class="c-summary__time">Started at <strong>${this.formatTime(this.results.startTime)}</strong> and ended at <strong>${this.formatTime(this.results.endTime)}</strong></span>`
 							: null}

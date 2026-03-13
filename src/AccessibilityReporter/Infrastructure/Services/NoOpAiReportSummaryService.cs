@@ -18,5 +18,8 @@ namespace AccessibilityReporter.Infrastructure.Services
 
         public Task<AiSummaryResponse> GetSiteSummaryAsync(AiSiteSummaryRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(new AiSummaryResponse { Available = false });
+
+        public Task<AiSummaryResponse> GetAccessibilityStatementAsync(AiAccessibilityStatementRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult(new AiSummaryResponse { Available = false });
     }
 }

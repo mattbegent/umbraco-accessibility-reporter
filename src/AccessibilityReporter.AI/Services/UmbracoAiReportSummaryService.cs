@@ -111,6 +111,37 @@ namespace AccessibilityReporter.AI.Services
             return sb.ToString();
         }
 
+        public async Task<AiSummaryResponse> GetAccessibilityStatementAsync(AiAccessibilityStatementRequest request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var messages = new List<ChatMessage>
+                {
+                    new(ChatRole.System, BuildAccessibilityStatementSystemPrompt()),
+                    new(ChatRole.User, BuildAccessibilityStatementPrompt(request))
+                };
+
+                var response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
+                var summary = response.Text;
+
+                return new AiSummaryResponse
+                {
+                    Available = true,
+                    Summary = string.IsNullOrWhiteSpace(summary) ? null : summary
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating AI accessibility statement");
+
+                return new AiSummaryResponse
+                {
+                    Available = true,
+                    Summary = null
+                };
+            }
+        }
+
         private static string BuildSitePrompt(AiSiteSummaryRequest request)
         {
             var sb = new StringBuilder();
@@ -144,6 +175,71 @@ namespace AccessibilityReporter.AI.Services
 
             sb.AppendLine();
             sb.AppendLine("Summarise the overall accessibility health of the website. Identify trends and recurring issues that appear across multiple pages. List the top 3–5 prioritised actions to improve site-wide accessibility. Note which pages need the most urgent attention. Write for a content editor, not a developer.");
+
+            return sb.ToString();
+        }
+
+        private static string BuildAccessibilityStatementSystemPrompt()
+        {
+            return @"You are an accessibility expert who generates accessibility statements for websites. You must generate an accessibility statement following the GOV.UK template structure. The statement should be in markdown format.
+
+The statement must follow this exact structure:
+
+1. **Accessibility statement for [website name]** - Introduction section explaining the scope and what users should be able to do
+2. **How accessible this website is** - Summary of known accessibility issues based on the audit data
+3. **Feedback and contact information** - Placeholder section for contact details
+4. **Enforcement procedure** - Standard legal text about EHRC/EASS
+5. **Technical information about this website's accessibility** - Commitment statement and compliance status
+6. **Non-accessible content** - Detailed list of non-compliances from the audit data, with WCAG criteria references where possible
+7. **What we're doing to improve accessibility** - Placeholder for improvement plans
+8. **Preparation of this accessibility statement** - Statement preparation details with today's date
+
+Important rules:
+- Use the actual audit data provided to populate the 'How accessible this website is' and 'Non-accessible content' sections with real issues found
+- Where sections need organisation-specific information (contact details, dates for fixes etc.), use square bracket placeholders like [email address], [phone number] etc.
+- The compliance status should be determined from the audit data: if there are violations, the site is partially compliant or not compliant
+- Reference WCAG 2.2 AA standard throughout
+- Format the entire response in clean markdown
+- Do not include any commentary or instructions about the statement itself, just output the statement content
+- Do not ask questions of the user";
+        }
+
+        private static string BuildAccessibilityStatementPrompt(AiAccessibilityStatementRequest request)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Generate an accessibility statement for the website \"{request.WebsiteName}\" ({request.WebsiteUrl}), run by \"{request.OrganisationName}\".");
+            sb.AppendLine();
+            sb.AppendLine($"The website was tested using automated accessibility testing tools. Here are the results:");
+            sb.AppendLine();
+            sb.AppendLine($"- Total pages tested: {request.TotalPages}");
+            sb.AppendLine($"- Average accessibility score: {request.AverageScore}/100");
+            sb.AppendLine($"- Total violations found: {request.TotalViolations}");
+
+            if (request.Pages.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Pages tested (sorted by score, lowest first):");
+                var sortedPages = request.Pages.OrderBy(p => p.Score).ToList();
+                foreach (var page in sortedPages)
+                {
+                    sb.AppendLine($"- \"{page.Name}\" ({page.Url}): score {page.Score}/100, {page.ViolationCount} violation(s)");
+                }
+            }
+
+            if (request.MostCommonViolations.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Accessibility violations found:");
+                foreach (var violation in request.MostCommonViolations)
+                {
+                    var pageWord = violation.AffectedPages == 1 ? "page" : "pages";
+                    sb.AppendLine($"- {violation.Impact.ToUpperInvariant()}: {violation.Help} (axe rule: {violation.Id}, {violation.TotalOccurrences} occurrence(s) across {violation.AffectedPages} {pageWord})");
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine($"Today's date is {DateTime.UtcNow:d MMMM yyyy}. Use this as the preparation date for the statement.");
 
             return sb.ToString();
         }

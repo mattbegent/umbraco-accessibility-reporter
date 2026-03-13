@@ -161,3 +161,37 @@ export type AiSiteSummaryResponses = {
 };
 
 export type AiSiteSummaryApiResponse = AiSiteSummaryResponses[keyof AiSiteSummaryResponses];
+
+export type AiAccessibilityStatementRequest = {
+    websiteName: string;
+    websiteUrl: string;
+    organisationName: string;
+    averageScore: number;
+    totalPages: number;
+    totalViolations: number;
+    pages: Array<AiSitePageInfo>;
+    mostCommonViolations: Array<AiSiteViolationSummary>;
+};
+
+export type AiAccessibilityStatementData = {
+    body: AiAccessibilityStatementRequest;
+    path?: never;
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/ai/accessibility-statement';
+};
+
+export type AiAccessibilityStatementErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type AiAccessibilityStatementResponses = {
+    /**
+     * OK
+     */
+    200: AiSummaryResponseModel;
+};
+
+export type AiAccessibilityStatementApiResponse = AiAccessibilityStatementResponses[keyof AiAccessibilityStatementResponses];

@@ -12,4 +12,11 @@ const readabilityModal: UmbExtensionManifest = {
     element: () => import('./readability/accessibilityreporter.readability.element')
 }
 
-export const manifests = [detailModal, readabilityModal];
+const statementModal: UmbExtensionManifest = {
+    type: 'modal',
+    alias: 'AccessibilityReporter.Modal.Statement',
+    name: 'Accessibility Reporter Modal - Statement',
+    element: () => import('./statement/accessibilityreporter.statement.element')
+}
+
+export const manifests = [detailModal, readabilityModal, statementModal];
