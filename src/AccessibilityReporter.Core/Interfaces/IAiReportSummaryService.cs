@@ -24,5 +24,10 @@ namespace AccessibilityReporter.Core.Interfaces
         /// populated with data from the accessibility audit results.
         /// </summary>
         Task<AiSummaryResponse> GetAccessibilityStatementAsync(AiAccessibilityStatementRequest request, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Generates AI-tailored manual accessibility tests based on the page content and audit results.
+        /// </summary>
+        Task<AiSummaryResponse> GetManualTestsAsync(AiManualTestsRequest request, CancellationToken cancellationToken = default);
     }
 }

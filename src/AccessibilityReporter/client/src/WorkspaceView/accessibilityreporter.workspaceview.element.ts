@@ -18,6 +18,7 @@ import { utils, writeFile } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
 import '../Components/ar-ai-summary';
+import '../Components/ar-manual-tests';
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -690,38 +691,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					</div>
 				</uui-box>
 
-				<uui-box>
-					<div slot="headline" class="c-title__group">
-						<div class="c-circle">
-							<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="18" height="18" viewBox="0 0 500 500"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="2.613" stroke-width="30"><path d="M201.404 415.551H450M201.404 250H450M201.404 84.45H450M129.745 118.506c0 3.213-2.603 5.798-5.815 5.798M123.93 124.305H55.815M55.815 124.305A5.799 5.799 0 0 1 50 118.507M50 118.506V50.445M50 50.445c0-3.231 2.603-5.851 5.815-5.851M55.815 44.595h68.115M123.93 44.595c3.213 0 5.815 2.62 5.815 5.851M129.745 50.445v68.061M129.745 284.074a5.79 5.79 0 0 1-5.815 5.799M123.93 289.873H55.815M55.815 289.873A5.787 5.787 0 0 1 50 284.074M50 284.074v-68.095M50 215.979c0-3.231 2.603-5.851 5.815-5.851M55.815 210.128h68.115M123.93 210.128c3.213 0 5.815 2.619 5.815 5.851M129.745 215.979v68.095M129.745 449.607c0 3.248-2.603 5.798-5.815 5.798M123.93 455.405H55.815M55.815 455.405c-3.213 0-5.815-2.55-5.815-5.798M50 449.607v-68.079M50 381.528c0-3.213 2.603-5.833 5.815-5.833M55.815 375.695h68.115M123.93 375.695c3.213 0 5.815 2.62 5.815 5.833M129.745 381.528v68.079" /></g></svg>
-						</div>
-						<h2 class="c-title">Manual Tests</h2>
-					</div>
-					<p class="c-paragraph">Automated accessibility tests can only catch up to <strong>37% of accessibility issues</strong>. Manual testing is needed to ensure that this page is fully accessible.</p>
-					<p class="c-paragraph__spaced">As a minimum it is recommended that the following manual tests are run on <a href="${this.testURL}" target="_blank" class="btn-link -underline c-bold">${this.pageName}<span class="sr-only"> (opens in a new window)</span></a> every time that the automated tests are run.</p>
-					<div class="c-checklist">
-						<div class="c-checklist__item">
-							<uui-toggle label="All interactive elements can be reached using keyboard controls."></uui-toggle>
-						</div>
-						<div class="c-checklist__item">
-							<uui-toggle label="Tab order is consistent with how it visually appears on the page."></uui-toggle>
-						</div>
-						<div class="c-checklist__item">
-							<uui-toggle label="There are no keyboard traps on elements that shouldn't be trapping focus."></uui-toggle>
-						</div>
-						<div class="c-checklist__item">
-							<uui-toggle label="Interactive elements have a clear focus style."></uui-toggle>
-						</div>
-						<div class="c-checklist__item">
-							<uui-toggle label="Input focus does not change unexpectedly without user initiating it."></uui-toggle>
-						</div>
-						${this.results.incomplete.length ? html`
-						<div class="c-checklist__item">
-							<uui-toggle label="Incomplete automated tests in the 'Incomplete Tests' section have passed."></uui-toggle>
-						</div>
-						` : null}
-					</div>
-				</uui-box>
+				<ar-manual-tests
+					testURL="${this.testURL}"
+					pageName="${this.pageName}"
+					.results=${this.results}
+					.score=${this.score}
+				></ar-manual-tests>
 				</div>
 			`;
 		}

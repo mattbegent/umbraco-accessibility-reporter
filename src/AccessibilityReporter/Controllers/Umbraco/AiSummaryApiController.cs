@@ -54,5 +54,17 @@ namespace AccessibilityReporter.Controllers.Umbraco
         {
             return await _aiSummaryService.GetAccessibilityStatementAsync(request, cancellationToken);
         }
+
+        /// <summary>
+        /// Returns AI-tailored manual accessibility tests based on the page content and audit results.
+        /// When the Umbraco.AI add-on is not installed, returns available: false.
+        /// </summary>
+        /// <returns code="200">The AI manual tests result</returns>
+        [HttpPost("ai/manual-tests")]
+        [ProducesResponseType<AiSummaryResponse>(200)]
+        public async Task<AiSummaryResponse> ManualTests([FromBody] AiManualTestsRequest request, CancellationToken cancellationToken)
+        {
+            return await _aiSummaryService.GetManualTestsAsync(request, cancellationToken);
+        }
     }
 }

@@ -243,5 +243,88 @@ Important rules:
 
             return sb.ToString();
         }
+
+        public async Task<AiSummaryResponse> GetManualTestsAsync(AiManualTestsRequest request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var messages = new List<ChatMessage>
+                {
+                    new(ChatRole.System, BuildManualTestsSystemPrompt()),
+                    new(ChatRole.User, BuildManualTestsPrompt(request))
+                };
+
+                var response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
+                var summary = response.Text;
+
+                return new AiSummaryResponse
+                {
+                    Available = true,
+                    Summary = string.IsNullOrWhiteSpace(summary) ? null : summary
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating AI manual tests for page {PageUrl}", request.PageUrl);
+
+                return new AiSummaryResponse
+                {
+                    Available = true,
+                    Summary = null
+                };
+            }
+        }
+
+        private static string BuildManualTestsSystemPrompt()
+        {
+            return @"You are an accessibility expert who generates tailored manual accessibility test checklists for web pages. Your role is to analyse the HTML content of a page and its automated test results to produce specific, actionable manual tests that are relevant to the actual content and elements on the page.
+
+Important rules:
+- Each test must be a verification check only — it must ask the user to TEST or VERIFY something, never to FIX, ADD, REMOVE, CHANGE or REPLACE anything. For example, write ""Verify that the page has a lang attribute set to the correct language"" NOT ""Add a lang attribute to the html element and verify it is correct""
+- Each test must be a single clear sentence that a content editor can understand and act on
+- Tests should be specific to the page content — reference actual elements, features or content patterns you can see in the HTML
+- Format your response as a JSON array of objects, each with a ""test"" (string) and ""category"" (string) property
+- Categories should be one of: ""Keyboard"", ""Visual"", ""Screen Reader"", ""Content"", ""Forms"", ""Media"", ""Navigation"", ""Interactive""
+- Include 10–20 tests, prioritising the most important ones based on what you see in the HTML
+- Do not include tests that automated tools would have already caught (e.g. missing alt text, colour contrast ratios)
+- Focus on things that require human judgement: meaningful alt text, logical reading order, clear link purpose, sensible focus management, appropriate use of headings, video captions etc.
+- CRITICAL: Do not wrap the JSON in markdown code fences or backticks. Do not start with ```json or ```. Output ONLY the raw JSON array starting with [ and ending with ]
+- Do not include any commentary, explanation or text before or after the JSON array";
+        }
+
+        private static string BuildManualTestsPrompt(AiManualTestsRequest request)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Generate tailored manual accessibility tests for the page \"{request.PageName}\" ({request.PageUrl}).");
+            sb.AppendLine();
+            sb.AppendLine($"Accessibility score: {request.Score}/100");
+            sb.AppendLine($"Automated violations found: {request.Violations.Count}");
+            sb.AppendLine($"Incomplete automated tests: {request.IncompleteCount}");
+
+            if (request.Violations.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Automated violations detected:");
+                foreach (var violation in request.Violations)
+                {
+                    var nodeWord = violation.NodeCount == 1 ? "element" : "elements";
+                    sb.AppendLine($"- {violation.Impact.ToUpperInvariant()}: {violation.Help} ({violation.NodeCount} {nodeWord})");
+                }
+            }
+
+            // Truncate HTML to avoid exceeding token limits — first 15 000 characters is enough for context
+            var html = request.PageHtml;
+            if (html.Length > 15000)
+            {
+                html = html.Substring(0, 15000) + "\n[... HTML truncated ...]";
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Page HTML:");
+            sb.AppendLine(html);
+
+            return sb.ToString();
+        }
     }
 }

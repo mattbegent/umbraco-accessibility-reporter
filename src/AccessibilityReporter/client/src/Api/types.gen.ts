@@ -195,3 +195,35 @@ export type AiAccessibilityStatementResponses = {
 };
 
 export type AiAccessibilityStatementApiResponse = AiAccessibilityStatementResponses[keyof AiAccessibilityStatementResponses];
+
+export type AiManualTestsRequest = {
+    pageUrl: string;
+    pageName: string;
+    pageHtml: string;
+    score: number;
+    violations: Array<AiViolationInfo>;
+    incompleteCount: number;
+};
+
+export type AiManualTestsData = {
+    body: AiManualTestsRequest;
+    path?: never;
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/ai/manual-tests';
+};
+
+export type AiManualTestsErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type AiManualTestsResponses = {
+    /**
+     * OK
+     */
+    200: AiSummaryResponseModel;
+};
+
+export type AiManualTestsApiResponse = AiManualTestsResponses[keyof AiManualTestsResponses];
