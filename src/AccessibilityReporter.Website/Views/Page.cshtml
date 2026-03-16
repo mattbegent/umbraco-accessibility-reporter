@@ -3,81 +3,95 @@
 @{
 	Layout = null;
 }
-<h1>@Model.Value("title")</h1>
 
-<!-- Images missing alt text -->
-<img src="/media/test.jpg">
-<img src="/media/logo.png" alt="">
+<style>
+    .c-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: cursive;
+    }
+</style>
 
-<!-- Form inputs without associated labels -->
-<form>
-    <input type="text" placeholder="Enter your name">
-    <input type="email" placeholder="Email address">
-    <input type="password" placeholder="Password">
-    <select>
-        <option>Choose an option</option>
-        <option>Option 1</option>
-    </select>
-    <textarea placeholder="Your message"></textarea>
-    <button></button>
-    <input type="submit" value="">
-</form>
+<div class="c-container">
 
-<!-- Skipped heading levels (jumps from h1 to h4) -->
-<h4>A section title</h4>
-<h6>A subsection</h6>
+    <h1>@Model.Value("title")</h1>
 
-<!-- Links with non-descriptive text -->
-<a href="/page1">Click here</a>
-<a href="/page2">Read more</a>
-<a href="#"></a>
+    <!-- Images missing alt text -->
+    <img src="/media/test.jpg">
+    <img src="/media/logo.png" alt="">
 
-<!-- Low contrast text (light grey on white) -->
-<p style="color: #aaaaaa; background: #ffffff;">This text has very low contrast and is hard to read.</p>
-<p style="color: #cccccc;">Even harder to read text here.</p>
+    <!-- Form inputs without associated labels -->
+    <form>
+        <input type="text" placeholder="Enter your name">
+        <input type="email" placeholder="Email address">
+        <input type="password" placeholder="Password">
+        <select>
+            <option>Choose an option</option>
+            <option>Option 1</option>
+        </select>
+        <textarea placeholder="Your message"></textarea>
+        <button></button>
+        <input type="submit" value="">
+    </form>
 
-<!-- Table without headers -->
-<table>
-    <tr>
-        <td>Name</td>
-        <td>Age</td>
-        <td>Email</td>
-    </tr>
-    <tr>
-        <td>John</td>
-        <td>30</td>
-        <td>john@example.com</td>
-    </tr>
-</table>
+    <!-- Skipped heading levels (jumps from h1 to h4) -->
+    <h4>A section title</h4>
+    <h6>A subsection</h6>
 
-<!-- iframe without a title -->
-<iframe src="/embed"></iframe>
+    <!-- Links with non-descriptive text -->
+    <a href="/page1">Click here</a>
+    <a href="/page2">Read more</a>
+    <a href="#"></a>
 
-<!-- Positive tabindex values (anti-pattern) -->
-<div tabindex="3">Focusable div with bad tabindex</div>
-<a href="/page3" tabindex="5">Link with bad tabindex</a>
+    <!-- Low contrast text (light grey on white) -->
+    <p style="color: #aaaaaa; background: #ffffff;">This text has very low contrast and is hard to read.</p>
+    <p style="color: #cccccc;">Even harder to read text here.</p>
 
-<!-- Element with role but missing required child roles -->
-<ul role="listbox">
-    <li>Item 1</li>
-    <li>Item 2</li>
-</ul>
+    <!-- Table without headers -->
+    <table>
+        <tr>
+            <td>Name</td>
+            <td>Age</td>
+            <td>Email</td>
+        </tr>
+        <tr>
+            <td>John</td>
+            <td>30</td>
+            <td>john@example.com</td>
+        </tr>
+    </table>
 
-<!-- Scrollable region not keyboard accessible -->
-<div style="overflow: auto; height: 100px; width: 200px;">
-    <p>A very long block of scrollable content that cannot be reached by keyboard users because it lacks a tabindex attribute, making it inaccessible to keyboard-only and assistive technology users.</p>
+    <!-- iframe without a title -->
+    <iframe src="/embed"></iframe>
+
+    <!-- Positive tabindex values (anti-pattern) -->
+    <div tabindex="3">Focusable div with bad tabindex</div>
+    <a href="/page3" tabindex="5">Link with bad tabindex</a>
+
+    <!-- Element with role but missing required child roles -->
+    <ul role="listbox">
+        <li>Item 1</li>
+        <li>Item 2</li>
+    </ul>
+
+    <!-- Scrollable region not keyboard accessible -->
+    <div style="overflow: auto; height: 100px; width: 200px;">
+        <p>A very long block of scrollable content that cannot be reached by keyboard users because it lacks a tabindex attribute, making it inaccessible to keyboard-only and assistive technology users.</p>
+    </div>
+
+    <!-- Duplicate IDs -->
+    <p id="duplicate-id">First element</p>
+    <p id="duplicate-id">Second element with the same ID</p>
+
+    <!-- Autofocusing an element unexpectedly -->
+    <input type="text" autofocus placeholder="This steals focus">
+
+    <!-- Button used as a link (bad semantics) -->
+    <button onclick="window.location='/page4'">Go to page 4</button>
+
+    <!-- Missing document language is set on a landmark with a wrong role -->
+    <div role="banner">Site header content</div>
+    <div role="banner">Duplicate banner landmark</div>
+
 </div>
-
-<!-- Duplicate IDs -->
-<p id="duplicate-id">First element</p>
-<p id="duplicate-id">Second element with the same ID</p>
-
-<!-- Autofocusing an element unexpectedly -->
-<input type="text" autofocus placeholder="This steals focus">
-
-<!-- Button used as a link (bad semantics) -->
-<button onclick="window.location='/page4'">Go to page 4</button>
-
-<!-- Missing document language is set on a landmark with a wrong role -->
-<div role="banner">Site header content</div>
-<div role="banner">Duplicate banner landmark</div>
