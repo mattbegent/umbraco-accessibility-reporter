@@ -4,6 +4,9 @@ import AiSummaryState from "../Enums/ai-summary-state";
 import { generalStyles } from "../Styles/general";
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AiSummaryService } from "../api";
+import { utils, writeFile } from "xlsx";
+import { format } from "date-fns";
+import AccessibilityReporterService from "../Services/accessibility-reporter.service.ts";
 
 interface ManualTest {
 	test: string;
@@ -77,7 +80,7 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 			{ test: "Animations respect the prefers-reduced-motion media query.", category: "Animation" },
 
 			// Mobile
-			{ test: "The site can be used in any orientation (portrait and landscape).", category: "Mobile" },
+			{ test: "The page can be used in any orientation (portrait and landscape).", category: "Mobile" },
 			{ test: "There is no unexpected horizontal scrolling.", category: "Mobile" },
 		];
 
@@ -196,6 +199,43 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 		`;
 	}
 
+	private exportManualTests() {
+		try {
+			const allTests: ManualTest[] = [...this.defaultTests];
+			if (this.aiTests.length) {
+				allTests.push(...this.aiTests);
+			}
+
+			const rows = allTests.map(t => ({
+				category: t.category,
+				test: t.test,
+				status: '',
+				notes: '',
+			}));
+
+			const worksheet = utils.json_to_sheet(rows);
+			const headers = [["Category", "Test", "Status", "Notes"]];
+			utils.sheet_add_aoa(worksheet, headers, { origin: "A1" });
+
+			const testWidth = rows.reduce((w, r) => Math.max(w, r.test.length), 40);
+			worksheet["!cols"] = [
+				{ width: 15 },
+				{ width: Math.min(testWidth, 80) },
+				{ width: 15 },
+				{ width: 40 },
+			];
+
+			const workbook = utils.book_new();
+			utils.book_append_sheet(workbook, worksheet, "Manual Tests");
+
+			writeFile(workbook,
+				AccessibilityReporterService.formatFileName(`manual-tests-${this.pageName}-${format(new Date(), "yyyy-MM-dd")}`) + ".xlsx",
+				{ compression: true });
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
 	render() {
 		return html`
 			<uui-box>
@@ -205,8 +245,10 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 					</div>
 					<h2 class="c-title">Manual Tests</h2>
 				</div>
-				<p class="c-paragraph">Automated accessibility tests can only catch up to <strong>37% of accessibility issues</strong>. Manual testing is needed to ensure that this page is fully accessible.</p>
-				<p class="c-paragraph__spaced">As a minimum it is recommended that the following manual tests are run on <a href="${this.testURL}" target="_blank" class="btn-link -underline c-bold">${this.pageName}<span class="sr-only"> (opens in a new window)</span></a> every time that the automated tests are run. Tests sourced from the <a href="https://www.a11yproject.com/checklist/" target="_blank" rel="noopener noreferrer">A11Y Project Checklist<span class="sr-only"> (opens in a new window)</span></a>.</p>
+				<p class="c-paragraph">Automated accessibility tests typically find about <strong>37% of accessibility issues</strong>. Manual testing is needed to ensure that this page is fully accessible.</p>
+				<p class="c-paragraph">We recommend running these tests on <a href="${this.testURL}" target="_blank" class="btn-link -underline c-bold">${this.pageName}<span class="sr-only"> (opens in a new window)</span></a> whenever you make significant layout or interactive changes to ensure a great experience for everyone.</p>
+
+				<uui-button look="secondary" color="default" @click="${this.exportManualTests}" label="Export manual tests as a spreadsheet" class="c-export-button">Export manual tests</uui-button>
 
 				${Array.from(this.groupedDefaultTests.entries()).map(([category, tests]) =>
 					this.renderTestGroup(category, tests)
@@ -289,6 +331,10 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 				font-size: 1.1em;
 				font-weight: 600;
 				margin: 0;
+			}
+
+			.c-export-button {
+				margin-bottom: 1rem;
 			}
     	`,
 	];
