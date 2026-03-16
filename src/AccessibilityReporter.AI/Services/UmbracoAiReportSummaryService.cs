@@ -27,8 +27,8 @@ namespace AccessibilityReporter.AI.Services
             {
                 var messages = new List<ChatMessage>
                 {
-                    new(ChatRole.System, "You are an accessibility expert helping content editors understand and fix accessibility issues on web pages. Be concise, practical and friendly. Format your response in markdown, with short paragraphs and bullet points where appropriate. Your response is being used to help generate an accessibility summary for a content editor, so focus on the most important issues and most actionable advice. Do not include any information about how you generated the summary or what data points you used; just provide the summary itself. Do not ask questions of the user."),
-                    new(ChatRole.User, BuildPrompt(request))
+                    new(ChatRole.System, "You are an accessibility expert helping content editors understand and fix accessibility issues on web pages. Be concise, practical and friendly. Format your response in markdown, with short paragraphs and bullet points where appropriate. Use bold sparingly — only for category labels, not for general emphasis. Your response is being used to help generate an accessibility summary for a content editor, so focus on the most important issues and most actionable advice. Do not include any information about how you generated the summary or what data points you used; just provide the summary itself. Do not ask questions of the user. Do not start with a title or heading — jump straight into the content."),
+                    new(ChatRole.User, BuildPagePrompt(request))
                 };
 
                 var response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
@@ -58,7 +58,7 @@ namespace AccessibilityReporter.AI.Services
             {
                 var messages = new List<ChatMessage>
                 {
-                    new(ChatRole.System, "You are an accessibility expert helping content editors understand and fix accessibility issues across a website. Be concise, practical and friendly. Format your response in markdown, with short paragraphs and bullet points where appropriate. Your response is being used to help generate a site-wide accessibility summary for a content editor, so focus on trends, recurring issues across multiple pages and prioritised actions. Do not include any information about how you generated the summary or what data points you used; just provide the summary itself. Do not ask questions of the user."),
+                    new(ChatRole.System, "You are an accessibility expert helping content editors understand and fix accessibility issues across a website. Be concise, practical and friendly. Do not start with a title or heading — jump straight into the content. Format your response in markdown, with short paragraphs and bullet points where appropriate. Your response is being used to help generate a site-wide accessibility summary for a content editor, so focus on trends, recurring issues across multiple pages and prioritised actions. Do not include any information about how you generated the summary or what data points you used; just provide the summary itself. Do not ask questions of the user."),
                     new(ChatRole.User, BuildSitePrompt(request))
                 };
 
@@ -83,7 +83,7 @@ namespace AccessibilityReporter.AI.Services
             }
         }
 
-        private static string BuildPrompt(AiSummaryRequest request)
+        private static string BuildPagePrompt(AiSummaryRequest request)
         {
             var sb = new StringBuilder();
 
@@ -106,7 +106,11 @@ namespace AccessibilityReporter.AI.Services
             }
 
             sb.AppendLine();
-            sb.AppendLine("In 3–5 sentences, summarise the key accessibility issues and the most important actions to take. Prioritise the highest-impact issues. Write for a content editor, not a developer.");
+            sb.AppendLine("Summarise the overall accessibility health of this webpage in 2 sentences.");
+            sb.AppendLine("Provide a concise summary with short, clear sentences. Categorise the issues into two sections:");
+            sb.AppendLine("1. **Content editor actions** — issues that a content editor can fix (e.g. missing alt text, unclear link text, heading structure, document language).");
+            sb.AppendLine("2. **Developer actions** — issues that require code changes (e.g. ARIA attributes, form labels, colour contrast, keyboard navigation).");
+            sb.AppendLine("Prioritise the highest-impact issues in each category. Use bullet points. Keep each bullet to one short sentence.");
 
             return sb.ToString();
         }
