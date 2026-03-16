@@ -192,11 +192,10 @@ The statement must follow this exact structure:
 1. **Accessibility statement for [website name]** - Introduction section explaining the scope and what users should be able to do
 2. **How accessible this website is** - Summary of known accessibility issues based on the audit data
 3. **Feedback and contact information** - Placeholder section for contact details
-4. **Enforcement procedure** - Standard legal text about EHRC/EASS
-5. **Technical information about this website's accessibility** - Commitment statement and compliance status
-6. **Non-accessible content** - Detailed list of non-compliances from the audit data, with WCAG criteria references where possible
-7. **What we're doing to improve accessibility** - Placeholder for improvement plans
-8. **Preparation of this accessibility statement** - Statement preparation details with today's date
+4. **Technical information about this website's accessibility** - Commitment statement and compliance status
+5. **Non-accessible content** - Detailed list of non-compliances from the audit data, with WCAG criteria references where possible
+6. **What we're doing to improve accessibility** - Placeholder for improvement plans
+7. **Preparation of this accessibility statement** - Statement preparation details with today's date
 
 Important rules:
 - Use the actual audit data provided to populate the 'How accessible this website is' and 'Non-accessible content' sections with real issues found
