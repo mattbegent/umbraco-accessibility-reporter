@@ -30,6 +30,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
 - **UserGroups** (optional) - Use this option if you want to restrict which user groups can see Accessibility Reporter. By default users with admin, editor or writer permissions can see it.
 - **ExcludedDocTypes** (optional) - Use this option if you want to exclude Accessibility Reporter from showing on certain document types.
 - **RunTestsAutomatically** (optional) - By default Accessibility Reporter runs as soon as you open up a content node. If you instead want Accessibility Reporter to run on demand via a button click, set this option to false.
+- **RunAiSummaryAutomatically** (optional) - By default Accessibility Reporter generates the AI summary (if you have Umbraco.AI setup) when the tests run. If you instead want the summaries to run on demand via a button click, set this option to false.
 - **IncludeIfNoTemplate** (optional) - By default Accessibility Reporter does not run on content without templates. However, if you are using Umbraco in a headless way you will was to set this to true.
 - **MaxPages** (optional) - This sets the maximum number of pages that the dashboard will test against. The default is set to 50.
 
@@ -54,6 +55,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
             "excludedPage"
         ],
         "RunTestsAutomatically": false,
+        "RunAiSummaryAutomatically": false
         "MaxPages": 20
     }
 
@@ -85,6 +87,7 @@ All options are completely optional and if you don't set them, they default to t
             "sensitive data"
         ],
         "RunTestsAutomatically": true,
+        "RunAiSummaryAutomatically": true,
         "IncludeIfNoTemplate": false,
         "MaxPages": 50
     }

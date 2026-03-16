@@ -4,6 +4,7 @@ export type AccessibilityReporterAppSettings = {
     apiUrl: string;
     testBaseUrl: string;
     runTestsAutomatically: boolean;
+    runAiSummaryAutomatically: boolean;
     includeIfNoTemplate: boolean;
     maxPages: number;
     userGroups: Array<string>;

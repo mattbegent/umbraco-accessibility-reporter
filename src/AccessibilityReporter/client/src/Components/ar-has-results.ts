@@ -720,6 +720,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 					.state=${this.aiSummaryState}
 					.summary=${this.aiSummary}
 					.onGenerate=${this.generateAiSummary.bind(this)}
+					?autoGenerate=${this.config?.runAiSummaryAutomatically}
 					idleDescription="Generate an AI-powered summary of the accessibility issues across the whole website, including trends and prioritised actions."
 				></ar-ai-summary>
 

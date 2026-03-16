@@ -8,6 +8,8 @@
 
 		bool RunTestsAutomatically { get; set; }
 
+		bool RunAiSummaryAutomatically { get; set; }
+
 		bool IncludeIfNoTemplate { get; set; }
 
 		int MaxPages { get; set; }

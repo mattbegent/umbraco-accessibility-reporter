@@ -514,6 +514,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					.state=${this.aiSummaryState}
 					.summary=${this.aiSummary}
 					.onGenerate=${this.generateAiSummary.bind(this)}
+					?autoGenerate=${this.config?.runAiSummaryAutomatically}
 					idleDescription="Generate an AI-powered summary of the accessibility issues on this page."
 				></ar-ai-summary>
 
