@@ -32,6 +32,10 @@ export class ARAiSummaryElement extends LitElement {
 	}
 
 	render() {
+		if (this.state === AiSummaryState.Unavailable) {
+			return html``;
+		}
+
 		return html`
 			<uui-box>
 				<div slot="headline" class="c-title__group">
@@ -55,9 +59,6 @@ export class ARAiSummaryElement extends LitElement {
 						${unsafeHTML(marked.parse(this.summary) as string)}
 					</div>
 					<uui-button look="secondary" color="default" @click="${this.onGenerate}" label="Regenerate AI summary of accessibility issues">Regenerate Summary</uui-button>
-				` : null}
-				${this.state === AiSummaryState.Unavailable ? html`
-					<p>AI summaries are not available. To use this feature, install <a href="https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter.AI" target="_blank" rel="noopener noreferrer">Umbraco.Community.AccessibilityReporter.AI</a> alongside <a href="https://github.com/umbraco/Umbraco.AI" target="_blank" rel="noopener noreferrer">Umbraco.AI</a> and a provider package.</p>
 				` : null}
 				${this.state === AiSummaryState.Errored ? html`
 					<p>An error occurred generating the summary. Please ensure Umbraco.AI is configured with a default chat profile.</p>

@@ -254,6 +254,7 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 					this.renderTestGroup(category, tests)
 				)}
 
+				${this.aiState !== AiSummaryState.Unavailable ? html`
 				<div class="c-ai-section">
 					<div class="c-ai-section__header">
 						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="28" height="28">
@@ -281,15 +282,12 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 						<uui-button look="secondary" color="default" @click="${this.generateAiTests}" label="Regenerate AI-tailored manual tests">Regenerate AI Tests</uui-button>
 					` : null}
 
-					${this.aiState === AiSummaryState.Unavailable ? html`
-						<p>AI-tailored tests are not available. To use this feature, install <a href="https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter.AI" target="_blank" rel="noopener noreferrer">Umbraco.Community.AccessibilityReporter.AI</a> alongside <a href="https://github.com/umbraco/Umbraco.AI" target="_blank" rel="noopener noreferrer">Umbraco.AI</a> and a provider package.</p>
-					` : null}
-
 					${this.aiState === AiSummaryState.Errored ? html`
 						<p>An error occurred generating AI-tailored tests. Please ensure Umbraco.AI is configured with a default chat profile.</p>
 						<uui-button look="secondary" color="default" @click="${this.generateAiTests}" label="Retry generating AI-tailored manual tests">Try again</uui-button>
 					` : null}
 				</div>
+				` : null}
 			</uui-box>
 		`;
 	}
