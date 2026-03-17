@@ -11,6 +11,7 @@ import AccessibilityReporterService from "../Services/accessibility-reporter.ser
 interface ManualTest {
 	test: string;
 	category: string;
+	isAi?: boolean;
 }
 
 @customElement('ar-manual-tests')
@@ -35,7 +36,13 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 	private aiTests: ManualTest[] = [];
 
 	@state()
+	private excludedDefaultTests: Set<string> = new Set();
+
+	@state()
 	private pageHtml: string = '';
+
+	@state()
+	private testsVisible: boolean = false;
 
 	private get defaultTests(): ManualTest[] {
 		const tests: ManualTest[] = [
@@ -95,11 +102,18 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 	}
 
 	private get groupedDefaultTests(): Map<string, ManualTest[]> {
-		return this.groupTests(this.defaultTests);
+		const filtered = this.defaultTests.filter(t => !this.excludedDefaultTests.has(t.test));
+		return this.groupTests(filtered);
 	}
 
 	private get groupedAiTests(): Map<string, ManualTest[]> {
 		return this.groupTests(this.aiTests);
+	}
+
+	private get groupedAllTests(): Map<string, ManualTest[]> {
+		const filtered = this.defaultTests.filter(t => !this.excludedDefaultTests.has(t.test));
+		const aiTagged = this.aiTests.map(t => ({ ...t, isAi: true }));
+		return this.groupTests([...filtered, ...aiTagged]);
 	}
 
 	private groupTests(tests: ManualTest[]): Map<string, ManualTest[]> {
@@ -132,6 +146,7 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 
 	private async generateAiTests(): Promise<void> {
 		this.aiState = AiSummaryState.Loading;
+		this.testsVisible = true;
 
 		try {
 			const pageHtml = await this.fetchPageHtml();
@@ -147,7 +162,8 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 					help: v.help,
 					nodeCount: v.nodes.length
 				})) ?? [],
-				incompleteCount: this.results?.incomplete?.length ?? 0
+				incompleteCount: this.results?.incomplete?.length ?? 0,
+				defaultTests: this.defaultTests.map(t => t.test)
 			};
 
 			const { data, error } = await tryExecute(this, AiSummaryService.manualTests({ body: request }));
@@ -174,9 +190,31 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 			const fenceMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
 			if (fenceMatch) {
 				jsonText = fenceMatch[1].trim();
+			} else if (jsonText.startsWith('```')) {
+				jsonText = jsonText.replace(/^```(?:json)?\s*/, '').trim();
 			}
-			const parsed = JSON.parse(jsonText) as ManualTest[];
-			this.aiTests = parsed;
+
+			let parsed: any;
+			try {
+				parsed = JSON.parse(jsonText);
+			} catch {
+				// Response may be truncated — attempt to extract valid tests and excludeDefaults
+				const testsMatch = jsonText.match(/"tests"\s*:\s*(\[[\s\S]*?\])(?:\s*,|\s*\})/);
+				const excludeMatch = jsonText.match(/"excludeDefaults"\s*:\s*(\[[\s\S]*?\])(?:\s*,|\s*\})/);
+				parsed = {
+					tests: testsMatch ? JSON.parse(testsMatch[1]) : [],
+					excludeDefaults: excludeMatch ? JSON.parse(excludeMatch[1]) : []
+				};
+			}
+
+			if (Array.isArray(parsed)) {
+				this.aiTests = parsed as ManualTest[];
+			} else {
+				this.aiTests = (parsed.tests ?? []) as ManualTest[];
+				if (Array.isArray(parsed.excludeDefaults)) {
+					this.excludedDefaultTests = new Set(parsed.excludeDefaults as string[]);
+				}
+			}
 			this.aiState = AiSummaryState.Done;
 		} catch (error) {
 			console.error(error);
@@ -189,9 +227,18 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 			<div class="c-test-group">
 				<h3 class="c-test-group__title">${category}</h3>
 				<div class="c-checklist">
-					${tests.map(t => html`
+					${tests.map(test => html`
 						<div class="c-checklist__item">
-							<uui-toggle label="${t.test}"></uui-toggle>
+							<uui-toggle label="${test.test}"></uui-toggle>
+							${test.isAi ? html`
+								<span class="c-ai-badge" title="AI-generated test">
+									<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 24 24" width="18" height="18">
+										<circle cx="12" cy="12" r="10" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"/>
+										<path d="M12 7v1M12 16v1M7 12h1M16 12h1M8.5 8.5l.7.7M14.8 14.8l.7.7M8.5 15.5l.7-.7M14.8 9.2l.7-.7" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round"/>
+										<circle cx="12" cy="12" r="2" style="fill:#443b52"/>
+									</svg>
+								</span>
+							` : null}
 						</div>
 					`)}
 				</div>
@@ -247,46 +294,48 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 				</div>
 				<p class="c-paragraph">Automated accessibility tests typically find about <strong>37% of accessibility issues</strong>. Manual testing is needed to ensure that this page is fully accessible.</p>
 				<p class="c-paragraph">We recommend running these tests on <a href="${this.testURL}" target="_blank" class="btn-link -underline c-bold">${this.pageName}<span class="sr-only"> (opens in a new window)</span></a> whenever you make significant layout or interactive changes to ensure a great experience for everyone.</p>
+				${this.aiState !== AiSummaryState.Unavailable && this.aiState === AiSummaryState.Idle ? html`
+				<p class="c-paragraph">Using the "Generate AI Tests" button will create AI-tailored manual tests for this page.</p>
+				` : null}
 
-				<uui-button look="secondary" color="default" @click="${this.exportManualTests}" label="Export manual tests as a spreadsheet" class="c-export-button">Export manual tests</uui-button>
 
-				${Array.from(this.groupedDefaultTests.entries()).map(([category, tests]) =>
-					this.renderTestGroup(category, tests)
-				)}
-
-				${this.aiState !== AiSummaryState.Unavailable ? html`
-				<div class="c-ai-section">
-					<div class="c-ai-section__header">
-						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 24 24" viewBox="0 0 24 24" width="28" height="28">
-							<circle cx="12" cy="12" r="10" style="fill:#ffffff;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"/>
-							<path d="M12 7v1M12 16v1M7 12h1M16 12h1M8.5 8.5l.7.7M14.8 14.8l.7.7M8.5 15.5l.7-.7M14.8 9.2l.7-.7" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round"/>
-							<circle cx="12" cy="12" r="2" style="fill:#443b52"/>
-						</svg>
-						<h3 class="c-ai-section__title">AI-Tailored Tests</h3>
-					</div>
-
-					${this.aiState === AiSummaryState.Idle ? html`
-						<p>Generate manual tests tailored to the specific content and elements on this page using AI.</p>
+				<div class="c-actions">
+					<uui-button look="primary" color="default" @click="${() => this.testsVisible = !this.testsVisible}" label="${this.testsVisible ? 'Hide manual tests' : 'Show manual tests'}">${this.testsVisible ? 'Hide Manual Tests' : 'Show Manual Tests'}</uui-button>
+					${this.aiState !== AiSummaryState.Unavailable && this.aiState === AiSummaryState.Idle ? html`
 						<uui-button look="primary" color="default" @click="${this.generateAiTests}" label="Generate AI-tailored manual tests for this page">Generate AI Tests</uui-button>
 					` : null}
-
-					${this.aiState === AiSummaryState.Loading ? html`
-						<uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>
-						<p>Analysing page content and generating tailored tests&hellip;</p>
+					${this.aiState !== AiSummaryState.Unavailable && this.aiState === AiSummaryState.Done ? html`
+						<uui-button look="primary" color="default" @click="${this.generateAiTests}" label="Regenerate AI-tailored manual tests">Regenerate AI Tests</uui-button>
 					` : null}
-
-					${this.aiState === AiSummaryState.Done ? html`
-						${Array.from(this.groupedAiTests.entries()).map(([category, tests]) =>
-							this.renderTestGroup(category, tests)
-						)}
-						<uui-button look="secondary" color="default" @click="${this.generateAiTests}" label="Regenerate AI-tailored manual tests">Regenerate AI Tests</uui-button>
-					` : null}
-
-					${this.aiState === AiSummaryState.Errored ? html`
-						<p>An error occurred generating AI-tailored tests. Please ensure Umbraco.AI is configured with a default chat profile.</p>
-						<uui-button look="secondary" color="default" @click="${this.generateAiTests}" label="Retry generating AI-tailored manual tests">Try again</uui-button>
-					` : null}
+					<uui-button look="secondary" color="default" @click="${this.exportManualTests}" label="Export manual tests as a spreadsheet">Export Manual Tests</uui-button>
 				</div>
+
+				${this.testsVisible ? html`
+					<div class="c-tests-content">
+						${this.aiState === AiSummaryState.Loading ? html`
+							<uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>
+							<p>Analysing page content and generating tailored tests&hellip;</p>
+						` : null}
+
+						${this.aiState === AiSummaryState.Errored ? html`
+							<p>An error occurred generating AI-tailored tests. Please ensure Umbraco.AI is configured with a default chat profile.</p>
+							<uui-button look="secondary" color="default" @click="${this.generateAiTests}" label="Retry generating AI-tailored manual tests">Try again</uui-button>
+						` : null}
+
+						${this.aiState !== AiSummaryState.Loading ? html`
+							${Array.from(this.groupedAllTests.entries()).map(([category, tests]) =>
+								this.renderTestGroup(category, tests)
+							)}
+						` : null}
+
+						${this.aiState === AiSummaryState.Done ? html`
+							<uui-button look="primary" color="default" @click="${this.generateAiTests}" label="Regenerate AI-tailored manual tests">Regenerate AI Tests</uui-button>
+						` : null}
+
+						${this.aiState !== AiSummaryState.Loading ? html`
+							<uui-button look="secondary" color="default" @click="${this.exportManualTests}" label="Export manual tests as a spreadsheet">Export Manual Tests</uui-button>
+						` : null}
+					</div>
 				` : null}
 			</uui-box>
 		`;
@@ -312,27 +361,27 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 				border-bottom: 1px solid var(--uui-color-border, #e0e0e0);
 			}
 
-			.c-ai-section {
-				margin-top: 24px;
-				padding-top: 20px;
-				border-top: 2px solid var(--uui-color-border, #e0e0e0);
-			}
-
-			.c-ai-section__header {
+			.c-checklist__item {
 				display: flex;
 				align-items: center;
+				gap: 6px;
+			}
+
+			.c-ai-badge {
+				display: inline-flex;
+				align-items: center;
+				flex-shrink: 0;
+			}
+
+			.c-actions {
+				display: flex;
+				flex-wrap: wrap;
 				gap: 8px;
-				margin-bottom: 12px;
+				margin-bottom: 4px;
 			}
 
-			.c-ai-section__title {
-				font-size: 1.1em;
-				font-weight: 600;
-				margin: 0;
-			}
-
-			.c-export-button {
-				margin-bottom: 1rem;
+			.c-tests-content {
+				margin-top: 16px;
 			}
     	`,
 	];

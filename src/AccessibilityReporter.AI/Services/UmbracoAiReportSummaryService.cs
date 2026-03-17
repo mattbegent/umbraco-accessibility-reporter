@@ -280,19 +280,21 @@ Important rules:
 
         private static string BuildManualTestsSystemPrompt()
         {
-            return @"You are an accessibility expert who generates tailored manual accessibility test checklists for web pages. Your role is to analyse the HTML content of a page and its automated test results to produce specific, actionable manual tests that are relevant to the actual content and elements on the page.
+            return @"You are an accessibility expert who generates tailored manual accessibility test checklists for web pages. Your role is to analyse the HTML content of a page and its automated test results to produce specific, actionable manual tests that are relevant to the actual content and elements on the page. You will also review a set of existing default tests and identify any that are NOT relevant to the page.
 
 Important rules:
 - Each test must be a verification check only — it must ask the user to TEST or VERIFY something, never to FIX, ADD, REMOVE, CHANGE or REPLACE anything. For example, write ""Verify that the page has a lang attribute set to the correct language"" NOT ""Add a lang attribute to the html element and verify it is correct""
 - Each test must be a single clear sentence that a content editor can understand and act on
 - Tests should be specific to the page content — reference actual elements, features or content patterns you can see in the HTML
-- Format your response as a JSON array of objects, each with a ""test"" (string) and ""category"" (string) property
 - Categories should be one of: ""Keyboard"", ""Visual"", ""Screen Reader"", ""Content"", ""Forms"", ""Media"", ""Navigation"", ""Interactive""
-- Include 10–20 tests, prioritising the most important ones based on what you see in the HTML
+- Include 10–20 new tests, prioritising the most important ones based on what you see in the HTML
 - Do not include tests that automated tools would have already caught (e.g. missing alt text, colour contrast ratios)
 - Focus on things that require human judgement: meaningful alt text, logical reading order, clear link purpose, sensible focus management, appropriate use of headings, video captions etc.
-- CRITICAL: Do not wrap the JSON in markdown code fences or backticks. Do not start with ```json or ```. Output ONLY the raw JSON array starting with [ and ending with ]
-- Do not include any commentary, explanation or text before or after the JSON array";
+- CRITICAL: Format your response as a JSON object with two properties:
+  - ""excludeDefaults"": an array of strings — the exact text of any default tests that are NOT relevant to this page (e.g. media tests when there is no media on the page, form tests when there are no forms). Only exclude tests for features clearly absent from the page. Use an empty array if all default tests are relevant.
+  - ""tests"": an array of objects, each with a ""test"" (string) and ""category"" (string) property — these are the NEW tailored tests
+- CRITICAL: Do not wrap the JSON in markdown code fences or backticks. Do not start with ```json or ```. Output ONLY the raw JSON object starting with { and ending with }
+- Do not include any commentary, explanation or text before or after the JSON object";
         }
 
         private static string BuildManualTestsPrompt(AiManualTestsRequest request)
@@ -326,6 +328,16 @@ Important rules:
             sb.AppendLine();
             sb.AppendLine("Page HTML:");
             sb.AppendLine(html);
+
+            if (request.DefaultTests.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Default manual tests already shown to the user (identify any that are NOT relevant to this page):");
+                foreach (var test in request.DefaultTests)
+                {
+                    sb.AppendLine($"- {test}");
+                }
+            }
 
             return sb.ToString();
         }

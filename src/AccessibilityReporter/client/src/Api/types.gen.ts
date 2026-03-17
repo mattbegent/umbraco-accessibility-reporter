@@ -204,6 +204,7 @@ export type AiManualTestsRequest = {
     score: number;
     violations: Array<AiViolationInfo>;
     incompleteCount: number;
+    defaultTests: Array<string>;
 };
 
 export type AiManualTestsData = {

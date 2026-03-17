@@ -13,5 +13,7 @@ namespace AccessibilityReporter.Core.Models
         public List<AiViolationInfo> Violations { get; set; } = new();
 
         public int IncompleteCount { get; set; }
+
+        public List<string> DefaultTests { get; set; } = new();
     }
 }
