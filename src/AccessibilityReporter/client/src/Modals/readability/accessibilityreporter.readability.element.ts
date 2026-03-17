@@ -208,6 +208,10 @@ export class ReadabilityModalElement extends UmbModalBaseElement<ReadabilityModa
             line-height: 1.6;
         }
 
+		.c-explanation h2 {
+			margin-top: 0;
+		}
+
         .c-explanation p:first-child {
             margin-top: 0;
         }

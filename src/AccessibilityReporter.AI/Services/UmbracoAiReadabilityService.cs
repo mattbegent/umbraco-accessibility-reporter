@@ -66,9 +66,12 @@ namespace AccessibilityReporter.AI.Services
                 {
                     new(ChatRole.System,
                         "You are an accessibility expert. Given an original and a rewritten version of HTML content, " +
-                        "provide a concise bullet-point summary (in markdown) of the readability improvements " +
-                        "that were made and why they help meet WCAG 2.1 SC 3.1.5 (Reading Level). " +
-                        "Focus on what changed, not what stayed the same. Keep it brief."),
+                        "provide a concise bullet-point summary (in markdown) of the readability improvements that were made. " +
+                        "Start with a markdown heading level 2 (##) that says only 'Readability Improvements'. " +
+                        "Then provide a maximum of 3 bullet points explaining the most impactful changes. Each bullet point must be ONE SHORT SENTENCE (max 20 words)." +
+                        "Keep it brief, clear, and easy to understand. " +
+                        "Focus on what changed and why it helps, not what stayed the same." +
+                        "End with a short summary sentence explaining how the improvements will help users."),
                     new(ChatRole.User,
                         $"Original HTML:\n{request.Html}\n\nImproved HTML:\n{improvedHtml}")
                 };
