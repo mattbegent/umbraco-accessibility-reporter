@@ -16,6 +16,7 @@ import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibil
 import { utils, writeFile } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
+import '../Components/ar-score-history';
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -669,32 +670,39 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 				</uui-box>
 
 				${this.history.length > 0 ? html`
-				<uui-box style="margin-bottom: 20px;">
-					<div slot="headline" class="c-title__group">
-						<div class="c-circle">
-							<uui-icon name="icon-history" aria-hidden="true"></uui-icon>
+					<uui-box style="margin-bottom: 20px;">
+						<div slot="headline" class="c-title__group">
+							<div class="c-circle">
+								<uui-icon name="icon-history" aria-hidden="true"></uui-icon>
+							</div>
+							<h2 class="c-title">History</h2>
 						</div>
-						<h2 class="c-title">History</h2>
-					</div>
-					<uui-table>
-						<uui-table-head>
-							<uui-table-head-cell>Date</uui-table-head-cell>
-							<uui-table-head-cell>Score</uui-table-head-cell>
-							<uui-table-head-cell>Passed</uui-table-head-cell>
-							<uui-table-head-cell>Failed</uui-table-head-cell>
-							<uui-table-head-cell>Incomplete</uui-table-head-cell>
-						</uui-table-head>
-						${this.history.map((run: TestRun) => html`
-						<uui-table-row>
-							<uui-table-cell>${format(run.runCompleted, "MMMM do yyyy HH:mm:ss")}</uui-table-cell>
-							<uui-table-cell>${run.score}</uui-table-cell>
-							<uui-table-cell>${run.passedCount}</uui-table-cell>
-							<uui-table-cell>${run.failedCount}</uui-table-cell>
-							<uui-table-cell>${run.incompleteCount}</uui-table-cell>
-						</uui-table-row>
-						`)}
-					</uui-table>
-				</uui-box>
+						<div class="c-history">
+							<div class="c-history__item">
+								<uui-table>
+									<uui-table-head>
+										<uui-table-head-cell>Date</uui-table-head-cell>
+										<uui-table-head-cell>Score</uui-table-head-cell>
+										<uui-table-head-cell>Passed</uui-table-head-cell>
+										<uui-table-head-cell>Failed</uui-table-head-cell>
+										<uui-table-head-cell>Incomplete</uui-table-head-cell>
+									</uui-table-head>
+									${this.history.map((run: TestRun) => html`
+									<uui-table-row>
+										<uui-table-cell>${format(run.runCompleted, "MMMM do yyyy HH:mm:ss")}</uui-table-cell>
+										<uui-table-cell>${run.score}</uui-table-cell>
+										<uui-table-cell>${run.passedCount}</uui-table-cell>
+										<uui-table-cell>${run.failedCount}</uui-table-cell>
+										<uui-table-cell>${run.incompleteCount}</uui-table-cell>
+									</uui-table-row>
+									`)}
+								</uui-table>
+							</div>
+							<div class="c-history__item">
+								<ar-score-history .history="${this.history}"></ar-score-history>
+							</div>
+						</div>
+					</uui-box>
 				`: null}
 
 				<uui-box>
