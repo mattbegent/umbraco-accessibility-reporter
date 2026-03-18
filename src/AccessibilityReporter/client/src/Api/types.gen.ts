@@ -41,6 +41,9 @@ export type TestRun = {
     contentId: string;
     runCompleted: string;
     score: number;
+	failedCount: number;
+	passedCount: number;
+	incompleteCount: number;
     resultPayload: string;
 };
 
