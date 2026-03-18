@@ -123,6 +123,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		}
 
 		this.history = await this.getHistory(this._workspaceContext?.getUnique() as string);
+		console.log(this.history);
 
 		if(this.config.runTestsAutomatically) {
 			this.runTests(false);
@@ -217,6 +218,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		if (error) {
 			console.error(error);
 		}
+
+		console.log(data);
 	}
 
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
@@ -250,7 +253,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.pageState = PageState.Loaded;
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
-			
+
 			this.saveTestRun(this._workspaceContext?.getUnique() as string, JSON.stringify(this.results));
 		} catch (error) {
 			this.pageState = PageState.Errored;
