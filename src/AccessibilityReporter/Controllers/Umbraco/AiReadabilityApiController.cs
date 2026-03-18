@@ -19,7 +19,7 @@ namespace AccessibilityReporter.Controllers.Umbraco
         }
 
         /// <summary>
-        /// Analyses the supplied rich text HTML for readability (WCAG 2.1 SC 3.1.5)
+        /// Analyses the supplied rich text HTML for readability (WCAG 2.2 SC 3.1.5)
         /// and returns an improved version with an explanation of the changes.
         /// When the Umbraco.AI add-on is not installed, returns available: false.
         /// </summary>

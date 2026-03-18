@@ -213,6 +213,10 @@ export class StatementModalElement extends UmbModalBaseElement<StatementModalDat
             overflow-y: auto;
         }
 
+		.c-statement h1 {
+			margin-top: 0;
+		}
+
         .c-statement p:first-child {
             margin-top: 0;
         }

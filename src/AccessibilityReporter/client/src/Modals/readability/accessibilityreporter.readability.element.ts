@@ -95,7 +95,7 @@ export class ReadabilityModalElement extends UmbModalBaseElement<ReadabilityModa
                     <div class="c-loading">
                         <uui-loader-bar animationDuration="1.5" style="color: #443b52"></uui-loader-bar>
                         <p>Analysing readability and generating improvements&hellip;</p>
-                        <p class="c-hint">This checks your content against <strong>WCAG 2.1 SC 3.1.5 (Reading Level)</strong>, aiming for lower secondary education reading level.</p>
+                        <p class="c-hint">This checks your content against <strong>WCAG 2.2 SC 3.1.5 (Reading Level)</strong>, aiming for lower secondary education reading level.</p>
                     </div>
                 ` : null}
 
@@ -218,14 +218,6 @@ export class ReadabilityModalElement extends UmbModalBaseElement<ReadabilityModa
 
         .c-explanation p:last-child {
             margin-bottom: 0;
-        }
-
-        .c-preview {
-            background: var(--uui-color-surface-alt, #f9f9f9);
-            border: 1px solid var(--uui-color-border, #e0e0e0);
-            border-radius: var(--uui-border-radius, 4px);
-            padding: 16px;
-            line-height: 1.6;
         }
 
         .c-code {

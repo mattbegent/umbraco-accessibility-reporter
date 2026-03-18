@@ -1,0 +1,25 @@
+﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+	Layout = null;
+}
+
+<!doctype html>
+<html lang="en-gb">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>@Model.Value("title")</title>
+</head>
+
+<body>
+
+    <main>
+        <h1>@Model.Value("title")</h1>
+        @Model.Value("Body")
+    </main>
+
+</body>
+
+</html>

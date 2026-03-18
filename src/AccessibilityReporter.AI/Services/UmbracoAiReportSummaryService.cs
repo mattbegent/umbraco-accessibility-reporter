@@ -107,10 +107,10 @@ namespace AccessibilityReporter.AI.Services
 
             sb.AppendLine();
             sb.AppendLine("Summarise the overall accessibility health of this webpage in 2 sentences.");
-            sb.AppendLine("Provide a concise summary with short, clear sentences. Categorise the issues into two sections:");
-            sb.AppendLine("1. **Content editor actions** — issues that a content editor can fix (e.g. missing alt text, unclear link text, heading structure, document language).");
-            sb.AppendLine("2. **Developer actions** — issues that require code changes (e.g. ARIA attributes, form labels, colour contrast, keyboard navigation).");
-            sb.AppendLine("Prioritise the highest-impact issues in each category. Use bullet points. Keep each bullet to one short sentence.");
+            sb.AppendLine("If the webpage is accessible, celebrate this with the user. Use positive language and highlight what is working well on the page. Include emojis to make it more friendly and engaging.");
+            sb.AppendLine("If there are issues, identify the most important ones to fix and provide actionable advice on how to fix them. Focus on the most impactful improvements that would make the biggest difference to users. Prioritise fixes that content editors can do themselves over those that require developer involvement.");
+            sb.AppendLine("Prioritise the highest-impact issues in each category. Use bullet points. Keep each bullet to one short sentence. Have a maximum of 3 bullets points.");
+
 
             return sb.ToString();
         }

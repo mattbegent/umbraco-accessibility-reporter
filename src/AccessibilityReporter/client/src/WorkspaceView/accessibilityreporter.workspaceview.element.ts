@@ -711,36 +711,6 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
         display: block;
         padding: 24px;
       }
-
-      .c-ai-summary {
-        background: var(--uui-color-surface-alt, #f4f4f4);
-        border-radius: var(--uui-border-radius, 4px);
-        padding: 16px;
-        margin-bottom: 12px;
-        line-height: 1.6;
-      }
-
-      .c-ai-summary p:first-child {
-        margin-top: 0;
-      }
-
-      .c-ai-summary p:last-child {
-        margin-bottom: 0;
-      }
-
-      .c-ai-summary ul,
-      .c-ai-summary ol {
-        padding-left: 1.5em;
-        margin: 0.5em 0;
-      }
-
-      .c-ai-summary li {
-        margin-bottom: 0.25em;
-      }
-
-      .c-ai-summary strong {
-        font-weight: 600;
-      }
     `,
 	];
 }

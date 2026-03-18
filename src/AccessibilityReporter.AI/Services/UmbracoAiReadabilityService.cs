@@ -14,7 +14,7 @@ namespace AccessibilityReporter.AI.Services
         private const string SystemPrompt =
             """
             You are an accessibility and plain-language expert. Your task is to rewrite
-            HTML content so it meets WCAG 2.1 Success Criterion 3.1.5 (Reading Level,
+            HTML content so it meets WCAG 2.2 Success Criterion 3.1.5 (Reading Level,
             Level AAA). The goal is that the text can be understood by someone with a
             lower secondary education reading level (roughly 7-9 years of schooling).
 
@@ -24,7 +24,7 @@ namespace AccessibilityReporter.AI.Services
             - Use short sentences (ideally under 20 words each).
             - Use active voice instead of passive voice.
             - Break long paragraphs into smaller ones.
-            - Use bullet or numbered lists where appropriate to aid scanning.
+            - Use bullet or numbered lists sparingly, only use where appropriate to aid scanning.
             - Preserve ALL original HTML tags, attributes, links, images and structure.
               Only change the text content itself. Do not remove or add HTML elements
               unless splitting a paragraph into a list or shorter paragraphs.
@@ -71,7 +71,8 @@ namespace AccessibilityReporter.AI.Services
                         "Then provide a maximum of 3 bullet points explaining the most impactful changes. Each bullet point must be ONE SHORT SENTENCE (max 20 words)." +
                         "Keep it brief, clear, and easy to understand. " +
                         "Focus on what changed and why it helps, not what stayed the same." +
-                        "End with a short summary sentence explaining how the improvements will help users."),
+                        "End with a short summary sentence explaining how the improvements will help users." +
+                        "If the content is already accessible, celebrate this with the user. Include emojis to make it more friendly and engaging."),
                     new(ChatRole.User,
                         $"Original HTML:\n{request.Html}\n\nImproved HTML:\n{improvedHtml}")
                 };

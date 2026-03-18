@@ -80,7 +80,13 @@ export class ARAiSummaryElement extends LitElement {
 				border-radius: var(--uui-border-radius, 4px);
 				padding: 16px;
 				margin-bottom: 12px;
+				font-size: 16px;
 				line-height: 1.6;
+				max-width: 900px;
+			}
+
+			.c-ai-summary h1 {
+				margin-top: 0;
 			}
 
 			.c-ai-summary p:first-child {
