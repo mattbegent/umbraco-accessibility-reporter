@@ -17,5 +17,7 @@ namespace AccessibilityReporter.Core.Models
         public int PassedCount { get; set; }
 
         public int IncompleteCount { get; set; }
+
+        public string ResultPayload { get; set; }
     }
 }
