@@ -24,5 +24,8 @@ namespace AccessibilityReporter.Infrastructure.Services
 
         public Task<AiSummaryResponse> GetManualTestsAsync(AiManualTestsRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(new AiSummaryResponse { Available = false });
+
+        public Task<AiSummaryResponse> GetHistorySummaryAsync(AiHistorySummaryRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult(new AiSummaryResponse { Available = false });
     }
 }

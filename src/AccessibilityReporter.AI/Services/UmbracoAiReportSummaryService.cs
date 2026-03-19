@@ -341,5 +341,66 @@ Important rules:
 
             return sb.ToString();
         }
+
+        public async Task<AiSummaryResponse> GetHistorySummaryAsync(AiHistorySummaryRequest request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var messages = new List<ChatMessage>
+                {
+                    new(ChatRole.System, "You are an accessibility expert helping content editors understand how the accessibility of a web page has changed over time. Be concise, practical and friendly. Do not start with a title or heading — jump straight into the content. Format your response in markdown, with short paragraphs and bullet points where appropriate. Focus on trends (positive or negative), highlight any issues that appear repeatedly across runs, and suggest prioritised next steps. Do not include any information about how you generated the summary or what data points you used; just provide the summary itself. Do not ask questions of the user."),
+                    new(ChatRole.User, BuildHistoryPrompt(request))
+                };
+
+                var response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
+                var summary = response.Text;
+
+                return new AiSummaryResponse
+                {
+                    Available = true,
+                    Summary = string.IsNullOrWhiteSpace(summary) ? null : summary
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating AI history summary for page {PageUrl}", request.PageUrl);
+
+                return new AiSummaryResponse
+                {
+                    Available = true,
+                    Summary = null
+                };
+            }
+        }
+
+        private static string BuildHistoryPrompt(AiHistorySummaryRequest request)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Provide a trend summary for the accessibility history of the page \"{request.PageName}\" ({request.PageUrl}).");
+            sb.AppendLine();
+            sb.AppendLine($"The following {request.Runs.Count} test run(s) have been recorded (oldest first):");
+
+            foreach (var run in request.Runs)
+            {
+                sb.AppendLine($"- {run.RunDate}: score {run.Score}/100, {run.FailedCount} failed, {run.IncompleteCount} incomplete, {run.PassedCount} passed");
+            }
+
+            if (request.FrequentViolations.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Issues that appear repeatedly across runs:");
+                foreach (var v in request.FrequentViolations)
+                {
+                    var runWord = v.AppearanceCount == 1 ? "run" : "runs";
+                    sb.AppendLine($"- {v.Impact.ToUpperInvariant()}: {v.Help} (appeared in {v.AppearanceCount} {runWord})");
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Summarise the accessibility trend for this page. Has it improved, worsened or stayed the same? Highlight any persistent issues that keep appearing across multiple runs. Suggest the most important next steps. Keep the response concise — 2–3 short paragraphs or equivalent bullet points.");
+
+            return sb.ToString();
+        }
     }
 }

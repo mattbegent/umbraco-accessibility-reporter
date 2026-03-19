@@ -6,7 +6,7 @@ import AiSummaryState from "../Enums/ai-summary-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
-import { AccessibilityReporterAppSettings, AiSummaryService, ConfigService, TestRun, TestRunService } from "../api";
+import { AccessibilityReporterAppSettings, AiHistorySummaryRequest, AiHistoryRunInfo, AiHistoryViolationSummary, AiSummaryService, ConfigService, TestRun, TestRunService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
 import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
 import { generalStyles } from "../Styles/general";
@@ -71,6 +71,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	@state()
 	private aiSummary: string = '';
+
+	@state()
+	private historyAiSummaryState: AiSummaryState = AiSummaryState.Idle;
+
+	@state()
+	private historyAiSummary: string = '';
 
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
 
@@ -466,6 +472,75 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		}
 	}
 
+	private async generateHistoryAiSummary(): Promise<void> {
+		this.historyAiSummaryState = AiSummaryState.Loading;
+
+		try {
+			const runs: AiHistoryRunInfo[] = this.history.map((run) => ({
+				runDate: format(run.runCompleted, "MMMM do yyyy HH:mm"),
+				score: run.score,
+				failedCount: run.failedCount,
+				passedCount: run.passedCount,
+				incompleteCount: run.incompleteCount,
+			}));
+
+			const violationCounts = new Map<string, { id: string; impact: string; help: string; count: number }>();
+			for (const run of this.history) {
+				try {
+					const payload = JSON.parse(run.resultPayload ?? '{}');
+					const violations: any[] = payload.violations ?? [];
+					const seen = new Set<string>();
+					for (const v of violations) {
+						if (!seen.has(v.id)) {
+							seen.add(v.id);
+							const existing = violationCounts.get(v.id);
+							if (existing) {
+								existing.count++;
+							} else {
+								violationCounts.set(v.id, { id: v.id, impact: v.impact ?? '', help: v.help ?? '', count: 1 });
+							}
+						}
+					}
+				} catch { /* skip unparseable payload */ }
+			}
+
+			const frequentViolations: AiHistoryViolationSummary[] = [...violationCounts.values()]
+				.filter(v => v.count > 1)
+				.sort((a, b) => b.count - a.count)
+				.map(v => ({ id: v.id, impact: v.impact, help: v.help, appearanceCount: v.count }));
+
+			const request: AiHistorySummaryRequest = {
+				pageName: this.pageName,
+				pageUrl: this.testURL,
+				runs,
+				frequentViolations,
+			};
+
+			const { data, error } = await tryExecute(this, AiSummaryService.historySummary({ body: request }));
+
+			if (error || !data) {
+				this.historyAiSummaryState = AiSummaryState.Errored;
+				return;
+			}
+
+			if (!data.available) {
+				this.historyAiSummaryState = AiSummaryState.Unavailable;
+				return;
+			}
+
+			if (!data.summary) {
+				this.historyAiSummaryState = AiSummaryState.Errored;
+				return;
+			}
+
+			this.historyAiSummary = data.summary;
+			this.historyAiSummaryState = AiSummaryState.Done;
+		} catch (err) {
+			this.historyAiSummaryState = AiSummaryState.Errored;
+			console.error(err);
+		}
+	}
+
 	private exportResults() {
 
 		try {
@@ -827,6 +902,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 								<ar-score-history .history="${this.history}"></ar-score-history>
 							</div>
 						</div>
+						<ar-ai-summary
+							.state=${this.historyAiSummaryState}
+							.summary=${this.historyAiSummary}
+							.onGenerate=${this.generateHistoryAiSummary.bind(this)}
+							idleDescription="Generate an AI-powered summary of accessibility trends and recurring issues across all test runs for this page."
+						></ar-ai-summary>
 					</uui-box>
 				`: null}
 

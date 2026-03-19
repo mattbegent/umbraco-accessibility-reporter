@@ -304,3 +304,48 @@ export type AiManualTestsResponses = {
 };
 
 export type AiManualTestsApiResponse = AiManualTestsResponses[keyof AiManualTestsResponses];
+
+export type AiHistoryRunInfo = {
+    runDate: string;
+    score: number;
+    failedCount: number;
+    passedCount: number;
+    incompleteCount: number;
+};
+
+export type AiHistoryViolationSummary = {
+    id: string;
+    impact: string;
+    help: string;
+    appearanceCount: number;
+};
+
+export type AiHistorySummaryRequest = {
+    pageName: string;
+    pageUrl: string;
+    runs: Array<AiHistoryRunInfo>;
+    frequentViolations: Array<AiHistoryViolationSummary>;
+};
+
+export type AiHistorySummaryData = {
+    body: AiHistorySummaryRequest;
+    path?: never;
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/ai/history-summary';
+};
+
+export type AiHistorySummaryErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type AiHistorySummaryResponses = {
+    /**
+     * OK
+     */
+    200: AiSummaryResponseModel;
+};
+
+export type AiHistorySummaryApiResponse = AiHistorySummaryResponses[keyof AiHistorySummaryResponses];

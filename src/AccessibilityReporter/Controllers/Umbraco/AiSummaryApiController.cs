@@ -66,5 +66,17 @@ namespace AccessibilityReporter.Controllers.Umbraco
         {
             return await _aiSummaryService.GetManualTestsAsync(request, cancellationToken);
         }
+
+        /// <summary>
+        /// Returns an AI-generated summary of trends and recurring issues from a page's test run history.
+        /// When the Umbraco.AI add-on is not installed, returns available: false.
+        /// </summary>
+        /// <returns code="200">The AI history summary result</returns>
+        [HttpPost("ai/history-summary")]
+        [ProducesResponseType<AiSummaryResponse>(200)]
+        public async Task<AiSummaryResponse> HistorySummary([FromBody] AiHistorySummaryRequest request, CancellationToken cancellationToken)
+        {
+            return await _aiSummaryService.GetHistorySummaryAsync(request, cancellationToken);
+        }
     }
 }
