@@ -750,7 +750,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 										<uui-table-head-cell>Failed</uui-table-head-cell>
 										<uui-table-head-cell>Incomplete</uui-table-head-cell>
 									</uui-table-head>
-									${this.history.map((run: TestRun) => html`
+									${this.history.slice(0, 5).map((run: TestRun) => html`
 									<uui-table-row>
 										<uui-table-cell>${format(run.runCompleted, "MMMM do yyyy HH:mm:ss")}</uui-table-cell>
 										<uui-table-cell>${run.score}</uui-table-cell>
