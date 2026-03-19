@@ -99,6 +99,13 @@ export const generalStyles = css`
 		font-size: 34px;
 	}
 
+	.c-summary__circle__inner {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		justify-content: center;
+	}
+
 	.c-summary--passed .c-summary__circle {
 		border-color: #1C824A;
 	}
@@ -324,5 +331,15 @@ export const generalStyles = css`
 			flex-direction: row;
 		}
 	}
+
+	.c-trend {
+        display: inline;
+        font-size: 0.875rem;
+        font-weight: bold;
+        margin-top: 4px;
+	}
+	.c-trend--improved { color: #3d8f3d; }
+	.c-trend--worsened { color: #c0392b; }
+	.c-trend--same { color: #888; }
 
   `;

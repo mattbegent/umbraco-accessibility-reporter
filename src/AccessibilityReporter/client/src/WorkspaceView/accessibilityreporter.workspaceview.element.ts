@@ -672,27 +672,25 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 							<ar-score score="${this.score}">
 								${this.#renderTrend(this.#getTrend(this.score, lastRun?.score, true))}
 							</ar-score>
-
 						</div>
 						<div class="c-summary c-summary--issues">
 							<div class="c-summary__circle">
-								${this.results.violations.length}
+								<span class="c-summary__circle__inner">${this.results.violations.length} ${this.#renderTrend(this.#getTrend(this.results.violations.length, lastRun?.failedCount, false))}</span>
 								<span class="c-summary__title">Failed</span>
-								${this.#renderTrend(this.#getTrend(this.results.violations.length, lastRun?.failedCount, false))}
+
 							</div>
 						</div>
 						<div class="c-summary c-summary--incomplete">
 							<div class="c-summary__circle">
-								${this.results.incomplete.length}
+								<span class="c-summary__circle__inner">${this.results.incomplete.length} ${this.#renderTrend(this.#getTrend(this.results.incomplete.length, lastRun?.incompleteCount, false))}</span>
 								<span class="c-summary__title">Incomplete</span>
-								${this.#renderTrend(this.#getTrend(this.results.incomplete.length, lastRun?.incompleteCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--passed">
 							<div class="c-summary__circle">
-								${this.results.passes.length}
+								<span class="c-summary__circle__inner">${this.results.passes.length} ${this.#renderTrend(this.#getTrend(this.results.passes.length, lastRun?.passedCount, true))}</span>
 								<span class="c-summary__title">Passed</span>
-								${this.#renderTrend(this.#getTrend(this.results.passes.length, lastRun?.passedCount, true))}
+
 							</div>
 						</div>
 					</div>
@@ -948,15 +946,6 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
         display: block;
         padding: 24px;
       }
-      .c-trend {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: bold;
-        margin-top: 4px;
-      }
-      .c-trend--improved { color: #3d8f3d; }
-      .c-trend--worsened { color: #c0392b; }
-      .c-trend--same { color: #888; }
     `,
 	];
 }
