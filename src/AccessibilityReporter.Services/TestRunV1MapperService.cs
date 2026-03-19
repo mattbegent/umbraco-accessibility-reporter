@@ -55,7 +55,7 @@ namespace AccessibilityReporter.Services
                 FailedCount = failedCount,
                 PassedCount = passedCount,
                 IncompleteCount = incompleteCount,
-                Payload = testRunData.ResultPayload
+                ResultPayload = testRunData.ResultPayload
             };
         }
 
