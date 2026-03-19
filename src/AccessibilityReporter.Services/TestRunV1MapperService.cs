@@ -54,7 +54,8 @@ namespace AccessibilityReporter.Services
                 Score = score,
                 FailedCount = failedCount,
                 PassedCount = passedCount,
-                IncompleteCount = incompleteCount
+                IncompleteCount = incompleteCount,
+                Payload = testRunData.ResultPayload
             };
         }
 
