@@ -4,6 +4,10 @@ namespace AccessibilityReporter.Core.Interfaces.Data
     {
         Guid ContentId { get; set; }
 
+        string Culture { get; set; }
+
+        string ContentHash { get; set; }
+
         DateTime RunCompleted { get; set; }
 
         string ResultPayload { get; set; }

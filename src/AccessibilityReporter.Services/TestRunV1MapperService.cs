@@ -48,6 +48,8 @@ namespace AccessibilityReporter.Services
             return new TestRun
             {
                 ContentId = testRunData.ContentId,
+                Culture = testRunData.Culture,
+                ContentHash = testRunData.ContentHash,
                 RunCompleted = testRunData.RunCompleted,
                 Score = score,
                 FailedCount = failedCount,

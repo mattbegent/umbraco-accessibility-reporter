@@ -4,6 +4,10 @@ namespace AccessibilityReporter.Core.Models
     {
         public Guid ContentId { get; set; }
 
+        public string Culture { get; set; }
+
+        public string ContentHash { get; set; }
+
         public DateTime RunCompleted { get; set; }
 
         public int Score { get; set; }

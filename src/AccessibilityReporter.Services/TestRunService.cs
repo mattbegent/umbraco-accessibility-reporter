@@ -1,7 +1,8 @@
 using AccessibilityReporter.Core.Interfaces.Repositories;
 using AccessibilityReporter.Core.Models;
-using AccessibilityReporter.Services.Interfaces;
 using AccessibilityReporter.Database.Data.Models;
+using AccessibilityReporter.Services.Interfaces;
+using AccessibilityReporter.Services.Models;
 
 namespace AccessibilityReporter.Services
 {
@@ -20,22 +21,30 @@ namespace AccessibilityReporter.Services
             _testRunMapperServices = testRunMapperServices.ToDictionary(mapper => mapper.ApplicableVersion, mapper => mapper);
         }
 
-        public void Create(Guid contentId, string resultPayload)
+        public TestRunCreationResult Create(Guid contentId, string culture, string contentHash, string resultPayload)
         {
             var testRunData = new TestRunData
             {
                 ContentId = contentId,
+                Culture = culture,
+                ContentHash = contentHash,
                 ResultPayload = resultPayload,
                 RunCompleted = DateTime.Now,
                 ResultPayloadVersion = PayloadVersion
             };
 
+            if (_testRunRepository.Run(contentId, culture, contentHash) != null)
+                            {
+                return TestRunCreationResult.Ignored;
+            }
+
             _testRunRepository.Create(testRunData);
+            return TestRunCreationResult.Created;
         }
 
-        public IEnumerable<TestRun> Runs(Guid contentId)
+        public IEnumerable<TestRun> Runs(Guid contentId, string culture)
         {
-            var runs = _testRunRepository.Runs(contentId);
+            var runs = _testRunRepository.Runs(contentId, culture);
 
             return runs.Select(run => _testRunMapperServices[run.ResultPayloadVersion].Map(run));
         }

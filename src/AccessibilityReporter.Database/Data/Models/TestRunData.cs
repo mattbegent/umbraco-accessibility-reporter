@@ -17,6 +17,10 @@ namespace AccessibilityReporter.Database.Data.Models
 
         public Guid ContentId { get; set; }
 
+        public string Culture { get; set; }
+
+        public string ContentHash { get; set; }
+
         public DateTime RunCompleted { get; set; }
 
         public string ResultPayload { get; set; } = string.Empty;
