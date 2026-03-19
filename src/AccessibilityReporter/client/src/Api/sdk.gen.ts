@@ -31,7 +31,7 @@ export class ConfigService {
             ...options
         });
     }
-    
+
 }
 
 export class DirectoryService {
@@ -47,7 +47,7 @@ export class DirectoryService {
             ...options
         });
     }
-    
+
 }
 
 export class TestRunService {
@@ -59,7 +59,7 @@ export class TestRunService {
                     type: 'http'
                 }
             ],
-            url: '/umbraco/accessibilityreporter/api/v1/test-run/{contentId}',
+            url: '/umbraco/accessibilityreporter/api/v1/test-run/{contentId}/{culture}/{contentHash}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export class TestRunService {
             }
         });
     }
-    
+
     public static runs<ThrowOnError extends boolean = false>(options: Options<RunsData, ThrowOnError>) {
         return (options.client ?? _heyApiClient).get<RunsResponse, unknown, ThrowOnError>({
             security: [
@@ -76,9 +76,9 @@ export class TestRunService {
                     type: 'http'
                 }
             ],
-            url: '/umbraco/accessibilityreporter/api/v1/test-runs/{contentId}',
+            url: '/umbraco/accessibilityreporter/api/v1/test-runs/{contentId}/{culture}',
             ...options
         });
     }
-    
+
 }
