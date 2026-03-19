@@ -9,6 +9,7 @@ import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AccessibilityReporterAppSettings, AiHistorySummaryRequest, AiHistoryRunInfo, AiHistoryViolationSummary, AiSummaryService, ConfigService, TestRun, TestRunService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
 import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
+import { UmbLanguageCollectionRepository } from "@umbraco-cms/backoffice/language";
 import { generalStyles } from "../Styles/general";
 import AccessibilityReporterAPIService from "../Services/accessibility-reporter-api.service";
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
@@ -81,6 +82,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
 
 	private _currentCulture: string | null = null;
+
+	private _defaultCulture: string = "";
 
 	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
@@ -181,12 +184,27 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			console.log(this._currentCulture);
 		});
 
+		this._fetchDefaultCulture();
+
 		this.observe(this._workspaceContext.unique, async (unique) => {
 			if (unique) {
 				await this._fetchDocumentUrls(unique);
 			}
 		});
 
+	}
+
+	private async _fetchDefaultCulture() {
+		try {
+			const repo = new UmbLanguageCollectionRepository(this);
+			const { data } = await repo.requestCollection({ skip: 0, take: 999 });
+			const defaultLang = data?.items.find(lang => lang.isDefault);
+			if (defaultLang) {
+				this._defaultCulture = defaultLang.unique;
+			}
+		} catch (error) {
+			console.error('Error fetching default language:', error);
+		}
 	}
 
 	private async _fetchDocumentUrls(documentUnique: string) {
@@ -218,7 +236,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		const { data, error } = await tryExecute(this, TestRunService.runs({
 			path: {
 				contentId: contentId,
-				culture: this._currentCulture ?? ""
+				culture: this._currentCulture ?? this._defaultCulture
 			}
 		}));
 
@@ -288,7 +306,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			const lastRunHash = this.#getLastRunHash();
 			if (contentHash !== lastRunHash) {
 				const payload = { ...this.results, contentHash, culture: this._currentCulture };
-				await this.saveTestRun(contentId, this._currentCulture ?? "", contentHash, JSON.stringify(payload));
+				await this.saveTestRun(contentId, this._currentCulture ?? this._defaultCulture, contentHash, JSON.stringify(payload));
 				this.history = await this.getHistory(contentId);
 			}
 		} catch (error) {
