@@ -109,6 +109,7 @@ namespace AccessibilityReporter.AI.Services
             sb.AppendLine("Summarise the overall accessibility health of this webpage in 2 sentences.");
             sb.AppendLine("If the webpage is accessible, celebrate this with the user. Use positive language and highlight what is working well on the page. Include emojis to make it more friendly and engaging.");
             sb.AppendLine("If there are issues, identify the most important ones to fix and provide actionable advice on how to fix them. Focus on the most impactful improvements that would make the biggest difference to users. Prioritise fixes that content editors can do themselves over those that require developer involvement.");
+            sb.AppendLine("Categorise the issues into two groups. One group for issues that content editors can fix themselves (e.g. meaningful alt text, clear link text, logical heading structure, sensible reading order etc.) and another group for issues that would require developer involvement (e.g. ARIA roles, keyboard focus management, dynamic content updates etc.). Use bold for the category labels but not for general emphasis in the advice.");
             sb.AppendLine("Prioritise the highest-impact issues in each category. Use bullet points. Keep each bullet to one short sentence. Have a maximum of 3 bullets points.");
 
 
