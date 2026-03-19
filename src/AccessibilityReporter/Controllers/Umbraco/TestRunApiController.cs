@@ -36,7 +36,7 @@ namespace AccessibilityReporter.Controllers.Umbraco
         [HttpPost("test-run/{contentId}/{culture}/{contentHash}")]
         [ProducesResponseType(201)]
         [ProducesResponseType(204)]
-        public IActionResult Create(Guid contentId, string culture, string contentHash, string testResultPayload)
+        public IActionResult Create(Guid contentId, string culture, string contentHash, [FromBody] string testResultPayload)
         {
             var result = _testRunService.Create(contentId, culture, contentHash, testResultPayload);
 
