@@ -1,4 +1,4 @@
-﻿using AccessibilityReporter.Services.Interfaces;
+using AccessibilityReporter.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
@@ -12,6 +12,8 @@ namespace AccessibilityReporter.Services.Infrastructure
 			builder.Services.AddScoped<ITestableNodesService, DefaultTestableNodesService>();
 			builder.Services.AddScoped<ITestableNodesSummaryService, TestableNodesSummaryService>();
 			builder.Services.AddScoped<INodeUrlService, NodeUrlService>();
+			builder.Services.AddScoped<ITestRunMapperService, TestRunV1MapperService>();
+			builder.Services.AddScoped<ITestRunService, TestRunService>();
 		}
 	}
 }

@@ -6,7 +6,7 @@ import AiSummaryState from "../Enums/ai-summary-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
-import { AccessibilityReporterAppSettings, AiSummaryService, ConfigService } from "../api";
+import { AccessibilityReporterAppSettings, AiSummaryService, ConfigService, TestRun, TestRunService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
 import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
 import { generalStyles } from "../Styles/general";
@@ -17,6 +17,7 @@ import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibil
 import { utils, writeFile } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
+import '../Components/ar-score-history';
 import '../Components/ar-ai-summary';
 import '../Components/ar-manual-tests';
 
@@ -63,12 +64,17 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private passesOpen: boolean = false;
 
 	@state()
+	private history: TestRun[];
+
+	@state()
 	private aiSummaryState: AiSummaryState = AiSummaryState.Idle;
 
 	@state()
 	private aiSummary: string = '';
 
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
+
+	private _currentCulture: string | null = null;
 
 	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
@@ -128,10 +134,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.config.testBaseUrl = this.getFallbackBaseUrl();
 		}
 
+		this.history = await this.getHistory(this._workspaceContext?.getUnique() as string);
+		console.log(this.history);
+
 		if(this.config.runTestsAutomatically) {
 			this.runTests(false);
 		}
-
 	}
 
 	private getLocalHostname() {
@@ -161,6 +169,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		if (!this._workspaceContext) return;
 
 		this.pageName = this._workspaceContext.getName() as string;
+
+		this.observe(this._workspaceContext.splitView.activeVariantsInfo, (activeVariants) => {
+			this._currentCulture = activeVariants[0]?.culture ?? null;
+			console.log(this._currentCulture);
+		});
 
 		this.observe(this._workspaceContext.unique, async (unique) => {
 			if (unique) {
@@ -195,12 +208,47 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return data;
 	}
 
+	private async getHistory(contentId: string): Promise<TestRun[] | []> {
+		const { data, error } = await tryExecute(this, TestRunService.runs({
+			path: {
+				contentId: contentId,
+				culture: this._currentCulture ?? ""
+			}
+		}));
+
+		if (error) {
+			console.error(error);
+			this.pageState = PageState.Errored;
+			return [];
+		}
+
+		return data ?? [];
+	}
+
+	private async saveTestRun(contentId: string, contentCulture: string, contentHash: string,  resultPayload: string) {
+		const { data, error } = await tryExecute(this, TestRunService.create({
+			path: {
+				contentId: contentId,
+				culture: contentCulture,
+				contentHash: contentHash
+			},
+			body: resultPayload
+		}));
+
+		if (error) {
+			console.error(error);
+		}
+
+		console.log(data);
+	}
+
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
 		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning);
 	}
 
 	private async runTests(showTestRunning: boolean): Promise<void> {
 
+		const isRerun = this.results != null;
 		this.pageState = PageState.Loading;
 		this.aiSummaryState = AiSummaryState.Idle;
 		this.aiSummary = '';
@@ -228,11 +276,58 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.pageState = PageState.Loaded;
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
+
+			const contentId = this._workspaceContext?.getUnique() as string;
+			const contentHash = await this.#computeContentHash(contentId, isRerun);
+			const lastRunHash = this.#getLastRunHash();
+			if (contentHash !== lastRunHash) {
+				const payload = { ...this.results, contentHash, culture: this._currentCulture };
+				await this.saveTestRun(contentId, this._currentCulture ?? "", contentHash, JSON.stringify(payload));
+				this.history = await this.getHistory(contentId);
+			}
 		} catch (error) {
 			this.pageState = PageState.Errored;
 			console.error(error);
 		}
 
+	}
+
+	async #computeContentHash(contentId: string, includeTimestamp = false): Promise<string> {
+		const data = this._workspaceContext?.getData();
+		const values = [...(data?.values ?? [])].sort((a, b) => a.alias.localeCompare(b.alias));
+		const timestamp = includeTimestamp ? new Date().toISOString() : '';
+		const input = contentId + timestamp + JSON.stringify(values);
+		const encoded = new TextEncoder().encode(input);
+		const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+		return Array.from(new Uint8Array(hashBuffer))
+			.map(b => b.toString(16).padStart(2, '0'))
+			.join('');
+	}
+
+	#getLastRunHash(): string | undefined {
+		if (!this.history?.length) return undefined;
+		try {
+			console.log(this.history[this.history.length - 1]);
+			const lastPayload = JSON.parse(this.history[this.history.length - 1].resultPayload ?? '{}');
+			console.log('Last run content hash:', lastPayload);
+			return lastPayload.contentHash;
+		} catch {
+			return undefined;
+		}
+	}
+
+	#getTrend(current: number, previous: number | undefined, higherIsBetter: boolean): 'improved' | 'worsened' | 'same' | null {
+		if (previous === undefined) return null;
+		if (current === previous) return 'same';
+		const improved = higherIsBetter ? current > previous : current < previous;
+		return improved ? 'improved' : 'worsened';
+	}
+
+	#renderTrend(trend: 'improved' | 'worsened' | 'same' | null) {
+		if (trend === null) return null;
+		if (trend === 'improved') return html`<span class="c-trend c-trend--improved" aria-label="Improved">&uarr;</span>`;
+		if (trend === 'worsened') return html`<span class="c-trend c-trend--worsened" aria-label="Worsened">&darr;</span>`;
+		return html`<span class="c-trend c-trend--same" aria-label="No change">&rarr;</span>`;
 	}
 
 	private sortResponse(results: any) {
@@ -465,6 +560,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		}
 
 		if (this.pageState === PageState.Loaded) {
+			const lastRun = this.history?.length > 0 ? this.history[this.history.length - 1] : undefined;
 			return html`
 			<div>
 				<uui-box style="margin-bottom: 20px;">
@@ -480,24 +576,30 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 					<div class="c-summary__container">
 						<div class="c-summary c-summary--issues">
-							<ar-score score="${this.score}"></ar-score>
+							<ar-score score="${this.score}">
+								${this.#renderTrend(this.#getTrend(this.score, lastRun?.score, true))}
+							</ar-score>
+
 						</div>
 						<div class="c-summary c-summary--issues">
 							<div class="c-summary__circle">
 								${this.results.violations.length}
 								<span class="c-summary__title">Failed</span>
+								${this.#renderTrend(this.#getTrend(this.results.violations.length, lastRun?.failedCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--incomplete">
 							<div class="c-summary__circle">
 								${this.results.incomplete.length}
 								<span class="c-summary__title">Incomplete</span>
+								${this.#renderTrend(this.#getTrend(this.results.incomplete.length, lastRun?.incompleteCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--passed">
 							<div class="c-summary__circle">
 								${this.results.passes.length}
 								<span class="c-summary__title">Passed</span>
+								${this.#renderTrend(this.#getTrend(this.results.passes.length, lastRun?.passedCount, true))}
 							</div>
 						</div>
 					</div>
@@ -692,6 +794,42 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					</div>
 				</uui-box>
 
+				${this.history.length > 0 ? html`
+					<uui-box style="margin-bottom: 20px;">
+						<div slot="headline" class="c-title__group">
+							<div class="c-circle">
+								<uui-icon name="icon-history" aria-hidden="true"></uui-icon>
+							</div>
+							<h2 class="c-title">History</h2>
+						</div>
+						<div class="c-history">
+							<div class="c-history__item">
+								<uui-table>
+									<uui-table-head>
+										<uui-table-head-cell>Date</uui-table-head-cell>
+										<uui-table-head-cell>Score</uui-table-head-cell>
+										<uui-table-head-cell>Passed</uui-table-head-cell>
+										<uui-table-head-cell>Failed</uui-table-head-cell>
+										<uui-table-head-cell>Incomplete</uui-table-head-cell>
+									</uui-table-head>
+									${this.history.slice(0, 5).map((run: TestRun) => html`
+									<uui-table-row>
+										<uui-table-cell>${format(run.runCompleted, "MMMM do yyyy HH:mm:ss")}</uui-table-cell>
+										<uui-table-cell>${run.score}</uui-table-cell>
+										<uui-table-cell>${run.passedCount}</uui-table-cell>
+										<uui-table-cell>${run.failedCount}</uui-table-cell>
+										<uui-table-cell>${run.incompleteCount}</uui-table-cell>
+									</uui-table-row>
+									`)}
+								</uui-table>
+							</div>
+							<div class="c-history__item">
+								<ar-score-history .history="${this.history}"></ar-score-history>
+							</div>
+						</div>
+					</uui-box>
+				`: null}
+
 				<ar-manual-tests
 					testURL="${this.testURL}"
 					pageName="${this.pageName}"
@@ -711,6 +849,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
         display: block;
         padding: 24px;
       }
+      .c-trend {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: bold;
+        margin-top: 4px;
+      }
+      .c-trend--improved { color: #3d8f3d; }
+      .c-trend--worsened { color: #c0392b; }
+      .c-trend--same { color: #888; }
     `,
 	];
 }

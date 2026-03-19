@@ -1,4 +1,4 @@
-﻿namespace AccessibilityReporter.Core.Interfaces
+namespace AccessibilityReporter.Core.Interfaces
 {
     public interface IAccessibilityReporterSettings
     {

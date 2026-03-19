@@ -101,14 +101,14 @@ export class ARManualTestsElement extends UmbElementMixin(LitElement) {
 		return tests;
 	}
 
-	private get groupedDefaultTests(): Map<string, ManualTest[]> {
-		const filtered = this.defaultTests.filter(t => !this.excludedDefaultTests.has(t.test));
-		return this.groupTests(filtered);
-	}
+	// private get groupedDefaultTests(): Map<string, ManualTest[]> {
+	// 	const filtered = this.defaultTests.filter(t => !this.excludedDefaultTests.has(t.test));
+	// 	return this.groupTests(filtered);
+	// }
 
-	private get groupedAiTests(): Map<string, ManualTest[]> {
-		return this.groupTests(this.aiTests);
-	}
+	// private get groupedAiTests(): Map<string, ManualTest[]> {
+	// 	return this.groupTests(this.aiTests);
+	// }
 
 	private get groupedAllTests(): Map<string, ManualTest[]> {
 		const filtered = this.defaultTests.filter(t => !this.excludedDefaultTests.has(t.test));
