@@ -239,6 +239,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	private async runTests(showTestRunning: boolean): Promise<void> {
 
+		const isRerun = this.results != null;
 		this.pageState = PageState.Loading;
 
 		// Ensure we have document URLs before running tests
@@ -266,7 +267,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
 
 			const contentId = this._workspaceContext?.getUnique() as string;
-			const contentHash = await this.#computeContentHash(contentId);
+			const contentHash = await this.#computeContentHash(contentId, isRerun);
 			const lastRunHash = this.#getLastRunHash();
 			if (contentHash !== lastRunHash) {
 				const payload = { ...this.results, contentHash, culture: this._currentCulture };
@@ -280,10 +281,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	}
 
-	async #computeContentHash(contentId: string): Promise<string> {
+	async #computeContentHash(contentId: string, includeTimestamp = false): Promise<string> {
 		const data = this._workspaceContext?.getData();
 		const values = [...(data?.values ?? [])].sort((a, b) => a.alias.localeCompare(b.alias));
-		const input = contentId + JSON.stringify(values);
+		const timestamp = includeTimestamp ? new Date().toISOString() : '';
+		const input = contentId + timestamp + JSON.stringify(values);
 		const encoded = new TextEncoder().encode(input);
 		const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
 		return Array.from(new Uint8Array(hashBuffer))
