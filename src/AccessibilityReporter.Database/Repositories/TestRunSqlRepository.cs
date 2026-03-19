@@ -30,8 +30,8 @@ namespace AccessibilityReporter.Database.Repositories
             var queryResults = scope.Database.SingleOrDefault<TestRunData>($"SELECT * " +
                 $"FROM {TestRunData.TableName} " +
                 $"WHERE {nameof(TestRunData.ContentId)} = @0 " +
-                $"WHERE {nameof(TestRunData.Culture)} = @1 " +
-                $"WHERE {nameof(TestRunData.ContentHash)} = @2 " +
+                $"AND {nameof(TestRunData.Culture)} = @1 " +
+                $"AND {nameof(TestRunData.ContentHash)} = @2 " +
                 $"ORDER BY {nameof(TestRunData.RunCompleted)}"
             , contentId, culture, contentHash);
 
@@ -47,7 +47,7 @@ namespace AccessibilityReporter.Database.Repositories
             var queryResults = scope.Database.Fetch<TestRunData>($"SELECT * " +
                 $"FROM {TestRunData.TableName} " +
                 $"WHERE {nameof(TestRunData.ContentId)} = @0 " +
-                $"WHERE {nameof(TestRunData.Culture)} = @1 " +
+                $"AND {nameof(TestRunData.Culture)} = @1 " +
                 $"ORDER BY {nameof(TestRunData.RunCompleted)}"
             , contentId, culture);
 
