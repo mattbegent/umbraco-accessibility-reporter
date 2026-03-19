@@ -919,6 +919,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 							</div>
 						</div>
 						<ar-ai-summary
+							?noBox=${true}
 							.state=${this.historyAiSummaryState}
 							.summary=${this.historyAiSummary}
 							.onGenerate=${this.generateHistoryAiSummary.bind(this)}
