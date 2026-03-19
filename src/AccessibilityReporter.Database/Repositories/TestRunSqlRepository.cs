@@ -48,7 +48,7 @@ namespace AccessibilityReporter.Database.Repositories
                 $"FROM {TestRunData.TableName} " +
                 $"WHERE {nameof(TestRunData.ContentId)} = @0 " +
                 $"AND {nameof(TestRunData.Culture)} = @1 " +
-                $"ORDER BY {nameof(TestRunData.RunCompleted)}"
+                $"ORDER BY {nameof(TestRunData.RunCompleted)} DESC"
             , contentId, culture);
 
             scope.Complete();

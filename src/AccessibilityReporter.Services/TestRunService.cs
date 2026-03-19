@@ -34,7 +34,7 @@ namespace AccessibilityReporter.Services
             };
 
             if (_testRunRepository.Run(contentId, culture, contentHash) != null)
-                            {
+            {
                 return TestRunCreationResult.Ignored;
             }
 
