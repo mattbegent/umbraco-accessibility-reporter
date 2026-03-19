@@ -97,9 +97,11 @@ export type CreateData = {
     body?: string;
     path: {
         contentId: string;
+		culture: string;
+		contentHash: string;
     };
     query?: never;
-    url: '/umbraco/accessibilityreporter/api/v1/test-run/{contentId}';
+    url: '/umbraco/accessibilityreporter/api/v1/test-run/{contentId}/{culture}/{contentHash}';
 };
 
 export type CreateErrors = {
@@ -120,9 +122,10 @@ export type RunsData = {
     body?: never;
     path: {
         contentId: string;
+		culture: string;
     };
     query?: never;
-    url: '/umbraco/accessibilityreporter/api/v1/test-runs/{contentId}';
+    url: '/umbraco/accessibilityreporter/api/v1/test-runs/{contentId}/{culture}';
 };
 
 export type RunsErrors = {

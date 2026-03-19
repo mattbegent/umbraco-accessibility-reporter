@@ -3,4 +3,65 @@
 @{
 	Layout = null;
 }
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@Model.Value("title")</title>
+</head>
+<body>
+
 <h1>@Model.Value("title")</h1>
+
+<!-- Missing alt text on images -->
+<img src="/media/example.jpg" />
+<img src="/media/decorative.png" alt="" role="presentation" />
+
+<!-- Low colour contrast text -->
+<p style="color: #aaa; background-color: #fff;">This text has poor colour contrast and will be hard to read.</p>
+
+<!-- Form inputs without labels -->
+<form>
+    <input type="text" placeholder="Enter your name" />
+    <input type="email" placeholder="Enter your email" />
+    <select>
+        <option value="">Choose an option</option>
+        <option value="1">Option 1</option>
+    </select>
+    <button>Submit</button>
+</form>
+
+<!-- Empty button (no accessible name) -->
+<button><span aria-hidden="true">&#x2715;</span></button>
+
+<!-- Link with no meaningful text -->
+<a href="/about">Click here</a>
+<a href="/contact">Read more</a>
+
+<!-- Heading order skipped (h1 -> h3, no h2) -->
+<h3>A sub-section skipping heading level 2</h3>
+
+<!-- Table with no headers -->
+<table>
+    <tr>
+        <td>Name</td>
+        <td>Age</td>
+        <td>Email</td>
+    </tr>
+    <tr>
+        <td>Jane Doe</td>
+        <td>34</td>
+        <td>jane@example.com</td>
+    </tr>
+</table>
+
+<!-- iframe with no title -->
+<iframe src="https://www.example.com" width="300" height="200"></iframe>
+
+<!-- Positive tabindex (disrupts natural tab order) -->
+<a href="/home" tabindex="5">Home</a>
+<a href="/about" tabindex="2">About</a>
+
+</body>
+</html>
+

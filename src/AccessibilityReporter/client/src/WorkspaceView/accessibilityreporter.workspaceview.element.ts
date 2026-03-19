@@ -65,6 +65,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
 
+	private _currentCulture: string | null = null;
+
 	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
 	private _notificationContext?: UmbNotificationContext;
@@ -159,6 +161,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.pageName = this._workspaceContext.getName() as string;
 
+		this.observe(this._workspaceContext.splitView.activeVariantsInfo, (activeVariants) => {
+			this._currentCulture = activeVariants[0]?.culture ?? null;
+			console.log(this._currentCulture);
+		});
+
 		this.observe(this._workspaceContext.unique, async (unique) => {
 			if (unique) {
 				await this._fetchDocumentUrls(unique);
@@ -195,7 +202,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private async getHistory(contentId: string): Promise<TestRun[] | []> {
 		const { data, error } = await tryExecute(this, TestRunService.runs({
 			path: {
-				contentId: contentId
+				contentId: contentId,
+				culture: this._currentCulture ?? ""
 			}
 		}));
 
@@ -208,10 +216,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return data ?? [];
 	}
 
-	private async saveTestRun(contentId: string, resultPayload: string) {
+	private async saveTestRun(contentId: string, contentCulture: string, contentHash: string,  resultPayload: string) {
 		const { data, error } = await tryExecute(this, TestRunService.create({
 			path: {
 				contentId: contentId,
+				culture: contentCulture,
+				contentHash: contentHash
 			},
 			body: resultPayload
 		}));
@@ -255,12 +265,56 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
 
-			this.saveTestRun(this._workspaceContext?.getUnique() as string, JSON.stringify(this.results));
+			const contentId = this._workspaceContext?.getUnique() as string;
+			const contentHash = await this.#computeContentHash(contentId);
+			const lastRunHash = this.#getLastRunHash();
+			if (contentHash !== lastRunHash) {
+				const payload = { ...this.results, contentHash, culture: this._currentCulture };
+				await this.saveTestRun(contentId, this._currentCulture ?? "", contentHash, JSON.stringify(payload));
+				this.history = await this.getHistory(contentId);
+			}
 		} catch (error) {
 			this.pageState = PageState.Errored;
 			console.error(error);
 		}
 
+	}
+
+	async #computeContentHash(contentId: string): Promise<string> {
+		const data = this._workspaceContext?.getData();
+		const values = [...(data?.values ?? [])].sort((a, b) => a.alias.localeCompare(b.alias));
+		const input = contentId + JSON.stringify(values);
+		const encoded = new TextEncoder().encode(input);
+		const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+		return Array.from(new Uint8Array(hashBuffer))
+			.map(b => b.toString(16).padStart(2, '0'))
+			.join('');
+	}
+
+	#getLastRunHash(): string | undefined {
+		if (!this.history?.length) return undefined;
+		try {
+			console.log(this.history[this.history.length - 1]);
+			const lastPayload = JSON.parse(this.history[this.history.length - 1].resultPayload ?? '{}');
+			console.log('Last run content hash:', lastPayload);
+			return lastPayload.contentHash;
+		} catch {
+			return undefined;
+		}
+	}
+
+	#getTrend(current: number, previous: number | undefined, higherIsBetter: boolean): 'improved' | 'worsened' | 'same' | null {
+		if (previous === undefined) return null;
+		if (current === previous) return 'same';
+		const improved = higherIsBetter ? current > previous : current < previous;
+		return improved ? 'improved' : 'worsened';
+	}
+
+	#renderTrend(trend: 'improved' | 'worsened' | 'same' | null) {
+		if (trend === null) return null;
+		if (trend === 'improved') return html`<span class="c-trend c-trend--improved" aria-label="Improved">&uarr;</span>`;
+		if (trend === 'worsened') return html`<span class="c-trend c-trend--worsened" aria-label="Worsened">&darr;</span>`;
+		return html`<span class="c-trend c-trend--same" aria-label="No change">&rarr;</span>`;
 	}
 
 	private sortResponse(results: any) {
@@ -451,6 +505,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		}
 
 		if (this.pageState === PageState.Loaded) {
+			const lastRun = this.history?.length > 0 ? this.history[this.history.length - 1] : undefined;
 			return html`
 			<div>
 				<uui-box style="margin-bottom: 20px;">
@@ -466,24 +521,30 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 					<div class="c-summary__container">
 						<div class="c-summary c-summary--issues">
-							<ar-score score="${this.score}"></ar-score>
+							<ar-score score="${this.score}">
+								${this.#renderTrend(this.#getTrend(this.score, lastRun?.score, true))}
+							</ar-score>
+
 						</div>
 						<div class="c-summary c-summary--issues">
 							<div class="c-summary__circle">
 								${this.results.violations.length}
 								<span class="c-summary__title">Failed</span>
+								${this.#renderTrend(this.#getTrend(this.results.violations.length, lastRun?.failedCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--incomplete">
 							<div class="c-summary__circle">
 								${this.results.incomplete.length}
 								<span class="c-summary__title">Incomplete</span>
+								${this.#renderTrend(this.#getTrend(this.results.incomplete.length, lastRun?.incompleteCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--passed">
 							<div class="c-summary__circle">
 								${this.results.passes.length}
 								<span class="c-summary__title">Passed</span>
+								${this.#renderTrend(this.#getTrend(this.results.passes.length, lastRun?.passedCount, true))}
 							</div>
 						</div>
 					</div>
@@ -750,6 +811,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
         display: block;
         padding: 24px;
       }
+      .c-trend {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: bold;
+        margin-top: 4px;
+      }
+      .c-trend--improved { color: #3d8f3d; }
+      .c-trend--worsened { color: #c0392b; }
+      .c-trend--same { color: #888; }
     `,
 	];
 }
