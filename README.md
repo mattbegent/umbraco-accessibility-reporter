@@ -4,7 +4,7 @@
 
 ## What is it?
 
-Accessibility Reporter for Umbraco is a content app and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
+Accessibility Reporter for Umbraco is an award winning content app/workspace view and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
 
 ## Why should I use it?
 
@@ -17,6 +17,10 @@ It runs an accessibility audit against the current published version of the page
 ## How do I install it?
 
 You can install Accessibility Reporter using Nuget `https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter`. Once installed when you build your project the files needed for Accessibility Reporter will be copied into your App_Plugins folder. That's it!
+
+## What version should I use?
+
+If you are running Umbraco 17+ use the latest version of Accessibility Reporter, which is version 4 onwards. If you are running Umbraco 10-13, use version 3.5.1.
 
 ## Options
 
