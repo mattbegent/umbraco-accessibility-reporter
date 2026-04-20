@@ -2,6 +2,9 @@
 
 ![Accessibility Reporter logo](https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/logos/logo64.png)
 
+[![Downloads](https://img.shields.io/nuget/dt/Umbraco.Community.AccessibilityReporter?color=cc9900)](https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter/)
+[![NuGet](https://img.shields.io/nuget/vpre/Umbraco.Community.AccessibilityReporter?color=0273B3)](https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter)
+
 ## What is it?
 
 Accessibility Reporter for Umbraco is an award winning content app/workspace view and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
