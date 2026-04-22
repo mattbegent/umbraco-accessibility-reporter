@@ -1,7 +1,7 @@
 import { LitElement, html, customElement, property, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 
-import { utils, writeFile } from "xlsx";
+import { utils } from "xlsx";
 import { format } from 'date-fns';
 
 import './ar-logo';
@@ -544,7 +544,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				];
 			}
 
-			writeFile(workbook, AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
+			AccessibilityReporterService.downloadWorkbook(workbook,
+				AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx");
 
 		} catch (error) {
 			console.error(error);
