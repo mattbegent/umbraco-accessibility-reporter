@@ -1,3 +1,5 @@
+import { write, WorkBook } from 'xlsx';
+
 export default class AccessibilityReporterService {
 
     static impacts = ["minor", "moderate", "serious", "critical"];
@@ -381,6 +383,19 @@ export default class AccessibilityReporterService {
 
     static formatFileName(name: string) {
         return name.replace(/\s+/g, '-').toLowerCase();
+    }
+
+    static downloadWorkbook(workbook: WorkBook, filename: string) {
+        const wbout = write(workbook, { bookType: 'xlsx', type: 'array', compression: true });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.dispatchEvent(new MouseEvent('click', { bubbles: false, cancelable: true }));
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     static formatNumber(numberToFormat: number) {

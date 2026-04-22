@@ -13,7 +13,7 @@ import AccessibilityReporterAPIService from "../Services/accessibility-reporter-
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 import { UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
 import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibilityreporter.detail.modal.token";
-import { utils, writeFile } from "xlsx";
+import { utils } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
 
@@ -347,8 +347,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 			passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 
-			writeFile(workbook,
-				AccessibilityReporterService.formatFileName(`accessibility-report-${this.pageName}-${format(this.results.timestamp, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
+			AccessibilityReporterService.downloadWorkbook(workbook,
+				AccessibilityReporterService.formatFileName(`accessibility-report-${this.pageName}-${format(this.results.timestamp, "yyyy-MM-dd")}`) + ".xlsx");
 
 		} catch(error) {
 			console.error(error);
