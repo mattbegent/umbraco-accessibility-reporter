@@ -392,10 +392,15 @@ export default class AccessibilityReporterService {
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        a.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
         document.body.appendChild(a);
-        a.dispatchEvent(new MouseEvent('click', { bubbles: false, cancelable: true }));
+        a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+        }, 0);
     }
 
     static formatNumber(numberToFormat: number) {
