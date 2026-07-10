@@ -49,7 +49,9 @@ export type CurrentResponse = CurrentResponses[keyof CurrentResponses];
 export type PagesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        culture?: string;
+    };
     url: '/umbraco/accessibilityreporter/api/v1/pages';
 };
 

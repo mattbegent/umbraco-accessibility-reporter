@@ -561,7 +561,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 					<uui-box class="c-dashboard-grid__full-row">
 						<div slot="headline">
-							<h1 class="c-title">Accessibility Report</h1>
+							<h1 class="c-title">Accessibility Report${this.results?.culture ? html` <uui-tag look="outline" color="default" style="margin-left: 6px;">${this.results.culture}</uui-tag>` : null}</h1>
 						</div>
 						<div>
 							<p>${unsafeHTML(this.reportSummaryText)}</p>

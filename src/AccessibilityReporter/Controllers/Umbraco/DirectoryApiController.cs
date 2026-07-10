@@ -23,9 +23,9 @@ namespace AccessibilityReporter.Controllers.Umbraco
         /// <returns code="200">A collection of NodeSummary objects</returns>
         [HttpGet("pages")]
         [ProducesResponseType<IEnumerable<NodeSummary>>(200)]
-        public IEnumerable<NodeSummary> Pages()
+        public IEnumerable<NodeSummary> Pages([FromQuery] string? culture = null)
         {
-            return _testableNodesSummaryService.All();
+            return _testableNodesSummaryService.All(culture);
         }
     }
 }

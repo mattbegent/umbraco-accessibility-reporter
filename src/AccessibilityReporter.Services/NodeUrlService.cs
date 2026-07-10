@@ -20,12 +20,17 @@ namespace AccessibilityReporter.Services
 
         public string AbsoluteUrl(IPublishedContent content)
         {
+            return AbsoluteUrl(content, null);
+        }
+
+        public string AbsoluteUrl(IPublishedContent content, string? culture)
+        {
             if (string.IsNullOrWhiteSpace(_settings.TestBaseUrl))
             {
-                return content.Url(_publishedUrlProvider, mode: UrlMode.Absolute);
+                return content.Url(_publishedUrlProvider, culture: culture, mode: UrlMode.Absolute);
             }
 
-            return $"{_settings.TestBaseUrl.TrimEnd("/")}{content.Url(_publishedUrlProvider, mode: UrlMode.Relative)}";
+            return $"{_settings.TestBaseUrl.TrimEnd("/")}{content.Url(_publishedUrlProvider, culture: culture, mode: UrlMode.Relative)}";
         }
     }
 }

@@ -18,9 +18,14 @@ namespace AccessibilityReporter.Services
 
         public IEnumerable<NodeSummary> All()
         {
+            return All(null);
+        }
+
+        public IEnumerable<NodeSummary> All(string? culture)
+        {
             var testableNodes = _testableNodesService.All();
 
-            return testableNodes.Select(content => new NodeSummary(content, _nodeUrlService.AbsoluteUrl(content)));
+            return testableNodes.Select(content => new NodeSummary(content, _nodeUrlService.AbsoluteUrl(content, culture)));
         }
     }
 }
