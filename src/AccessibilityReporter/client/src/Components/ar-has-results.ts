@@ -23,6 +23,9 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@property()
 	onRunTests = () => { };
 
+	@property()
+	onStartOver = () => { };
+
 	@property({ attribute: false })
 	public results: IResults | undefined;
 
@@ -601,6 +604,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 								</div>
 							</div>
 							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="Rerun full website accessibility tests" class="c-summary__button">Rerun tests</uui-button>
+							<uui-button look="secondary" color="default" @click="${this.onStartOver}" label="Change settings and start over" class="c-summary__button">Start over</uui-button>
 							<uui-button look="secondary" color="default" @click="${this.exportResults}" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export results</uui-button>
 							${this.results ?
 							html`<span class="c-summary__time">Started at <strong>${this.formatTime(this.results.startTime)}</strong> and ended at <strong>${this.formatTime(this.results.endTime)}</strong></span>`

@@ -300,7 +300,8 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		if (this.pageState === PageState.HasResults && this.results && this.config) {
 			return html`
 				<ar-has-results
-				.onRunTests=${() => { this.pageState = PageState.PreTest; }}
+				.onRunTests=${this.runTests.bind(this)}
+				.onStartOver=${() => { this.pageState = PageState.PreTest; }}
 				.results=${this.results}
 				.config=${this.config}
 				></ar-has-results>
