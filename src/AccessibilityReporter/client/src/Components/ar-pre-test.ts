@@ -19,10 +19,10 @@ export class ARPreTestElement extends UmbElementMixin(LitElement) {
 	@property()
 	selectedCulture: string = '';
 
-	private _handleCultureChange(e: Event) {
+	private _handleCultureChange = (e: Event) => {
 		const select = e.target as HTMLSelectElement;
 		this.onCultureChange(select.value);
-	}
+	};
 
 	render() {
 		const showPicker = this.availableLanguages.length > 1;

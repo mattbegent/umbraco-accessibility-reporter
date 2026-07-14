@@ -21,7 +21,18 @@ namespace AccessibilityReporter.Services
 		{
 			MethodInfo method = typeof(PublishedContentExtensions)
 				.GetMethods(BindingFlags.Public | BindingFlags.Static)
-				.First(m => m.Name == "Name" && m.GetParameters().Length == 3);
+				.FirstOrDefault(m =>
+				{
+					if (m.Name != "Name" || m.ReturnType != typeof(string))
+						return false;
+					ParameterInfo[] p = m.GetParameters();
+					return p.Length == 3
+						&& p[1].ParameterType == typeof(IVariationContextAccessor)
+						&& p[2].ParameterType == typeof(string);
+				})
+				?? throw new InvalidOperationException(
+					"Could not find PublishedContentExtensions.Name(*, IVariationContextAccessor, string) returning string. " +
+					"This package may be incompatible with the current Umbraco version.");
 
 			ParameterExpression content = Expression.Parameter(typeof(IPublishedContent), "content");
 			ParameterExpression accessor = Expression.Parameter(typeof(IVariationContextAccessor), "accessor");
