@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
+import { UMB_WORKSPACE_SPLIT_VIEW_CONTEXT } from '@umbraco-cms/backoffice/workspace';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AccessibilityReporterAppSettings, ConfigService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
@@ -52,6 +53,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	@state()
 	private _testedCulture: string | null = null;
+
+	private _splitViewIndex: number = 0;
 
 	@state()
 	private violationsOpen: boolean = true;
@@ -102,6 +105,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
             this._modalManagerContext = context;
         });
+
+		this.consumeContext(UMB_WORKSPACE_SPLIT_VIEW_CONTEXT, (context) => {
+			if (!context) return;
+			this.observe(context.index, (index) => {
+				if (index !== undefined) {
+					this._splitViewIndex = index;
+				}
+			});
+		});
 
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
@@ -230,7 +242,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
 		}
 
-		const activeCulture = this._getActiveCultureFromRoute();
+		const routeCulture = this._getActiveCultureFromRoute();
+		let activeCulture: string | null;
+		if (routeCulture && routeCulture.includes('_&_')) {
+			// Split view: resolve the culture for the current panel index
+			const activeVariants = this._workspaceContext?.splitView.getActiveVariants();
+			activeCulture = activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
+		} else {
+			activeCulture = routeCulture;
+		}
 		const pathToTest = this._getUrlForCulture(activeCulture);
 		this._testedCulture = activeCulture;
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
