@@ -1,14 +1,14 @@
-﻿using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace AccessibilityReporter.Core.Models
 {
 	public class NodeSummary
 	{
-        public NodeSummary(IPublishedContent content, string url)
+        public NodeSummary(IPublishedContent content, string url, int id, string name)
         {
 			Guid = content.Key;
-			Id = content.Id;
-			Name = content.Name!;
+			Id = id;
+			Name = name;
 			DocTypeAlias = content.ContentType.Alias;
 			Url = url;
         }

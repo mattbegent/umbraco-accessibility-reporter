@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
+import { UMB_WORKSPACE_SPLIT_VIEW_CONTEXT } from '@umbraco-cms/backoffice/workspace';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AccessibilityReporterAppSettings, ConfigService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
@@ -49,6 +50,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	@state()
 	private testDate: string;
+
+	@state()
+	private _testedCulture: string | null = null;
+
+	private _splitViewIndex: number = 0;
 
 	@state()
 	private violationsOpen: boolean = true;
@@ -99,6 +105,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
             this._modalManagerContext = context;
         });
+
+		this.consumeContext(UMB_WORKSPACE_SPLIT_VIEW_CONTEXT, (context) => {
+			if (!context) return;
+			this.observe(context.index, (index) => {
+				if (index !== undefined) {
+					this._splitViewIndex = index;
+				}
+			});
+		});
 
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
@@ -190,6 +205,26 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning);
 	}
 
+	private _getActiveCultureFromRoute(): string | null {
+		const path = window.location.pathname;
+		const viewIndex = path.lastIndexOf('/view/');
+		if (viewIndex === -1) return null;
+		const segments = path.substring(0, viewIndex).split('/');
+		const culture = segments[segments.length - 1];
+		return (culture && culture !== 'invariant') ? culture : null;
+	}
+
+	private _getUrlForCulture(culture: string | null): string {
+		if (!this._urls || this._urls.length === 0) return "/";
+		if (culture) {
+			const match = this._urls.find(u =>
+				u.culture?.toLowerCase() === culture.toLowerCase()
+			);
+			if (match?.url) return match.url;
+		}
+		return this._urls[0]?.url || "/";
+	}
+
 	private async runTests(showTestRunning: boolean): Promise<void> {
 
 		this.pageState = PageState.Loading;
@@ -207,7 +242,17 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
 		}
 
-		const pathToTest = this._urls?.[0]?.url || "/";
+		const routeCulture = this._getActiveCultureFromRoute();
+		let activeCulture: string | null;
+		if (routeCulture && routeCulture.includes('_&_')) {
+			// Split view: resolve the culture for the current panel index
+			const activeVariants = this._workspaceContext?.splitView.getActiveVariants();
+			activeCulture = activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
+		} else {
+			activeCulture = routeCulture;
+		}
+		const pathToTest = this._getUrlForCulture(activeCulture);
+		this._testedCulture = activeCulture;
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
 
 		try {
@@ -422,7 +467,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 						<path d="m7 9 5 1m5-1-5 1m0 0v3m0 0-2 5m2-5 2 5" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
 						<path d="M12 8.5c-.7 0-1.2-.6-1.2-1.3S11.3 6 12 6s1.2.6 1.2 1.2-.5 1.3-1.2 1.3z" style="fill:#443b52" />
 						</svg>
-						<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a></h2>
+						<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a>${this._testedCulture ? html` <uui-tag look="outline" color="default" style="margin-left: 6px;">${this._testedCulture}</uui-tag>` : null}</h2>
 					</div>
 
 					<div class="c-summary__container">
