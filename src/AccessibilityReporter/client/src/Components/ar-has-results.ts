@@ -89,6 +89,9 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private pageUrls: Map<string, string> = new Map();
 
+	@state()
+	private _siteNames: string[] = [];
+
 	private _notificationContext?: UmbNotificationContext;
 
 	@state()
@@ -165,10 +168,19 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				guid: currentResult.page.guid,
 				name: currentResult.page.name,
 				url: currentResult.page.url,
+				rootName: currentResult.page.rootName,
 				score: currentResult.score,
 				violations: totalViolationsForPage
 			});
 		}
+
+		const siteNames: string[] = [];
+		for (const result of testResults.pages) {
+			if (result.page.rootName && !siteNames.includes(result.page.rootName)) {
+				siteNames.push(result.page.rootName);
+			}
+		}
+		this._siteNames = siteNames;
 
 		this.numberOfPagesTested = testResults.pages.length;
 		this.totalErrors = totalErrors;
@@ -237,15 +249,22 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		return null;
 	}
 
+	private get isMultisite(): boolean {
+		return this._siteNames.length > 1;
+	}
+
 	private getReportSummaryText() {
+		const siteWord = this.isMultisite ? "these websites" : "this website";
+		const doWord = this.isMultisite ? "do" : "does";
+
 		const highestLevelOfNonCompliance = this.getHighestLevelOfNonCompliance();
 		if (highestLevelOfNonCompliance) {
-			return `This website <strong>does not</strong> comply with <strong>WCAG ${highestLevelOfNonCompliance}</strong>.`;
+			return `${AccessibilityReporterService.upperCaseFirstLetter(siteWord)} <strong>${doWord} not</strong> comply with <strong>WCAG ${highestLevelOfNonCompliance}</strong>.`;
 		}
 		if (this.totalOtherViolations !== 0) {
-			return "High 5, you rock! No WCAG violations were found. However, some other issues were found. Please manually test your website to check full compliance.";
+			return `High 5, you rock! No WCAG violations were found. However, some other issues were found. Please manually test ${siteWord} to check full compliance.`;
 		}
-		return "High 5, you rock! No WCAG violations were found. Please manually test your website to check full compliance.";
+		return `High 5, you rock! No WCAG violations were found. Please manually test ${siteWord} to check full compliance.`;
 	}
 
 	private displaySeverityChart(sortedAllErrors: any) {
@@ -487,8 +506,15 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		try {
 
 			const workbook = utils.book_new();
+			const multisite = this.isMultisite;
 
-			const pagesRows = this.pagesTestResults.map((page: any) => ({
+			const pagesRows = this.pagesTestResults.map((page: any) => multisite ? ({
+				name: page.name,
+				site: page.rootName,
+				url: page.url,
+				score: page.score,
+				violations: page.violations
+			}) : ({
 				name: page.name,
 				url: page.url,
 				score: page.score,
@@ -498,10 +524,18 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			const pagesWorksheet = utils.json_to_sheet(pagesRows);
 			utils.book_append_sheet(workbook, pagesWorksheet, "Pages Summary");
 
-			const pagesHeaders = [["Name", "URL", "Accessibility Score", "Total Violations"]];
+			const pagesHeaders = [multisite
+				? ["Name", "Site", "URL", "Accessibility Score", "Total Violations"]
+				: ["Name", "URL", "Accessibility Score", "Total Violations"]];
 			utils.sheet_add_aoa(pagesWorksheet, pagesHeaders, { origin: "A1" });
 
-			pagesWorksheet["!cols"] = [
+			pagesWorksheet["!cols"] = multisite ? [
+				{ width: 30 }, // Name
+				{ width: 20 }, // Site
+				{ width: 40 }, // URL
+				{ width: 20 }, // Score
+				{ width: 15 }  // Violations
+			] : [
 				{ width: 30 }, // Name
 				{ width: 40 }, // URL
 				{ width: 20 }, // Score
@@ -514,10 +548,12 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			this.results.pages.forEach(pageResult => {
 				const pageName = pageResult.page.name;
 				const pageUrl = pageResult.page.url;
+				const siteName = pageResult.page.rootName;
 
 				pageResult.violations.forEach(violation => {
 					allViolations.push({
 						pageName: pageName,
+						...(multisite ? { siteName: siteName } : {}),
 						pageUrl: pageUrl,
 						impact: violation.impact ? AccessibilityReporterService.upperCaseFirstLetter(violation.impact) : '',
 						title: violation.title || '',
@@ -532,11 +568,22 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				const violationsWorksheet = utils.json_to_sheet(allViolations);
 				utils.book_append_sheet(workbook, violationsWorksheet, "All Violations");
 
-				const violationsHeaders = [["Name", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]];
+				const violationsHeaders = [multisite
+					? ["Name", "Site", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]
+					: ["Name", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]];
 				utils.sheet_add_aoa(violationsWorksheet, violationsHeaders, { origin: "A1" });
 
 				const titleWidth = allViolations.reduce((w, r) => Math.max(w, r.title ? r.title.length : 0), 40);
-				violationsWorksheet["!cols"] = [
+				violationsWorksheet["!cols"] = multisite ? [
+					{ width: 25 }, // Name
+					{ width: 20 }, // Site
+					{ width: 40 }, // URL
+					{ width: 10 }, // Impact
+					{ width: titleWidth }, // Title
+					{ width: 50 }, // Description
+					{ width: 25 }, // Standard
+					{ width: 10 }  // Count
+				] : [
 					{ width: 25 }, // Name
 					{ width: 40 }, // URL
 					{ width: 10 }, // Impact
@@ -548,7 +595,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			}
 
 			AccessibilityReporterService.downloadWorkbook(workbook,
-				AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx");
+				AccessibilityReporterService.formatFileName(`${multisite ? "multisite" : "website"}-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx");
 
 		} catch (error) {
 			console.error(error);
@@ -603,7 +650,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 									</div>
 								</div>
 							</div>
-							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="Rerun full website accessibility tests" class="c-summary__button">Rerun tests</uui-button>
+							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="${this.isMultisite ? "Rerun full accessibility tests across all sites" : "Rerun full website accessibility tests"}" class="c-summary__button">Rerun tests</uui-button>
 							<uui-button look="secondary" color="default" @click="${this.onStartOver}" label="Change settings and start over" class="c-summary__button">Start over</uui-button>
 							<uui-button look="secondary" color="default" @click="${this.exportResults}" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export results</uui-button>
 							${this.results ?
@@ -661,6 +708,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 						<uui-table>
 							<uui-table-head>
 								<uui-table-head-cell>Name</uui-table-head-cell>
+								${this.isMultisite ? html`<uui-table-head-cell>Site</uui-table-head-cell>` : null}
 								<uui-table-head-cell>URL</uui-table-head-cell>
 								<uui-table-head-cell>Score</uui-table-head-cell>
 								<uui-table-head-cell>Violations</uui-table-head-cell>
@@ -669,6 +717,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							${this.pagesTestResultsCurrentPage.map((page: any) =>
 							html`<uui-table-row>
 								<uui-table-cell>${page.name}</uui-table-cell>
+								${this.isMultisite ? html`<uui-table-cell>${page.rootName}</uui-table-cell>` : null}
 								<uui-table-cell><a href="${page.url}" target="_blank">${page.url} <span class="sr-only">Opens in a new window</span></a></uui-table-cell>
 								<uui-table-cell>${page.score}</uui-table-cell>
 								<uui-table-cell>${page.violations}</uui-table-cell>

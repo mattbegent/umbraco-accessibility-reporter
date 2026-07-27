@@ -21,27 +21,35 @@ namespace AccessibilityReporter.Services
 			_settings = settings;
         }
 
-		public IEnumerable<IPublishedContent> All()
+		public IEnumerable<TestableNode> All()
 		{
 			using (var contextReference = _contextFactory.EnsureUmbracoContext())
 			{
 				var rootItems = _documentNavigationQueryService.TryGetRootKeys(out var rootKeys) ? rootKeys : Enumerable.Empty<Guid>();
 
-				var everything = new List<IPublishedContent>();
+				// Build one list of applicable nodes per root/site, rather than one big concatenated
+				// list, so a single large site can't consume the entire MaxPages budget and starve
+				// every other site in a multisite install (see Interleave below).
+				var perRoot = new List<List<TestableNode>>();
 
 				foreach (var rootKey in rootItems)
 				{
 					var rootContent = contextReference.UmbracoContext.Content?.GetById(rootKey);
-					if (rootContent != null)
+					if (rootContent == null)
 					{
-						everything.Add(rootContent);
-						everything.AddRange(GetDescendants(rootContent));
+						continue;
 					}
+
+					var siteNodes = new List<IPublishedContent> { rootContent };
+					siteNodes.AddRange(GetDescendants(rootContent));
+
+					perRoot.Add(siteNodes.Where(DocumentTypeIsApplicable)
+						.Where(TemplateStateIsApplicable)
+						.Select(content => new TestableNode(content, rootContent))
+						.ToList());
 				}
 
-				return everything.Where(DocumentTypeIsApplicable)
-					.Where(TemplateStateIsApplicable)
-					.Take(_settings.MaxPages);
+				return Interleave(perRoot).Take(_settings.MaxPages);
 
 				bool DocumentTypeIsApplicable(IPublishedContent content)
 					=> _settings.ExcludedDocTypes.Contains(content.ContentType.Alias) == false;
@@ -49,6 +57,28 @@ namespace AccessibilityReporter.Services
 				bool TemplateStateIsApplicable(IPublishedContent content)
 					=> _settings.IncludeIfNoTemplate || content.TemplateId.HasValue;
 			}
+		}
+
+		// Round-robins across each root's nodes (site1[0], site2[0], site3[0], site1[1], ...) so that
+		// applying Take(MaxPages) afterwards gives every site fair representation instead of exhausting
+		// the budget on whichever root happened to be enumerated first.
+		private static IEnumerable<TestableNode> Interleave(List<List<TestableNode>> perRoot)
+		{
+			var indices = new int[perRoot.Count];
+			bool any;
+			do
+			{
+				any = false;
+				for (int i = 0; i < perRoot.Count; i++)
+				{
+					if (indices[i] < perRoot[i].Count)
+					{
+						yield return perRoot[i][indices[i]];
+						indices[i]++;
+						any = true;
+					}
+				}
+			} while (any);
 		}
 
 		private IEnumerable<IPublishedContent> GetDescendants(IPublishedContent content)

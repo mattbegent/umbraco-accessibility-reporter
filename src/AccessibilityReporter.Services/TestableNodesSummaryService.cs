@@ -33,16 +33,30 @@ namespace AccessibilityReporter.Services
         {
             var testableNodes = _testableNodesService.All();
 
-            return testableNodes.Select(content =>
+            foreach (var node in testableNodes)
             {
+                var content = node.Content;
+                var url = _nodeUrlService.AbsoluteUrl(content, node.Root, culture);
+
+                // Umbraco's URL provider returns "#" when it can't resolve a URL, notably when the
+                // requested culture isn't a published variant for this content. In a multisite install
+                // different sites can support different culture sets, so skip nodes that don't support
+                // the requested culture rather than testing a broken "#" URL.
+                if (!string.IsNullOrEmpty(culture) && url == "#")
+                {
+                    continue;
+                }
+
                 var idAttempt = _idKeyMap.GetIdForKey(content.Key, UmbracoObjectTypes.Document);
 
-                return new NodeSummary(
+                yield return new NodeSummary(
                     content,
-                    _nodeUrlService.AbsoluteUrl(content, culture),
+                    url,
                     idAttempt.Success ? idAttempt.Result : 0,
-                    PublishedContentNameResolver.GetName(content, _variationContextAccessor, culture));
-            });
+                    PublishedContentNameResolver.GetName(content, _variationContextAccessor, culture),
+                    node.Root.Key,
+                    PublishedContentNameResolver.GetName(node.Root, _variationContextAccessor, null));
+            }
         }
     }
 }

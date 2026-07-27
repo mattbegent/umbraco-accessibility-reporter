@@ -54,6 +54,9 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	@state()
 	private _testedCulture: string | null = null;
 
+	@state()
+	private _crossOriginHostname: string | null = null;
+
 	private _splitViewIndex: number = 0;
 
 	@state()
@@ -144,23 +147,42 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return location.hostname + (location.port ? ":" + location.port : "");
 	}
 
-	private getFallbackBaseUrl() {
-		return location.protocol + "//" + this.getHostname(this?._urls);
-	}
-
-	private getHostname(possibleUrls: any) {
-		if (!this.config?.apiUrl) {
-			// so we don't get iframe CORS issues
-			return this.getLocalHostname();
-		}
-		for (let index = 0; index < possibleUrls.length; index++) {
-			var possibleCurrentUrl = possibleUrls[index].text;
-			if (AccessibilityReporterService.isAbsoluteURL(possibleCurrentUrl)) {
-				return AccessibilityReporterService.getHostnameFromString(possibleCurrentUrl);
+	// Finds a real, domain-qualified URL from the document's own URLs (populated per-node by
+	// Umbraco based on the domains bound to its root) rather than assuming every site shares the
+	// backoffice's own hostname - the previous behaviour, which silently tested the wrong page on
+	// any multisite install where a site's domain differs from the backoffice's.
+	private getResolvedAbsoluteUrl(possibleUrls?: Array<UmbDocumentUrlModel>): string | null {
+		if (!possibleUrls) return null;
+		for (const possibleUrl of possibleUrls) {
+			if (possibleUrl.url && AccessibilityReporterService.isAbsoluteURL(possibleUrl.url)) {
+				return possibleUrl.url;
 			}
 		}
-		// fallback if hostnames not set assume current host
-		return this.getLocalHostname();
+		return null;
+	}
+
+	private getFallbackBaseUrl() {
+		const resolvedAbsoluteUrl = this.getResolvedAbsoluteUrl(this._urls);
+		if (resolvedAbsoluteUrl) {
+			return new URL(resolvedAbsoluteUrl).origin;
+		}
+		// No domain bound to this node - fall back to the current backoffice host, matching the
+		// original behaviour when there's nothing better to go on.
+		return location.protocol + "//" + this.getLocalHostname();
+	}
+
+	// The in-iframe test injects a script directly into the iframe's document, which the browser
+	// only allows for same-origin content. If the resolved test URL is on a different origin to the
+	// backoffice (a genuinely different domain per site) and no external ApiUrl is configured to run
+	// the test out-of-browser instead, testing would previously either hang indefinitely or silently
+	// test the wrong page - surface this as an explicit, actionable error instead.
+	private isCrossOriginTest(url: string): boolean {
+		if (this.config?.apiUrl) return false;
+		try {
+			return new URL(url, location.href).origin !== location.origin;
+		} catch {
+			return false;
+		}
 	}
 
 	private _observeContent() {
@@ -254,6 +276,13 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		const pathToTest = this._getUrlForCulture(activeCulture);
 		this._testedCulture = activeCulture;
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
+
+		if (this.isCrossOriginTest(this.testURL)) {
+			this._crossOriginHostname = new URL(this.testURL).hostname;
+			this.pageState = PageState.Errored;
+			return;
+		}
+		this._crossOriginHostname = null;
 
 		try {
 			const testResponse = await this.getTestResult(this.testURL, showTestRunning); // TODO: Add types
@@ -449,8 +478,13 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					</svg>
 					<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a> errored</h2>
 				</div>
+				${this._crossOriginHostname ? html`
+				<p>This page is on a different domain (<strong>${this._crossOriginHostname}</strong>) to your Umbraco backoffice, so in-browser testing can't run against it for security reasons.</p>
+				<p>To test sites on a different domain in a multisite install, configure <code>ApiUrl</code> to run tests via an external service instead - see the Accessibility Reporter documentation for details.</p>
+				` : html`
 				<p>Accessibility Reporter only works for URLs that are accessible publicly.</p>
 				<p>If your page is publicly accessible, please try using the "Rerun Tests" button below or refreshing this page to run the accessibility report again.</p>
+				`}
 				<uui-button look="primary" color="default" @click="${this.runTests}" label="Rerun accessibility tests on current published page">Rerun tests</uui-button>
 			</uui-box>
 			`;

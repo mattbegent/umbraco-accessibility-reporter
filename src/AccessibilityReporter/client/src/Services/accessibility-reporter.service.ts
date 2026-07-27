@@ -64,16 +64,24 @@ export default class AccessibilityReporterService {
                 }, 0);
 
                 testIframe.onload = function () {
-                    if (testIframe?.contentWindow?.document.body) {
-                        let scriptAxe = testIframe.contentWindow.document.createElement("script");
-                        scriptAxe.type = "text/javascript";
-                        scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
-                        testIframe.contentWindow.document.body.appendChild(scriptAxe);
-                        /*@ts-ignore*/
-                        scriptAxe = null;
-                    } else {
+                    try {
+                        if (testIframe?.contentWindow?.document.body) {
+                            let scriptAxe = testIframe.contentWindow.document.createElement("script");
+                            scriptAxe.type = "text/javascript";
+                            scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
+                            testIframe.contentWindow.document.body.appendChild(scriptAxe);
+                            /*@ts-ignore*/
+                            scriptAxe = null;
+                        } else {
+                            cleanUpIframe();
+                            reject('Test page has no body.');
+                        }
+                    } catch (error) {
+                        // Cross-origin iframe access throws a SecurityError here - without this
+                        // catch it would go unhandled and the test would hang indefinitely instead
+                        // of surfacing as a failed test.
                         cleanUpIframe();
-                        reject('Test page has no body.');
+                        reject(error);
                     }
                 };
 
@@ -242,10 +250,6 @@ export default class AccessibilityReporterService {
 
     static isAbsoluteURL(urlString: string) {
         return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
-    }
-
-    static getHostnameFromString(url: string) {
-        return new URL(url).hostname;
     }
 
     static getPageScore(result: any) {

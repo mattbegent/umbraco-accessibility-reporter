@@ -32,7 +32,8 @@ You can run Accessibility Reporter without adding any configuration options, as 
 ### Available options
 
 - **ApiUrl** - This is the URL of the API that will run the tests. By default the tests are run in an iframe within Umbraco, however if you website is on a different domain to your Umbraco instance to get around iframe security issues, you can host an API on an Azure function by forking `https://github.com/mattbegent/azure-function-accessibility-reporter` and deploying it to Azure.  
-- **TestBaseUrl** (optional) - If you run Umbraco in a headless way or Accessibility Reporter is having trouble finding the domain to test against, set this to the base URL of your wesbite. If not set Accessibility Reporter will try to infer this from available information in Umbraco.
+- **TestBaseUrl** (optional) - If you run Umbraco in a headless way or Accessibility Reporter is having trouble finding the domain to test against, set this to the base URL of your wesbite. If not set Accessibility Reporter will try to infer this from available information in Umbraco. In a multisite install this is used as a fallback only for root nodes that don't have a domain bound and aren't covered by `SiteBaseUrls` below - prefer `SiteBaseUrls` when you have more than one site.
+- **SiteBaseUrls** (optional) - Per-site base URL overrides for multisite/headless installs where different root nodes don't have Umbraco domains bound to them. Keyed by each root node's Key (the Guid shown on that node's Info tab), so a different base URL can be used per site instead of forcing every site onto the single `TestBaseUrl`. Not needed if your root nodes already have domains configured in Umbraco - those are resolved automatically per site.
 - **TestsToRun** (optional) - This sets which axe-core rules should be run. For example, you may want to test your website against `wcag2a` only. A full list of supported tags can be found in the [axe-core documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags). If not set Accessibility Reporter defaults to WCAG A and AA tests. 
 - **UserGroups** (optional) - Use this option if you want to restrict which user groups can see Accessibility Reporter. By default users with admin, editor or writer permissions can see it.
 - **ExcludedDocTypes** (optional) - Use this option if you want to exclude Accessibility Reporter from showing on certain document types.
@@ -45,6 +46,9 @@ You can run Accessibility Reporter without adding any configuration options, as 
     "AccessibilityReporter": {
         "ApiUrl": "https://api.example.com/api/audit",
         "TestBaseUrl": "https://example.com",
+        "SiteBaseUrls": {
+            "b1a2c3d4-e5f6-7890-abcd-ef1234567890": "https://site-two.example.com"
+        },
         "TestsToRun": [
             "wcag2a", 
             "wcag2aa", 
@@ -71,6 +75,7 @@ All options are completely optional and if you don't set them, they default to t
     "AccessibilityReporter": {
         "ApiUrl": "",
         "TestBaseUrl": "",
+        "SiteBaseUrls": {},
         "TestsToRun": [
             "wcag2a", 
             "wcag2aa", 
@@ -111,6 +116,17 @@ To do this deploying the following azure function https://github.com/mattbegent/
 
 It's worth noting that if you are using Accessibility Reporter in this way the tests will take much longer than if you run Umbraco in a non headless way.
 
+## Multisite
+
+Accessibility Reporter supports Umbraco installs with more than one root content node ("site"):
+
+- The dashboard tests pages from every site, allocating the `MaxPages` limit fairly across them rather than letting one large site use up the whole budget.
+- If a selected language isn't supported by a particular site, that site's pages are skipped for that run rather than tested with a broken URL.
+- Dashboard results and exports show which site each page belongs to whenever more than one site is present in the results.
+- If your root nodes have domains bound to them in Umbraco, per-site URLs are resolved automatically - no configuration needed.
+- If you run a headless multisite install with no domains bound to root nodes, use `SiteBaseUrls` (see Options above) to set a base URL per site instead of `TestBaseUrl`.
+- If a site's public domain is genuinely different to your Umbraco backoffice's own domain, in-browser testing on the content workspace view can't cross that boundary for browser security reasons (the same restriction described in "How to use with a headless setup"). You'll see an explicit error telling you to configure `ApiUrl` for that site rather than the test silently running against the wrong page.
+
 ## Limitations
 
 The accessibility report runs on the current published page URL you are editing.
@@ -121,7 +137,6 @@ Automated accessibility testing is no substitute for manual testing and testing 
 
 - History. This will mean the dashboard is automatically populated.
 - Scheduling.
-- Support for multisite setups.
 - Manual test recommendations.
 - Localization - if anyone speaks any languages other than English it would be super to get some help.
 
