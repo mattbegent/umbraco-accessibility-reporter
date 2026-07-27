@@ -125,7 +125,37 @@ Accessibility Reporter supports Umbraco installs with more than one root content
 - Dashboard results and exports show which site each page belongs to whenever more than one site is present in the results.
 - If your root nodes have domains bound to them in Umbraco, per-site URLs are resolved automatically - no configuration needed.
 - If you run a headless multisite install with no domains bound to root nodes, use `SiteBaseUrls` (see Options above) to set a base URL per site instead of `TestBaseUrl`.
-- If a site's public domain is genuinely different to your Umbraco backoffice's own domain, in-browser testing on the content workspace view can't cross that boundary for browser security reasons (the same restriction described in "How to use with a headless setup"). You'll see an explicit error telling you to configure `ApiUrl` for that site rather than the test silently running against the wrong page.
+- If a site's public domain is genuinely different to your Umbraco backoffice's own domain, in-browser testing can't cross that boundary directly for browser security reasons (the same restriction described in "How to use with a headless setup") - see "Testing sites on a different domain" below for how to make it work anyway.
+
+## Testing sites on a different domain
+
+If a site's public domain differs from your Umbraco backoffice's own domain (a common multisite or headless setup), Accessibility Reporter can't inject its test script directly into that page for security reasons. There are two ways to make it work anyway - both only ever activate while Accessibility Reporter itself is running a test, so nothing extra loads or runs for ordinary visitors:
+
+**Option 1: Add the bridge (recommended, no extra hosting required)**
+
+If this site is rendered with Razor (e.g. a multi-domain Umbraco install where the same application serves every site, just on different bound domains), add `@using AccessibilityReporter.Extensions` to your `_ViewImports.cshtml`, then add this to a shared layout:
+
+    @Html.AccessibilityReporterScript()
+
+If it isn't a Razor site (a genuinely separate/headless frontend), add this small snippet instead, replacing `your-umbraco-domain.example.com` with wherever your Umbraco backoffice is hosted:
+
+    <script>
+    (function () {
+      if (window.name !== 'accessibility-reporter-bridge-activate') return;
+      var s = document.createElement('script');
+      s.src = 'https://your-umbraco-domain.example.com/App_Plugins/AccessibilityReporter/libs/accessibility-reporter-bridge.js';
+      document.head.appendChild(s);
+    })();
+    </script>
+
+Either way, this is a tiny, inert stub for every normal page view - it checks a marker that's only ever set on the specific iframe Accessibility Reporter creates to run a test, and does nothing else (no network request, no listener registered) unless that marker is present. Only when Accessibility Reporter is actually testing that page does it fetch the real bridge script, which runs the accessibility test and reports the result back over `postMessage` (which, unlike direct DOM access, is designed to work across origins). Two things worth knowing about that real bridge script, if you ever need to debug it:
+
+- It needs to run promptly - if you end up loading it (or the snippet above) through a tag manager or a consent-gated loader, it may not get the chance to announce itself in time.
+- If the page uses a nonce-based Content-Security-Policy, it needs `strict-dynamic` for the bridge's own script load to be allowed - otherwise you'll see an explicit error rather than the test hanging.
+
+**Option 2: Configure `ApiUrl`**
+
+See "How to use with a headless setup" above - this runs tests via an external service instead of in the browser, so no changes to the target site are needed, at the cost of needing to deploy and maintain that service, and slower test runs.
 
 ## Limitations
 

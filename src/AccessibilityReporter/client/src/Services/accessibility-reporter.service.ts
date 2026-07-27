@@ -1,10 +1,28 @@
 import { write, WorkBook } from 'xlsx';
 
+// How long to wait for an accessibility-reporter-bridge.js "ready" ping before assuming a
+// cross-origin page doesn't have the bridge installed, and (once presence is confirmed) how long
+// to then wait for it to actually finish running axe and report back.
+export const AR_BRIDGE_PRESENCE_TIMEOUT_MS = 3000;
+export const AR_BRIDGE_RESULTS_TIMEOUT_MS = 15000;
+
+// Per-origin cache of whether accessibility-reporter-bridge.js has been seen there, so a bulk run
+// against many pages on a bridge-absent cross-origin site only pays the presence timeout once.
+// Only ever set to 'absent' after a full presence-timeout with zero messages received - a single
+// error response still means the bridge is there, just failed that one test.
+const bridgeAvailability = new Map<string, 'present' | 'absent'>();
+
+// Set as the test iframe's window.name before every navigation. accessibility-reporter-bridge.js
+// (and the loader snippet/@Html.AccessibilityReporterScript() that conditionally injects it) only
+// activate when window.name matches this - so on a real visit, with no such iframe involved, the
+// bridge never loads or does anything. Must match the activation name in both of those places.
+export const AR_BRIDGE_ACTIVATION_NAME = "accessibility-reporter-bridge-activate";
+
 export default class AccessibilityReporterService {
 
     static impacts = ["minor", "moderate", "serious", "critical"];
 
-    static async runTest(rootElement: any, testUrl: string, showWhileRunning: boolean) {
+    static async runTest(rootElement: any, testUrl: string, showWhileRunning: boolean, testsToRun: string[]) {
 
         return new Promise(async (resolve, reject) => {
 
@@ -21,6 +39,14 @@ export default class AccessibilityReporterService {
                 const container = showWhileRunning ? rootElement.getElementById('dashboard-ar-tests') : rootElement as HTMLElement;
                 let testIframe = document.createElement("iframe") as HTMLIFrameElement;
 
+                let settled = false;
+                let presenceTimer: ReturnType<typeof setTimeout> | undefined;
+                let resultsTimer: ReturnType<typeof setTimeout> | undefined;
+                // Only set once we know the target is cross-origin (direct injection threw) - this
+                // also acts as the flag for "are we on the bridge path at all".
+                let expectedOrigin: string | null = null;
+                let nonce: string | null = null;
+
                 function cleanUpIframe() {
                     if (testIframe) {
                         testIframe.src = "";
@@ -30,24 +56,76 @@ export default class AccessibilityReporterService {
                     }
                 }
 
-                const handleTestResultMessage = function (message: any) {
-                    if (!message.data.testRunner) {
-                        return;
-                    }
-                    if (message.data.testRunner.name !== 'axe') {
-                        return;
-                    }
-                    cleanUpIframe();
-                    if (message.data) {
-                        resolve(message.data);
-                    } else {
-                        reject(message);
-                    }
-                    message = null;
+                function clearTimers() {
+                    if (presenceTimer) clearTimeout(presenceTimer);
+                    if (resultsTimer) clearTimeout(resultsTimer);
+                }
+
+                function settle(action: () => void) {
+                    if (settled) return;
+                    settled = true;
+                    clearTimers();
                     window.removeEventListener("message", handleTestResultMessage, true);
+                    cleanUpIframe();
+                    action();
+                }
+
+                function startPresenceTimer() {
+                    presenceTimer = setTimeout(() => {
+                        if (expectedOrigin) bridgeAvailability.set(expectedOrigin, 'absent');
+                        settle(() => reject('No accessibility-reporter-bridge script detected on this page.'));
+                    }, AR_BRIDGE_PRESENCE_TIMEOUT_MS);
+                }
+
+                function startResultsTimer() {
+                    if (presenceTimer) {
+                        clearTimeout(presenceTimer);
+                        presenceTimer = undefined;
+                    }
+                    if (resultsTimer) return;
+                    resultsTimer = setTimeout(() => {
+                        settle(() => reject('Timed out waiting for accessibility-reporter-bridge test results.'));
+                    }, AR_BRIDGE_RESULTS_TIMEOUT_MS);
+                }
+
+                const handleTestResultMessage = function (event: any) {
+                    const data = event.data;
+                    if (!data) return;
+
+                    // Presence pings update the shared cache regardless of whether this particular
+                    // call has already settled, so a bridge that answers just after this call gave
+                    // up still benefits later pages/calls against the same origin in this run.
+                    if (data.source === 'accessibility-reporter-bridge' && data.event === 'ready') {
+                        if (expectedOrigin && event.origin === expectedOrigin) {
+                            bridgeAvailability.set(expectedOrigin, 'present');
+                        }
+                        if (settled || !testIframe || event.source !== testIframe.contentWindow) return;
+                        startResultsTimer();
+                        return;
+                    }
+
+                    if (settled) return;
+                    if (!testIframe || event.source !== testIframe.contentWindow) return;
+
+                    if (data.testRunner && data.testRunner.name === 'axe') {
+                        // On the bridge path (expectedOrigin set) also require the origin and nonce
+                        // to match this exact call - on the direct same-origin path there's nothing
+                        // to check beyond the source-window check above.
+                        if (expectedOrigin && (event.origin !== expectedOrigin || data.nonce !== nonce)) return;
+                        settle(() => resolve(data));
+                        return;
+                    }
+
+                    if (data.error && expectedOrigin && event.origin === expectedOrigin && data.nonce === nonce) {
+                        settle(() => reject(data.error));
+                        return;
+                    }
                 }
                 window.addEventListener("message", handleTestResultMessage, true);
 
+                // Set before the src so a bridge/loader snippet on the target page can see it as
+                // soon as it runs - see the AR_BRIDGE_ACTIVATION_NAME comment above.
+                testIframe.name = AR_BRIDGE_ACTIVATION_NAME;
                 testIframe.setAttribute("src", testUrl);
                 testIframe.setAttribute("id", iframeId);
                 testIframe.style.height = "800px";
@@ -66,22 +144,51 @@ export default class AccessibilityReporterService {
                 testIframe.onload = function () {
                     try {
                         if (testIframe?.contentWindow?.document.body) {
-                            let scriptAxe = testIframe.contentWindow.document.createElement("script");
-                            scriptAxe.type = "text/javascript";
-                            scriptAxe.src = "/App_Plugins/AccessibilityReporter/libs/axe.min.js";
-                            testIframe.contentWindow.document.body.appendChild(scriptAxe);
+                            // axe-core.min.js is the plain library, shared with the bridge script;
+                            // run-tests.js (the bit that actually calls axe.run() and reports back)
+                            // only runs once axe-core has finished loading, chained via onload so
+                            // insertion order can't matter.
+                            const iframeDocument = testIframe.contentWindow.document;
+                            let axeCoreScript = iframeDocument.createElement("script");
+                            axeCoreScript.type = "text/javascript";
+                            axeCoreScript.src = "/App_Plugins/AccessibilityReporter/libs/axe-core.min.js";
+                            axeCoreScript.onload = function () {
+                                let runTestsScript = iframeDocument.createElement("script");
+                                runTestsScript.type = "text/javascript";
+                                runTestsScript.src = "/App_Plugins/AccessibilityReporter/libs/run-tests.js";
+                                iframeDocument.body.appendChild(runTestsScript);
+                                /*@ts-ignore*/
+                                runTestsScript = null;
+                            };
+                            iframeDocument.body.appendChild(axeCoreScript);
                             /*@ts-ignore*/
-                            scriptAxe = null;
+                            axeCoreScript = null;
                         } else {
-                            cleanUpIframe();
-                            reject('Test page has no body.');
+                            settle(() => reject('Test page has no body.'));
                         }
                     } catch (error) {
-                        // Cross-origin iframe access throws a SecurityError here - without this
-                        // catch it would go unhandled and the test would hang indefinitely instead
-                        // of surfacing as a failed test.
-                        cleanUpIframe();
-                        reject(error);
+                        // Cross-origin iframe access throws a SecurityError here. Rather than giving
+                        // up, fall back to the accessibility-reporter-bridge postMessage protocol -
+                        // the target page may have the bridge script installed for exactly this case.
+                        expectedOrigin = new URL(testUrl, location.href).origin;
+                        nonce = AccessibilityReporterService.randomUUID();
+
+                        const cached = bridgeAvailability.get(expectedOrigin);
+                        if (cached === 'absent') {
+                            settle(() => reject(error));
+                            return;
+                        }
+
+                        if (cached === 'present') {
+                            startResultsTimer();
+                        } else {
+                            startPresenceTimer();
+                        }
+
+                        testIframe?.contentWindow?.postMessage(
+                            { source: 'accessibility-reporter', command: 'run-test', testsToRun, nonce },
+                            expectedOrigin
+                        );
                     }
                 };
 

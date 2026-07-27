@@ -224,7 +224,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	}
 
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
-		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning);
+		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning, this.config?.testsToRun ?? []);
 	}
 
 	private _getActiveCultureFromRoute(): string | null {
@@ -276,15 +276,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		const pathToTest = this._getUrlForCulture(activeCulture);
 		this._testedCulture = activeCulture;
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
-
-		if (this.isCrossOriginTest(this.testURL)) {
-			this._crossOriginHostname = new URL(this.testURL).hostname;
-			this.pageState = PageState.Errored;
-			return;
-		}
 		this._crossOriginHostname = null;
 
 		try {
+			// Always attempt the test, even cross-origin - accessibility-reporter-bridge.js may be
+			// installed on the target site, in which case this succeeds without ever reaching the
+			// catch block below.
 			const testResponse = await this.getTestResult(this.testURL, showTestRunning); // TODO: Add types
 			this.results = this.sortResponse(testResponse);
 			this.score = AccessibilityReporterService.getPageScore(testResponse);
@@ -292,6 +289,9 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
 		} catch (error) {
+			if (this.isCrossOriginTest(this.testURL)) {
+				this._crossOriginHostname = new URL(this.testURL).hostname;
+			}
 			this.pageState = PageState.Errored;
 			console.error(error);
 		}
@@ -479,8 +479,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a> errored</h2>
 				</div>
 				${this._crossOriginHostname ? html`
-				<p>This page is on a different domain (<strong>${this._crossOriginHostname}</strong>) to your Umbraco backoffice, so in-browser testing can't run against it for security reasons.</p>
-				<p>To test sites on a different domain in a multisite install, configure <code>ApiUrl</code> to run tests via an external service instead - see the Accessibility Reporter documentation for details.</p>
+				<p>This page is on a different domain (<strong>${this._crossOriginHostname}</strong>) to your Umbraco backoffice, so in-browser testing can't run against it directly for security reasons.</p>
+				<p>To test sites on a different domain in a multisite install, either add the <code>accessibility-reporter-bridge.js</code> script to that site, or configure <code>ApiUrl</code> to run tests via an external service instead - see the Accessibility Reporter documentation for details.</p>
 				` : html`
 				<p>Accessibility Reporter only works for URLs that are accessible publicly.</p>
 				<p>If your page is publicly accessible, please try using the "Rerun Tests" button below or refreshing this page to run the accessibility report again.</p>

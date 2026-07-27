@@ -7,7 +7,7 @@ import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, Node
 import { UmbLanguageCollectionRepository } from '@umbraco-cms/backoffice/language';
 import type { UmbLanguageDetailModel } from '@umbraco-cms/backoffice/language';
 
-import AccessibilityReporterService from "../Services/accessibility-reporter.service";
+import AccessibilityReporterService, { AR_BRIDGE_PRESENCE_TIMEOUT_MS, AR_BRIDGE_RESULTS_TIMEOUT_MS } from "../Services/accessibility-reporter.service";
 
 import "../Components/ar-chart";
 import "../Components/ar-score";
@@ -143,7 +143,10 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			}
 		});
 
-		const testTimeout = this.config?.apiUrl ? 30000 : 10000;
+		// The non-apiUrl budget must comfortably exceed the bridge's own worst case (presence +
+		// results timeouts) - otherwise this outer race would kill a legitimately in-progress
+		// cross-origin/bridge test before it gets the chance to finish.
+		const testTimeout = this.config?.apiUrl ? 30000 : (AR_BRIDGE_PRESENCE_TIMEOUT_MS + AR_BRIDGE_RESULTS_TIMEOUT_MS + 2000);
 		const timer = new Promise((_resolve, reject) => setTimeout(() => reject("Test run exceeded timeout"), testTimeout));
 
 		return await Promise.race([testRun, timer]);
@@ -209,7 +212,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	}
 
 	private async getTestResult(testUrl: string) {
-		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, true);
+		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, true, this.config?.testsToRun ?? []);
 	}
 
 	private reduceTestResult(testResult: any) {
