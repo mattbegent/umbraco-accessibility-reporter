@@ -30,10 +30,14 @@
 
 	// window.AR_BRIDGE_ORIGIN is an escape hatch for the rare case this script is loaded in a way
 	// where document.currentScript isn't available (e.g. as a dynamically-injected/module script).
-	var trustedOrigin = window.AR_BRIDGE_ORIGIN || (scriptEl && scriptEl.src ? new URL(scriptEl.src).origin : null);
+	// This is only the origin this script's own assets (axe-core) are served from - it is NOT the
+	// backoffice/parent's origin, which this script has no reliable way to know in advance (that's
+	// the whole reason a bridge is needed). Do not use it to target or validate postMessage traffic
+	// with window.parent - see the comments below.
+	var assetOrigin = window.AR_BRIDGE_ORIGIN || (scriptEl && scriptEl.src ? new URL(scriptEl.src).origin : null);
 
-	if (!trustedOrigin) {
-		console.error('[AccessibilityReporter] bridge could not determine a trusted origin to communicate with - set window.AR_BRIDGE_ORIGIN before this script runs if it is not loaded as a plain <script src> tag.');
+	if (!assetOrigin) {
+		console.error('[AccessibilityReporter] bridge could not determine an origin to load axe-core from - set window.AR_BRIDGE_ORIGIN before this script runs if it is not loaded as a plain <script src> tag.');
 		return;
 	}
 
@@ -45,12 +49,16 @@
 			}
 		}
 		message.nonce = nonce;
-		window.parent.postMessage(message, trustedOrigin);
+		// '*' because this script cannot know the parent's real origin (it may differ per install,
+		// per environment, or even per request in a multi-domain setup) - safe here because the
+		// parent (accessibility-reporter.service.ts) independently verifies the *sender's* origin
+		// against the target URL it navigated this iframe to before trusting anything in the message.
+		window.parent.postMessage(message, '*');
 	}
 
 	function runTest(testsToRun, nonce) {
 		var axeScript = document.createElement('script');
-		axeScript.src = trustedOrigin + '/App_Plugins/AccessibilityReporter/libs/axe-core.min.js';
+		axeScript.src = assetOrigin + '/App_Plugins/AccessibilityReporter/libs/axe-core.min.js';
 		axeScript.onerror = function () {
 			respond({ error: 'Failed to load axe-core (network error, or blocked by this page\'s Content-Security-Policy - a nonce-based CSP needs \'strict-dynamic\' to allow this).' }, nonce);
 		};
@@ -63,14 +71,18 @@
 		document.body.appendChild(axeScript);
 	}
 
+	// No event.origin check here - this script has no reliable way to know the backoffice's real
+	// origin in advance (see assetOrigin above), so instead it relies entirely on the window.name
+	// activation gate at the top of this file: only the Accessibility Reporter parent that created
+	// this exact iframe could have set that name before navigating it here.
 	window.addEventListener('message', function (event) {
-		if (event.origin !== trustedOrigin) return;
 		var data = event.data;
 		if (!data || data.source !== 'accessibility-reporter' || data.command !== 'run-test') return;
 		runTest(data.testsToRun || [], data.nonce);
 	});
 
 	// Announce presence immediately, unconditionally - lets Accessibility Reporter know this page
-	// has the bridge installed without needing to wait for a full test cycle.
-	window.parent.postMessage({ source: 'accessibility-reporter-bridge', event: 'ready' }, trustedOrigin);
+	// has the bridge installed without needing to wait for a full test cycle. '*' for the same
+	// reason as respond() above.
+	window.parent.postMessage({ source: 'accessibility-reporter-bridge', event: 'ready' }, '*');
 }(window, document));

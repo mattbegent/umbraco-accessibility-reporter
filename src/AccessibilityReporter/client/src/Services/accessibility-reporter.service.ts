@@ -34,7 +34,13 @@ export default class AccessibilityReporterService {
                     method: 'GET',
                     headers: headers
                 });
-                await fetch(testRequest);
+                try {
+                    await fetch(testRequest);
+                } catch {
+                    // A cross-origin target without Access-Control-Allow-Origin blocks this
+                    // pre-check with a CORS error - it's just a same-origin traffic marker, so
+                    // ignore the failure and let the iframe/bridge path do the real test.
+                }
                 const iframeId = "arTestIframe" + AccessibilityReporterService.randomUUID();
                 const container = showWhileRunning ? rootElement.getElementById('dashboard-ar-tests') : rootElement as HTMLElement;
                 let testIframe = document.createElement("iframe") as HTMLIFrameElement;
