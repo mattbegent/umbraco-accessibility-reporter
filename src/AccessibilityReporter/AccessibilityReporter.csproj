@@ -19,7 +19,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Copyright>Matt Begent</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReleaseNotes>Added support for testing language variations, updated axe-core and added Umbraco 18 support.</PackageReleaseNotes>
+        <PackageReleaseNotes>Added multisite support and added another way of testing headless setups.</PackageReleaseNotes>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
