@@ -1,4 +1,4 @@
-import { LitElement, html, customElement, property, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
+import { LitElement, html, customElement, property, state, unsafeHTML, css } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 
 import { utils } from "xlsx";
@@ -92,6 +92,12 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private _siteNames: string[] = [];
 
+	@state()
+	private _selectedSite: string = 'all';
+
+	@state()
+	private _filteredResultPages: any[] = [];
+
 	private _notificationContext?: UmbNotificationContext;
 
 	@state()
@@ -126,6 +132,20 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	private setStats(testResults: any) {
+
+		const siteNames: string[] = [];
+		for (const result of testResults.pages) {
+			if (result.page.rootName && !siteNames.includes(result.page.rootName)) {
+				siteNames.push(result.page.rootName);
+			}
+		}
+		this._siteNames = siteNames;
+
+		const filteredPages = this.isMultisite && this._selectedSite !== 'all'
+			? testResults.pages.filter((page: any) => page.page.rootName === this._selectedSite)
+			: testResults.pages;
+		this._filteredResultPages = filteredPages;
+
 		let totalErrors = 0;
 		let allErrors: any = [];
 		let totalViolations = 0;
@@ -135,8 +155,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		let totalOtherViolations = 0;
 
 		let pagesTestResults = [];
-		for (let index = 0; index < testResults.pages.length; index++) {
-			const currentResult = testResults.pages[index];
+		for (let index = 0; index < filteredPages.length; index++) {
+			const currentResult = filteredPages[index];
 			totalErrors += currentResult.violations.length;
 			allErrors = allErrors.concat(currentResult.violations);
 
@@ -174,15 +194,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			});
 		}
 
-		const siteNames: string[] = [];
-		for (const result of testResults.pages) {
-			if (result.page.rootName && !siteNames.includes(result.page.rootName)) {
-				siteNames.push(result.page.rootName);
-			}
-		}
-		this._siteNames = siteNames;
-
-		this.numberOfPagesTested = testResults.pages.length;
+		this.numberOfPagesTested = filteredPages.length;
 		this.totalErrors = totalErrors;
 
 		this.totalViolations = totalViolations;
@@ -193,8 +205,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 		this.reportSummaryText = this.getReportSummaryText();
 
-		this.averagePageScore = this.getAveragePageScore(testResults.pages);
-		this.pageWithLowestScore = this.getPageWithLowestScore(testResults.pages);
+		this.averagePageScore = this.getAveragePageScore(filteredPages);
+		this.pageWithLowestScore = this.getPageWithLowestScore(filteredPages);
 
 		const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
 		this.mostCommonErrors = this.getErrorsSortedByViolations(allErrors).slice(0, 6);
@@ -253,9 +265,17 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		return this._siteNames.length > 1;
 	}
 
+	private _handleSiteFilterChange = (e: Event) => {
+		const select = e.target as HTMLSelectElement;
+		this._selectedSite = select.value;
+		this.currentPage = 1;
+		this.setStats(this.results);
+	};
+
 	private getReportSummaryText() {
-		const siteWord = this.isMultisite ? "these websites" : "this website";
-		const doWord = this.isMultisite ? "do" : "does";
+		const isFilteredToSingleSite = this.isMultisite && this._selectedSite !== 'all';
+		const siteWord = (this.isMultisite && !isFilteredToSingleSite) ? "these websites" : "this website";
+		const doWord = (this.isMultisite && !isFilteredToSingleSite) ? "do" : "does";
 
 		const highestLevelOfNonCompliance = this.getHighestLevelOfNonCompliance();
 		if (highestLevelOfNonCompliance) {
@@ -545,12 +565,12 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 			let allViolations: any[] = [];
 
-			this.results.pages.forEach(pageResult => {
+			this._filteredResultPages.forEach((pageResult: any) => {
 				const pageName = pageResult.page.name;
 				const pageUrl = pageResult.page.url;
 				const siteName = pageResult.page.rootName;
 
-				pageResult.violations.forEach(violation => {
+				pageResult.violations.forEach((violation: any) => {
 					allViolations.push({
 						pageName: pageName,
 						...(multisite ? { siteName: siteName } : {}),
@@ -594,8 +614,10 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				];
 			}
 
+			const siteSuffix = multisite && this._selectedSite !== 'all' ? `-${this._selectedSite}` : '';
+
 			AccessibilityReporterService.downloadWorkbook(workbook,
-				AccessibilityReporterService.formatFileName(`${multisite ? "multisite" : "website"}-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx");
+				AccessibilityReporterService.formatFileName(`${multisite ? "multisite" : "website"}-accessibility-report${siteSuffix}-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx");
 
 		} catch (error) {
 			console.error(error);
@@ -614,6 +636,17 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							<h1 class="c-title">Accessibility Report${this.results?.culture ? html` <uui-tag look="outline" color="default" style="margin-left: 6px;">${this.results.culture}</uui-tag>` : null}</h1>
 						</div>
 						<div>
+							${this.isMultisite ? html`
+							<div class="c-site-filter">
+								<label for="ar-site-select" class="c-site-filter__label">Filter by site:</label>
+								<select id="ar-site-select" class="c-site-filter__select" .value=${this._selectedSite} @change=${this._handleSiteFilterChange}>
+									<option value="all" ?selected=${this._selectedSite === 'all'}>All sites</option>
+									${this._siteNames.map(site => html`
+										<option value=${site} ?selected=${site === this._selectedSite}>${site}</option>
+									`)}
+								</select>
+							</div>
+							` : null}
 							<p>${unsafeHTML(this.reportSummaryText)}</p>
 							<div class="c-summary__container">
 								${this.showViolationsForLevel('a') ?
@@ -752,7 +785,33 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	static styles = [
-		generalStyles
+		generalStyles,
+		css`
+			.c-site-filter {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 10px;
+			}
+			.c-site-filter__label {
+				font-size: 14px;
+				font-weight: 500;
+				white-space: nowrap;
+			}
+			.c-site-filter__select {
+				padding: 6px 10px;
+				border: 1px solid var(--uui-color-border, #d8d7d9);
+				border-radius: var(--uui-border-radius, 3px);
+				background: var(--uui-color-surface, #fff);
+				font-size: 14px;
+				color: var(--uui-color-text, #1b1b1f);
+				cursor: pointer;
+			}
+			.c-site-filter__select:focus {
+				outline: 2px solid var(--uui-color-focus, #3544b1);
+				outline-offset: 2px;
+			}
+		`
 	];
 }
 
