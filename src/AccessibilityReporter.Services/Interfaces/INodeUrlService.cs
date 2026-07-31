@@ -4,7 +4,7 @@ namespace AccessibilityReporter.Services.Interfaces
 {
     public interface INodeUrlService
     {
-        string AbsoluteUrl(IPublishedContent content);
-        string AbsoluteUrl(IPublishedContent content, string? culture);
+        string AbsoluteUrl(IPublishedContent content, IPublishedContent root);
+        string AbsoluteUrl(IPublishedContent content, IPublishedContent root, string? culture);
     }
 }

@@ -21,7 +21,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Copyright>Matt Begent</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReleaseNotes>Accessibility Reporter for Umbraco 17+. Includes the export fix in this release.</PackageReleaseNotes>
+        <PackageReleaseNotes>Added multisite support and added another way of testing headless setups.</PackageReleaseNotes>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 

@@ -3,6 +3,9 @@
 export type AccessibilityReporterAppSettings = {
     apiUrl: string;
     testBaseUrl: string;
+    siteBaseUrls: {
+        [key: string]: string;
+    };
     runTestsAutomatically: boolean;
     includeIfNoTemplate: boolean;
     maxPages: number;
@@ -13,14 +16,20 @@ export type AccessibilityReporterAppSettings = {
 
 export type NodeSummaryReadable = {
     readonly guid: string;
-    readonly id: number;
-    readonly name: string;
+    id: number;
+    name: string;
     readonly docTypeAlias: string;
     url: string;
+    rootId: string;
+    rootName: string;
 };
 
 export type NodeSummaryWritable = {
+    id: number;
+    name: string;
     url: string;
+    rootId: string;
+    rootName: string;
 };
 
 export type CurrentData = {

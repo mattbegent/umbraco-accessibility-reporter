@@ -11,6 +11,8 @@ namespace AccessibilityReporter.Infrastructure.Config
 
 		public string TestBaseUrl { get; set; } = string.Empty;
 
+		public IDictionary<string, string> SiteBaseUrls { get; set; } = new Dictionary<string, string>();
+
 		public bool RunTestsAutomatically { get; set; } = true;
 
 		public bool IncludeIfNoTemplate { get; set; } = false;
