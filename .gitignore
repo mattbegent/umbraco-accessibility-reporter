@@ -14,3 +14,5 @@ Thumbs.db
 node_modules
 src/AccessibilityReporter/wwwroot/App_Plugins/AccessibilityReporter
 src/build.out
+
+.agents

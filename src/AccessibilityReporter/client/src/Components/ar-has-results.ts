@@ -1,7 +1,7 @@
-import { LitElement, html, customElement, property, state, unsafeHTML } from "@umbraco-cms/backoffice/external/lit";
+import { LitElement, html, customElement, property, state, unsafeHTML, css } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 
-import { utils, writeFile } from "xlsx";
+import { utils } from "xlsx";
 import { format } from 'date-fns';
 
 import './ar-logo';
@@ -22,6 +22,9 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 	@property()
 	onRunTests = () => { };
+
+	@property()
+	onStartOver = () => { };
 
 	@property({ attribute: false })
 	public results: IResults | undefined;
@@ -86,6 +89,15 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private pageUrls: Map<string, string> = new Map();
 
+	@state()
+	private _siteNames: string[] = [];
+
+	@state()
+	private _selectedSite: string = 'all';
+
+	@state()
+	private _filteredResultPages: any[] = [];
+
 	private _notificationContext?: UmbNotificationContext;
 
 	@state()
@@ -120,6 +132,20 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	private setStats(testResults: any) {
+
+		const siteNames: string[] = [];
+		for (const result of testResults.pages) {
+			if (result.page.rootName && !siteNames.includes(result.page.rootName)) {
+				siteNames.push(result.page.rootName);
+			}
+		}
+		this._siteNames = siteNames;
+
+		const filteredPages = this.isMultisite && this._selectedSite !== 'all'
+			? testResults.pages.filter((page: any) => page.page.rootName === this._selectedSite)
+			: testResults.pages;
+		this._filteredResultPages = filteredPages;
+
 		let totalErrors = 0;
 		let allErrors: any = [];
 		let totalViolations = 0;
@@ -129,8 +155,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		let totalOtherViolations = 0;
 
 		let pagesTestResults = [];
-		for (let index = 0; index < testResults.pages.length; index++) {
-			const currentResult = testResults.pages[index];
+		for (let index = 0; index < filteredPages.length; index++) {
+			const currentResult = filteredPages[index];
 			totalErrors += currentResult.violations.length;
 			allErrors = allErrors.concat(currentResult.violations);
 
@@ -162,12 +188,13 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				guid: currentResult.page.guid,
 				name: currentResult.page.name,
 				url: currentResult.page.url,
+				rootName: currentResult.page.rootName,
 				score: currentResult.score,
 				violations: totalViolationsForPage
 			});
 		}
 
-		this.numberOfPagesTested = testResults.pages.length;
+		this.numberOfPagesTested = filteredPages.length;
 		this.totalErrors = totalErrors;
 
 		this.totalViolations = totalViolations;
@@ -178,8 +205,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 		this.reportSummaryText = this.getReportSummaryText();
 
-		this.averagePageScore = this.getAveragePageScore(testResults.pages);
-		this.pageWithLowestScore = this.getPageWithLowestScore(testResults.pages);
+		this.averagePageScore = this.getAveragePageScore(filteredPages);
+		this.pageWithLowestScore = this.getPageWithLowestScore(filteredPages);
 
 		const sortedByImpact = allErrors.sort(AccessibilityReporterService.sortIssuesByImpact);
 		this.mostCommonErrors = this.getErrorsSortedByViolations(allErrors).slice(0, 6);
@@ -234,15 +261,30 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		return null;
 	}
 
+	private get isMultisite(): boolean {
+		return this._siteNames.length > 1;
+	}
+
+	private _handleSiteFilterChange = (e: Event) => {
+		const select = e.target as HTMLSelectElement;
+		this._selectedSite = select.value;
+		this.currentPage = 1;
+		this.setStats(this.results);
+	};
+
 	private getReportSummaryText() {
+		const isFilteredToSingleSite = this.isMultisite && this._selectedSite !== 'all';
+		const siteWord = (this.isMultisite && !isFilteredToSingleSite) ? "these websites" : "this website";
+		const doWord = (this.isMultisite && !isFilteredToSingleSite) ? "do" : "does";
+
 		const highestLevelOfNonCompliance = this.getHighestLevelOfNonCompliance();
 		if (highestLevelOfNonCompliance) {
-			return `This website <strong>does not</strong> comply with <strong>WCAG ${highestLevelOfNonCompliance}</strong>.`;
+			return `${AccessibilityReporterService.upperCaseFirstLetter(siteWord)} <strong>${doWord} not</strong> comply with <strong>WCAG ${highestLevelOfNonCompliance}</strong>.`;
 		}
 		if (this.totalOtherViolations !== 0) {
-			return "High 5, you rock! No WCAG violations were found. However, some other issues were found. Please manually test your website to check full compliance.";
+			return `High 5, you rock! No WCAG violations were found. However, some other issues were found. Please manually test ${siteWord} to check full compliance.`;
 		}
-		return "High 5, you rock! No WCAG violations were found. Please manually test your website to check full compliance.";
+		return `High 5, you rock! No WCAG violations were found. Please manually test ${siteWord} to check full compliance.`;
 	}
 
 	private displaySeverityChart(sortedAllErrors: any) {
@@ -484,8 +526,15 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		try {
 
 			const workbook = utils.book_new();
+			const multisite = this.isMultisite;
 
-			const pagesRows = this.pagesTestResults.map((page: any) => ({
+			const pagesRows = this.pagesTestResults.map((page: any) => multisite ? ({
+				name: page.name,
+				site: page.rootName,
+				url: page.url,
+				score: page.score,
+				violations: page.violations
+			}) : ({
 				name: page.name,
 				url: page.url,
 				score: page.score,
@@ -495,10 +544,18 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			const pagesWorksheet = utils.json_to_sheet(pagesRows);
 			utils.book_append_sheet(workbook, pagesWorksheet, "Pages Summary");
 
-			const pagesHeaders = [["Name", "URL", "Accessibility Score", "Total Violations"]];
+			const pagesHeaders = [multisite
+				? ["Name", "Site", "URL", "Accessibility Score", "Total Violations"]
+				: ["Name", "URL", "Accessibility Score", "Total Violations"]];
 			utils.sheet_add_aoa(pagesWorksheet, pagesHeaders, { origin: "A1" });
 
-			pagesWorksheet["!cols"] = [
+			pagesWorksheet["!cols"] = multisite ? [
+				{ width: 30 }, // Name
+				{ width: 20 }, // Site
+				{ width: 40 }, // URL
+				{ width: 20 }, // Score
+				{ width: 15 }  // Violations
+			] : [
 				{ width: 30 }, // Name
 				{ width: 40 }, // URL
 				{ width: 20 }, // Score
@@ -508,13 +565,15 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 			let allViolations: any[] = [];
 
-			this.results.pages.forEach(pageResult => {
+			this._filteredResultPages.forEach((pageResult: any) => {
 				const pageName = pageResult.page.name;
 				const pageUrl = pageResult.page.url;
+				const siteName = pageResult.page.rootName;
 
-				pageResult.violations.forEach(violation => {
+				pageResult.violations.forEach((violation: any) => {
 					allViolations.push({
 						pageName: pageName,
+						...(multisite ? { siteName: siteName } : {}),
 						pageUrl: pageUrl,
 						impact: violation.impact ? AccessibilityReporterService.upperCaseFirstLetter(violation.impact) : '',
 						title: violation.title || '',
@@ -529,11 +588,22 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				const violationsWorksheet = utils.json_to_sheet(allViolations);
 				utils.book_append_sheet(workbook, violationsWorksheet, "All Violations");
 
-				const violationsHeaders = [["Name", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]];
+				const violationsHeaders = [multisite
+					? ["Name", "Site", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]
+					: ["Name", "URL", "Impact", "Title", "Description", "Accessibility Standard", "Instances"]];
 				utils.sheet_add_aoa(violationsWorksheet, violationsHeaders, { origin: "A1" });
 
 				const titleWidth = allViolations.reduce((w, r) => Math.max(w, r.title ? r.title.length : 0), 40);
-				violationsWorksheet["!cols"] = [
+				violationsWorksheet["!cols"] = multisite ? [
+					{ width: 25 }, // Name
+					{ width: 20 }, // Site
+					{ width: 40 }, // URL
+					{ width: 10 }, // Impact
+					{ width: titleWidth }, // Title
+					{ width: 50 }, // Description
+					{ width: 25 }, // Standard
+					{ width: 10 }  // Count
+				] : [
 					{ width: 25 }, // Name
 					{ width: 40 }, // URL
 					{ width: 10 }, // Impact
@@ -544,7 +614,10 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 				];
 			}
 
-			writeFile(workbook, AccessibilityReporterService.formatFileName(`website-accessibility-report-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
+			const siteSuffix = multisite && this._selectedSite !== 'all' ? `-${this._selectedSite}` : '';
+
+			AccessibilityReporterService.downloadWorkbook(workbook,
+				AccessibilityReporterService.formatFileName(`${multisite ? "multisite" : "website"}-accessibility-report${siteSuffix}-${format(this.results.endTime, "yyyy-MM-dd")}`) + ".xlsx");
 
 		} catch (error) {
 			console.error(error);
@@ -560,9 +633,20 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 					<uui-box class="c-dashboard-grid__full-row">
 						<div slot="headline">
-							<h1 class="c-title">Accessibility Report</h1>
+							<h1 class="c-title">Accessibility Report${this.results?.culture ? html` <uui-tag look="outline" color="default" style="margin-left: 6px;">${this.results.culture}</uui-tag>` : null}</h1>
 						</div>
 						<div>
+							${this.isMultisite ? html`
+							<div class="c-site-filter">
+								<label for="ar-site-select" class="c-site-filter__label">Filter by site:</label>
+								<select id="ar-site-select" class="c-site-filter__select" .value=${this._selectedSite} @change=${this._handleSiteFilterChange}>
+									<option value="all" ?selected=${this._selectedSite === 'all'}>All sites</option>
+									${this._siteNames.map(site => html`
+										<option value=${site} ?selected=${site === this._selectedSite}>${site}</option>
+									`)}
+								</select>
+							</div>
+							` : null}
 							<p>${unsafeHTML(this.reportSummaryText)}</p>
 							<div class="c-summary__container">
 								${this.showViolationsForLevel('a') ?
@@ -599,7 +683,8 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 									</div>
 								</div>
 							</div>
-							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="Rerun full website accessibility tests" class="c-summary__button">Rerun tests</uui-button>
+							<uui-button look="primary" color="default" @click="${this.onRunTests}" label="${this.isMultisite ? "Rerun full accessibility tests across all sites" : "Rerun full website accessibility tests"}" class="c-summary__button">Rerun tests</uui-button>
+							<uui-button look="secondary" color="default" @click="${this.onStartOver}" label="Change settings and start over" class="c-summary__button">Start over</uui-button>
 							<uui-button look="secondary" color="default" @click="${this.exportResults}" label="Export accessibility test results as an xlsx file" class="c-summary__button">Export results</uui-button>
 							${this.results ?
 							html`<span class="c-summary__time">Started at <strong>${this.formatTime(this.results.startTime)}</strong> and ended at <strong>${this.formatTime(this.results.endTime)}</strong></span>`
@@ -656,6 +741,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 						<uui-table>
 							<uui-table-head>
 								<uui-table-head-cell>Name</uui-table-head-cell>
+								${this.isMultisite ? html`<uui-table-head-cell>Site</uui-table-head-cell>` : null}
 								<uui-table-head-cell>URL</uui-table-head-cell>
 								<uui-table-head-cell>Score</uui-table-head-cell>
 								<uui-table-head-cell>Violations</uui-table-head-cell>
@@ -664,6 +750,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							${this.pagesTestResultsCurrentPage.map((page: any) =>
 							html`<uui-table-row>
 								<uui-table-cell>${page.name}</uui-table-cell>
+								${this.isMultisite ? html`<uui-table-cell>${page.rootName}</uui-table-cell>` : null}
 								<uui-table-cell><a href="${page.url}" target="_blank">${page.url} <span class="sr-only">Opens in a new window</span></a></uui-table-cell>
 								<uui-table-cell>${page.score}</uui-table-cell>
 								<uui-table-cell>${page.violations}</uui-table-cell>
@@ -698,7 +785,33 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	}
 
 	static styles = [
-		generalStyles
+		generalStyles,
+		css`
+			.c-site-filter {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 10px;
+			}
+			.c-site-filter__label {
+				font-size: 14px;
+				font-weight: 500;
+				white-space: nowrap;
+			}
+			.c-site-filter__select {
+				padding: 6px 10px;
+				border: 1px solid var(--uui-color-border, #d8d7d9);
+				border-radius: var(--uui-border-radius, 3px);
+				background: var(--uui-color-surface, #fff);
+				font-size: 14px;
+				color: var(--uui-color-text, #1b1b1f);
+				cursor: pointer;
+			}
+			.c-site-filter__select:focus {
+				outline: 2px solid var(--uui-color-focus, #3544b1);
+				outline-offset: 2px;
+			}
+		`
 	];
 }
 

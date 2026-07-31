@@ -4,8 +4,10 @@ import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from '@umbraco-cms/back
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummaryReadable } from '../api';
+import { UmbLanguageCollectionRepository } from '@umbraco-cms/backoffice/language';
+import type { UmbLanguageDetailModel } from '@umbraco-cms/backoffice/language';
 
-import AccessibilityReporterService from "../Services/accessibility-reporter.service";
+import AccessibilityReporterService, { AR_BRIDGE_PRESENCE_TIMEOUT_MS, AR_BRIDGE_RESULTS_TIMEOUT_MS } from "../Services/accessibility-reporter.service";
 
 import "../Components/ar-chart";
 import "../Components/ar-score";
@@ -47,6 +49,12 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	@state()
 	currentUser: UmbCurrentUserModel | undefined;
 
+	@state()
+	private _availableLanguages: UmbLanguageDetailModel[] = [];
+
+	@state()
+	private _selectedCulture: string = '';
+
 		private _notificationContext?: UmbNotificationContext;
 
 	constructor() {
@@ -80,8 +88,27 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		/*@ts-ignore*/
 		window.ACCESSIBILITY_REPORTER_CONFIG = this.config;
 
+		this._fetchLanguages();
 		this.loadDashboard();
 
+	}
+
+	private async _fetchLanguages() {
+		try {
+			const languageRepo = new UmbLanguageCollectionRepository(this);
+			const { data } = await languageRepo.requestCollection({ skip: 0, take: 100 });
+			if (data?.items && data.items.length > 1) {
+				this._availableLanguages = data.items;
+				const defaultLang = data.items.find(l => l.isDefault);
+				this._selectedCulture = defaultLang?.unique ?? data.items[0]?.unique ?? '';
+			}
+		} catch {
+			// Language picker is optional — ignore errors
+		}
+	}
+
+	private _handleCultureChange(culture: string) {
+		this._selectedCulture = culture;
 	}
 
 	private loadDashboard() {
@@ -116,7 +143,10 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			}
 		});
 
-		const testTimeout = this.config?.apiUrl ? 30000 : 10000;
+		// The non-apiUrl budget must comfortably exceed the bridge's own worst case (presence +
+		// results timeouts) - otherwise this outer race would kill a legitimately in-progress
+		// cross-origin/bridge test before it gets the chance to finish.
+		const testTimeout = this.config?.apiUrl ? 30000 : (AR_BRIDGE_PRESENCE_TIMEOUT_MS + AR_BRIDGE_RESULTS_TIMEOUT_MS + 2000);
 		const timer = new Promise((_resolve, reject) => setTimeout(() => reject("Test run exceeded timeout"), testTimeout));
 
 		return await Promise.race([testRun, timer]);
@@ -174,14 +204,15 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		this.results = {
 			startTime: startTime,
 			endTime: new Date(),
-			pages: testResults
+			pages: testResults,
+			culture: this._selectedCulture || undefined
 		};
 		AccessibilityReporterService.saveToLocalStorage(this.DASHBOARD_STORAGE_KEY, this.results as object);
 		this.pageState = PageState.HasResults;
 	}
 
 	private async getTestResult(testUrl: string) {
-		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, true);
+		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, true, this.config?.testsToRun ?? []);
 	}
 
 	private reduceTestResult(testResult: any) {
@@ -211,7 +242,9 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	}
 
 	private async getTestPages(): Promise<NodeSummaryReadable[] | undefined> {
-		const { data, error } = await tryExecute(this, DirectoryService.pages())
+		const { data, error } = await tryExecute(this, DirectoryService.pages(
+			this._selectedCulture ? { query: { culture: this._selectedCulture } } : undefined
+		))
 		if (error) {
 			console.error(error);
 			this.pageState = PageState.Errored;
@@ -239,7 +272,12 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	render() {
 		if (this.pageState === PageState.PreTest) {
 			return html`
-				<ar-pre-test .onRunTests=${this.runTests.bind(this)}></ar-pre-test>
+				<ar-pre-test
+					.onRunTests=${this.runTests.bind(this)}
+					.availableLanguages=${this._availableLanguages}
+					.selectedCulture=${this._selectedCulture}
+					.onCultureChange=${this._handleCultureChange.bind(this)}
+				></ar-pre-test>
 			`;
 		}
 
@@ -266,6 +304,7 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			return html`
 				<ar-has-results
 				.onRunTests=${this.runTests.bind(this)}
+				.onStartOver=${() => { this.pageState = PageState.PreTest; }}
 				.results=${this.results}
 				.config=${this.config}
 				></ar-has-results>

@@ -3,6 +3,9 @@
 export type AccessibilityReporterAppSettings = {
     apiUrl: string;
     testBaseUrl: string;
+    siteBaseUrls: {
+        [key: string]: string;
+    };
     runTestsAutomatically: boolean;
     includeIfNoTemplate: boolean;
     maxPages: number;
@@ -21,14 +24,20 @@ export enum EventMessageTypeModel {
 
 export type NodeSummaryReadable = {
     readonly guid: string;
-    readonly id: number;
-    readonly name: string;
+    id: number;
+    name: string;
     readonly docTypeAlias: string;
     url: string;
+    rootId: string;
+    rootName: string;
 };
 
 export type NodeSummaryWritable = {
+    id: number;
+    name: string;
     url: string;
+    rootId: string;
+    rootName: string;
 };
 
 export type NotificationHeaderModel = {
@@ -73,7 +82,9 @@ export type CurrentResponse = CurrentResponses[keyof CurrentResponses];
 export type PagesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        culture?: string;
+    };
     url: '/umbraco/accessibilityreporter/api/v1/pages';
 };
 

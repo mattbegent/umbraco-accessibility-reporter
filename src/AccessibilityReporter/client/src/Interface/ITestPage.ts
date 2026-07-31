@@ -4,6 +4,8 @@ interface ITestPage {
 	name: string;
 	docTypeAlias: string;
 	url: string;
+	rootId: string;
+	rootName: string;
 }
 
 export default ITestPage;

@@ -68,6 +68,10 @@ export const generalStyles = css`
 		overflow-x: auto;
 	}
 
+	.c-table__container uui-table {
+		box-sizing: border-box;
+	}
+
 	.c-table__container uui-table-head-cell {
 		font-size: 14px;
 	}

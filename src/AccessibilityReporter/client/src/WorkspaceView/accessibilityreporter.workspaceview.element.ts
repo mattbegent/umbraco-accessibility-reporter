@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import PageState from "../Enums/page-state";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
+import { UMB_WORKSPACE_SPLIT_VIEW_CONTEXT } from '@umbraco-cms/backoffice/workspace';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AccessibilityReporterAppSettings, ConfigService, TestRun, TestRunService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
@@ -13,7 +14,7 @@ import AccessibilityReporterAPIService from "../Services/accessibility-reporter-
 import AccessibilityReporterService from "../Services/accessibility-reporter.service";
 import { UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
 import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibilityreporter.detail.modal.token";
-import { utils, writeFile } from "xlsx";
+import { utils } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
 import '../Components/ar-score-history';
@@ -50,6 +51,14 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	@state()
 	private testDate: string;
+
+	@state()
+	private _testedCulture: string | null = null;
+
+	@state()
+	private _crossOriginHostname: string | null = null;
+
+	private _splitViewIndex: number = 0;
 
 	@state()
 	private violationsOpen: boolean = true;
@@ -106,6 +115,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
             this._modalManagerContext = context;
         });
 
+		this.consumeContext(UMB_WORKSPACE_SPLIT_VIEW_CONTEXT, (context) => {
+			if (!context) return;
+			this.observe(context.index, (index) => {
+				if (index !== undefined) {
+					this._splitViewIndex = index;
+				}
+			});
+		});
+
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
 		});
@@ -137,23 +155,42 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return location.hostname + (location.port ? ":" + location.port : "");
 	}
 
-	private getFallbackBaseUrl() {
-		return location.protocol + "//" + this.getHostname(this?._urls);
-	}
-
-	private getHostname(possibleUrls: any) {
-		if (!this.config?.apiUrl) {
-			// so we don't get iframe CORS issues
-			return this.getLocalHostname();
-		}
-		for (let index = 0; index < possibleUrls.length; index++) {
-			var possibleCurrentUrl = possibleUrls[index].text;
-			if (AccessibilityReporterService.isAbsoluteURL(possibleCurrentUrl)) {
-				return AccessibilityReporterService.getHostnameFromString(possibleCurrentUrl);
+	// Finds a real, domain-qualified URL from the document's own URLs (populated per-node by
+	// Umbraco based on the domains bound to its root) rather than assuming every site shares the
+	// backoffice's own hostname - the previous behaviour, which silently tested the wrong page on
+	// any multisite install where a site's domain differs from the backoffice's.
+	private getResolvedAbsoluteUrl(possibleUrls?: Array<UmbDocumentUrlModel>): string | null {
+		if (!possibleUrls) return null;
+		for (const possibleUrl of possibleUrls) {
+			if (possibleUrl.url && AccessibilityReporterService.isAbsoluteURL(possibleUrl.url)) {
+				return possibleUrl.url;
 			}
 		}
-		// fallback if hostnames not set assume current host
-		return this.getLocalHostname();
+		return null;
+	}
+
+	private getFallbackBaseUrl() {
+		const resolvedAbsoluteUrl = this.getResolvedAbsoluteUrl(this._urls);
+		if (resolvedAbsoluteUrl) {
+			return new URL(resolvedAbsoluteUrl).origin;
+		}
+		// No domain bound to this node - fall back to the current backoffice host, matching the
+		// original behaviour when there's nothing better to go on.
+		return location.protocol + "//" + this.getLocalHostname();
+	}
+
+	// The in-iframe test injects a script directly into the iframe's document, which the browser
+	// only allows for same-origin content. If the resolved test URL is on a different origin to the
+	// backoffice (a genuinely different domain per site) and no external ApiUrl is configured to run
+	// the test out-of-browser instead, testing would previously either hang indefinitely or silently
+	// test the wrong page - surface this as an explicit, actionable error instead.
+	private isCrossOriginTest(url: string): boolean {
+		if (this.config?.apiUrl) return false;
+		try {
+			return new URL(url, location.href).origin !== location.origin;
+		} catch {
+			return false;
+		}
 	}
 
 	private _observeContent() {
@@ -234,7 +271,27 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	}
 
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
-		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning);
+		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning, this.config?.testsToRun ?? []);
+	}
+
+	private _getActiveCultureFromRoute(): string | null {
+		const path = window.location.pathname;
+		const viewIndex = path.lastIndexOf('/view/');
+		if (viewIndex === -1) return null;
+		const segments = path.substring(0, viewIndex).split('/');
+		const culture = segments[segments.length - 1];
+		return (culture && culture !== 'invariant') ? culture : null;
+	}
+
+	private _getUrlForCulture(culture: string | null): string {
+		if (!this._urls || this._urls.length === 0) return "/";
+		if (culture) {
+			const match = this._urls.find(u =>
+				u.culture?.toLowerCase() === culture.toLowerCase()
+			);
+			if (match?.url) return match.url;
+		}
+		return this._urls[0]?.url || "/";
 	}
 
 	private async runTests(showTestRunning: boolean): Promise<void> {
@@ -255,10 +312,24 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
 		}
 
-		const pathToTest = this._urls?.[0]?.url || "/";
+		const routeCulture = this._getActiveCultureFromRoute();
+		let activeCulture: string | null;
+		if (routeCulture && routeCulture.includes('_&_')) {
+			// Split view: resolve the culture for the current panel index
+			const activeVariants = this._workspaceContext?.splitView.getActiveVariants();
+			activeCulture = activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
+		} else {
+			activeCulture = routeCulture;
+		}
+		const pathToTest = this._getUrlForCulture(activeCulture);
+		this._testedCulture = activeCulture;
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
+		this._crossOriginHostname = null;
 
 		try {
+			// Always attempt the test, even cross-origin - accessibility-reporter-bridge.js may be
+			// installed on the target site, in which case this succeeds without ever reaching the
+			// catch block below.
 			const testResponse = await this.getTestResult(this.testURL, showTestRunning); // TODO: Add types
 			this.results = this.sortResponse(testResponse);
 			this.score = AccessibilityReporterService.getPageScore(testResponse);
@@ -275,6 +346,9 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 				this.history = await this.getHistory(contentId);
 			}
 		} catch (error) {
+			if (this.isCrossOriginTest(this.testURL)) {
+				this._crossOriginHostname = new URL(this.testURL).hostname;
+			}
 			this.pageState = PageState.Errored;
 			console.error(error);
 		}
@@ -442,8 +516,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			incompleteWorksheet["!cols"] = [{ width: 10 }, { width: incompleteTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 			passedWorksheet["!cols"] = [{ width: 10 }, { width: passedTitleWidth }, { width: 40 }, { width: 25 }, { width: 8 }  ];
 
-			writeFile(workbook,
-				AccessibilityReporterService.formatFileName(`accessibility-report-${this.pageName}-${format(this.results.timestamp, "yyyy-MM-dd")}`) + ".xlsx", { compression: true });
+			AccessibilityReporterService.downloadWorkbook(workbook,
+				AccessibilityReporterService.formatFileName(`accessibility-report-${this.pageName}-${format(this.results.timestamp, "yyyy-MM-dd")}`) + ".xlsx");
 
 		} catch(error) {
 			console.error(error);
@@ -499,8 +573,13 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					</svg>
 					<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a> errored</h2>
 				</div>
+				${this._crossOriginHostname ? html`
+				<p>This page is on a different domain (<strong>${this._crossOriginHostname}</strong>) to your Umbraco backoffice, so in-browser testing can't run against it directly for security reasons.</p>
+				<p>To test sites on a different domain in a multisite install, either add the <code>accessibility-reporter-bridge.js</code> script to that site, or configure <code>ApiUrl</code> to run tests via an external service instead - see the Accessibility Reporter documentation for details.</p>
+				` : html`
 				<p>Accessibility Reporter only works for URLs that are accessible publicly.</p>
 				<p>If your page is publicly accessible, please try using the "Rerun Tests" button below or refreshing this page to run the accessibility report again.</p>
+				`}
 				<uui-button look="primary" color="default" @click="${this.runTests}" label="Rerun accessibility tests on current published page">Rerun tests</uui-button>
 			</uui-box>
 			`;
@@ -518,7 +597,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 						<path d="m7 9 5 1m5-1-5 1m0 0v3m0 0-2 5m2-5 2 5" style="fill:none;stroke:#443b52;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" />
 						<path d="M12 8.5c-.7 0-1.2-.6-1.2-1.3S11.3 6 12 6s1.2.6 1.2 1.2-.5 1.3-1.2 1.3z" style="fill:#443b52" />
 						</svg>
-						<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a></h2>
+						<h2 class="c-title">Accessibility Report for <a href="${this.testURL}" target="_blank" class="c-title__link">${this.pageName} <span class="sr-only">(opens in a new window)</span></a>${this._testedCulture ? html` <uui-tag look="outline" color="default" style="margin-left: 6px;">${this._testedCulture}</uui-tag>` : null}</h2>
 					</div>
 
 					<div class="c-summary__container">

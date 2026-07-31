@@ -2,9 +2,12 @@
 
 ![Accessibility Reporter logo](https://raw.githubusercontent.com/mattbegent/umbraco-accessibility-reporter/main/logos/logo64.png)
 
+[![Downloads](https://img.shields.io/nuget/dt/Umbraco.Community.AccessibilityReporter?color=cc9900)](https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter/)
+[![NuGet](https://img.shields.io/nuget/vpre/Umbraco.Community.AccessibilityReporter?color=0273B3)](https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter)
+
 ## What is it?
 
-Accessibility Reporter for Umbraco is a content app and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
+Accessibility Reporter for Umbraco is an award winning content app/workspace view and dashboard that helps you test the accessibility of your website against common accessibility standards, including the Web Content Accessibility Guidelines (WCAG), Section 508 and best practices, directly in Umbraco.
 
 ## Why should I use it?
 
@@ -18,6 +21,10 @@ It runs an accessibility audit against the current published version of the page
 
 You can install Accessibility Reporter using Nuget `https://www.nuget.org/packages/Umbraco.Community.AccessibilityReporter`. Once installed when you build your project the files needed for Accessibility Reporter will be copied into your App_Plugins folder. That's it!
 
+## What version should I use?
+
+If you are running Umbraco 17+ use the latest version of Accessibility Reporter, which is version 4 onwards. If you are running Umbraco 10-13, use version 3.5.1.
+
 ## Options
 
 You can run Accessibility Reporter without adding any configuration options, as it has some sensible defaults. However, you can configure how it runs by adding an `AccessibilityReporter` section to your `appsettings.json` file.
@@ -25,7 +32,8 @@ You can run Accessibility Reporter without adding any configuration options, as 
 ### Available options
 
 - **ApiUrl** - This is the URL of the API that will run the tests. By default the tests are run in an iframe within Umbraco, however if you website is on a different domain to your Umbraco instance to get around iframe security issues, you can host an API on an Azure function by forking `https://github.com/mattbegent/azure-function-accessibility-reporter` and deploying it to Azure.  
-- **TestBaseUrl** (optional) - If you run Umbraco in a headless way or Accessibility Reporter is having trouble finding the domain to test against, set this to the base URL of your wesbite. If not set Accessibility Reporter will try to infer this from available information in Umbraco.
+- **TestBaseUrl** (optional) - If you run Umbraco in a headless way or Accessibility Reporter is having trouble finding the domain to test against, set this to the base URL of your wesbite. If not set Accessibility Reporter will try to infer this from available information in Umbraco. In a multisite install this is used as a fallback only for root nodes that don't have a domain bound and aren't covered by `SiteBaseUrls` below - prefer `SiteBaseUrls` when you have more than one site.
+- **SiteBaseUrls** (optional) - Per-site base URL overrides for multisite/headless installs where different root nodes don't have Umbraco domains bound to them. Keyed by each root node's Key (the Guid shown on that node's Info tab), so a different base URL can be used per site instead of forcing every site onto the single `TestBaseUrl`. Not needed if your root nodes already have domains configured in Umbraco - those are resolved automatically per site.
 - **TestsToRun** (optional) - This sets which axe-core rules should be run. For example, you may want to test your website against `wcag2a` only. A full list of supported tags can be found in the [axe-core documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags). If not set Accessibility Reporter defaults to WCAG A and AA tests. 
 - **UserGroups** (optional) - Use this option if you want to restrict which user groups can see Accessibility Reporter. By default users with admin, editor or writer permissions can see it.
 - **ExcludedDocTypes** (optional) - Use this option if you want to exclude Accessibility Reporter from showing on certain document types.
@@ -38,6 +46,9 @@ You can run Accessibility Reporter without adding any configuration options, as 
     "AccessibilityReporter": {
         "ApiUrl": "https://api.example.com/api/audit",
         "TestBaseUrl": "https://example.com",
+        "SiteBaseUrls": {
+            "b1a2c3d4-e5f6-7890-abcd-ef1234567890": "https://site-two.example.com"
+        },
         "TestsToRun": [
             "wcag2a", 
             "wcag2aa", 
@@ -64,6 +75,7 @@ All options are completely optional and if you don't set them, they default to t
     "AccessibilityReporter": {
         "ApiUrl": "",
         "TestBaseUrl": "",
+        "SiteBaseUrls": {},
         "TestsToRun": [
             "wcag2a", 
             "wcag2aa", 
@@ -104,6 +116,47 @@ To do this deploying the following azure function https://github.com/mattbegent/
 
 It's worth noting that if you are using Accessibility Reporter in this way the tests will take much longer than if you run Umbraco in a non headless way.
 
+## Multisite
+
+Accessibility Reporter supports Umbraco installs with more than one root content node ("site"):
+
+- The dashboard tests pages from every site, allocating the `MaxPages` limit fairly across them rather than letting one large site use up the whole budget.
+- If a selected language isn't supported by a particular site, that site's pages are skipped for that run rather than tested with a broken URL.
+- Dashboard results and exports show which site each page belongs to whenever more than one site is present in the results.
+- If your root nodes have domains bound to them in Umbraco, per-site URLs are resolved automatically - no configuration needed.
+- If you run a headless multisite install with no domains bound to root nodes, use `SiteBaseUrls` (see Options above) to set a base URL per site instead of `TestBaseUrl`.
+- If a site's public domain is genuinely different to your Umbraco backoffice's own domain, in-browser testing can't cross that boundary directly for browser security reasons (the same restriction described in "How to use with a headless setup") - see "Testing sites on a different domain" below for how to make it work anyway.
+
+## Testing sites on a different domain
+
+If a site's public domain differs from your Umbraco backoffice's own domain (a common multisite or headless setup), Accessibility Reporter can't inject its test script directly into that page for security reasons. There are two ways to make it work anyway - both only ever activate while Accessibility Reporter itself is running a test, so nothing extra loads or runs for ordinary visitors:
+
+**Option 1: Add the bridge (recommended, no extra hosting required)**
+
+If this site is rendered with Razor (e.g. a multi-domain Umbraco install where the same application serves every site, just on different bound domains), add `@using AccessibilityReporter.Extensions` to your `_ViewImports.cshtml`, then add this to a shared layout:
+
+    @Html.AccessibilityReporterScript()
+
+If it isn't a Razor site (a genuinely separate/headless frontend), add this small snippet instead, replacing `your-umbraco-domain.example.com` with wherever your Umbraco backoffice is hosted:
+
+    <script>
+    (function () {
+      if (window.name !== 'accessibility-reporter-bridge-activate') return;
+      var s = document.createElement('script');
+      s.src = 'https://your-umbraco-domain.example.com/App_Plugins/AccessibilityReporter/libs/accessibility-reporter-bridge.js';
+      document.head.appendChild(s);
+    })();
+    </script>
+
+Either way, this is a tiny, inert stub for every normal page view - it checks a marker that's only ever set on the specific iframe Accessibility Reporter creates to run a test, and does nothing else (no network request, no listener registered) unless that marker is present. Only when Accessibility Reporter is actually testing that page does it fetch the real bridge script, which runs the accessibility test and reports the result back over `postMessage` (which, unlike direct DOM access, is designed to work across origins). Two things worth knowing about that real bridge script, if you ever need to debug it:
+
+- It needs to run promptly - if you end up loading it (or the snippet above) through a tag manager or a consent-gated loader, it may not get the chance to announce itself in time.
+- If the page uses a nonce-based Content-Security-Policy, it needs `strict-dynamic` for the bridge's own script load to be allowed - otherwise you'll see an explicit error rather than the test hanging.
+
+**Option 2: Configure `ApiUrl`**
+
+See "How to use with a headless setup" above - this runs tests via an external service instead of in the browser, so no changes to the target site are needed, at the cost of needing to deploy and maintain that service, and slower test runs.
+
 ## Limitations
 
 The accessibility report runs on the current published page URL you are editing.
@@ -114,7 +167,6 @@ Automated accessibility testing is no substitute for manual testing and testing 
 
 - History. This will mean the dashboard is automatically populated.
 - Scheduling.
-- Support for multisite setups.
 - Manual test recommendations.
 - Localization - if anyone speaks any languages other than English it would be super to get some help.
 
