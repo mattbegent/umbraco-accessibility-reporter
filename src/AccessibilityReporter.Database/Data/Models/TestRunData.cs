@@ -26,5 +26,9 @@ namespace AccessibilityReporter.Database.Data.Models
         public string ResultPayload { get; set; } = string.Empty;
 
         public int ResultPayloadVersion { get; set; } = 1;
+
+        public Guid? RootContentId { get; set; }
+
+        public string? RootName { get; set; }
     }
 }

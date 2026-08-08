@@ -55,5 +55,57 @@ namespace AccessibilityReporter.Database.Repositories
 
             return queryResults;
         }
+
+        public void DeleteOlderThan(DateTime threshold)
+        {
+            using var scope = _scopeProvider.CreateScope();
+
+            scope.Database.Execute($"DELETE FROM {TestRunData.TableName} " +
+                $"WHERE {nameof(TestRunData.RunCompleted)} < @0"
+            , threshold);
+
+            scope.Complete();
+        }
+
+        public IEnumerable<(Guid RootId, string RootName)> Sites()
+        {
+            using var scope = _scopeProvider.CreateScope();
+
+            var queryResults = scope.Database.Fetch<TestRunData>($"SELECT DISTINCT " +
+                $"{nameof(TestRunData.RootContentId)}, {nameof(TestRunData.RootName)} " +
+                $"FROM {TestRunData.TableName} " +
+                $"WHERE {nameof(TestRunData.RootContentId)} IS NOT NULL"
+            );
+
+            scope.Complete();
+
+            return queryResults
+                .Where(row => row.RootContentId.HasValue && !string.IsNullOrEmpty(row.RootName))
+                .Select(row => (row.RootContentId!.Value, row.RootName!))
+                .Distinct()
+                .ToList();
+        }
+
+        public IEnumerable<ITestRunData> RunsForRoot(Guid rootContentId, string? culture)
+        {
+            using var scope = _scopeProvider.CreateScope();
+
+            var queryResults = string.IsNullOrEmpty(culture)
+                ? scope.Database.Fetch<TestRunData>($"SELECT * " +
+                    $"FROM {TestRunData.TableName} " +
+                    $"WHERE {nameof(TestRunData.RootContentId)} = @0 " +
+                    $"ORDER BY {nameof(TestRunData.RunCompleted)}"
+                , rootContentId)
+                : scope.Database.Fetch<TestRunData>($"SELECT * " +
+                    $"FROM {TestRunData.TableName} " +
+                    $"WHERE {nameof(TestRunData.RootContentId)} = @0 " +
+                    $"AND {nameof(TestRunData.Culture)} = @1 " +
+                    $"ORDER BY {nameof(TestRunData.RunCompleted)}"
+                , rootContentId, culture);
+
+            scope.Complete();
+
+            return queryResults;
+        }
     }
 }

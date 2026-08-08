@@ -13,5 +13,9 @@ namespace AccessibilityReporter.Core.Interfaces.Data
         string ResultPayload { get; set; }
 
         int ResultPayloadVersion { get; set; }
+
+        Guid? RootContentId { get; set; }
+
+        string? RootName { get; set; }
     }
 }

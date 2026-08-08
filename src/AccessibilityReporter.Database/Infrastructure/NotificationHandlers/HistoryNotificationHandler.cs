@@ -30,7 +30,8 @@ namespace AccessibilityReporter.Database.Infrastructure.NotificationHandlers
             var migrationPlan = new MigrationPlan("HistoryInitial");
 
             migrationPlan.From(string.Empty)
-                .To<AddTestRunDataTable>("history-initial");
+                .To<AddTestRunDataTable>("history-initial")
+                .To<AddSiteInfoToTestRunDataTable>("history-site-info");
 
             var upgrader = new Upgrader(migrationPlan);
             upgrader.ExecuteAsync(_migrationPlanExecutor, _coreScopeProvider, _keyValueService);
