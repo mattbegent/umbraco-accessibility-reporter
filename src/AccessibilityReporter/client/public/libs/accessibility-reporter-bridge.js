@@ -78,11 +78,19 @@
 	window.addEventListener('message', function (event) {
 		var data = event.data;
 		if (!data || data.source !== 'accessibility-reporter' || data.command !== 'run-test') return;
+		clearInterval(announceInterval);
 		runTest(data.testsToRun || [], data.nonce);
 	});
 
-	// Announce presence immediately, unconditionally - lets Accessibility Reporter know this page
-	// has the bridge installed without needing to wait for a full test cycle. '*' for the same
-	// reason as respond() above.
-	window.parent.postMessage({ source: 'accessibility-reporter-bridge', event: 'ready' }, '*');
+	function announcePresence() {
+		// Lets Accessibility Reporter know this page has the bridge installed without needing to
+		// wait for a full test cycle. '*' for the same reason as respond() above.
+		window.parent.postMessage({ source: 'accessibility-reporter-bridge', event: 'ready' }, '*');
+	}
+
+	// Repeat instead of a single fire-and-forget ping, so one late/dropped message can't fail
+	// presence detection. Capped in case a run-test command never arrives.
+	announcePresence();
+	var announceInterval = setInterval(announcePresence, 300);
+	setTimeout(function () { clearInterval(announceInterval); }, 10000);
 }(window, document));

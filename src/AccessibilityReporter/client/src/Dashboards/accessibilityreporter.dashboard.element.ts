@@ -13,6 +13,7 @@ import "../Components/ar-chart";
 import "../Components/ar-score";
 import "../Components/ar-pre-test";
 import "../Components/ar-errored";
+import "../Components/ar-no-pages";
 import "../Components/ar-running-tests";
 import "../Components/ar-has-results";
 
@@ -166,12 +167,12 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			await this.getTestPages();
 		} catch (error) {
 			console.error(error);
+			this.pageState = PageState.Errored;
 			return;
 		}
 
-		if (!this.testPages) {
-			console.log('error', this.testPages);
-			this.pageState = PageState.Errored;
+		if (!this.testPages.length) {
+			this.pageState = PageState.NoPages;
 			return;
 		}
 
@@ -241,21 +242,16 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		this.pageState = PageState.PreTest;
 	}
 
-	private async getTestPages(): Promise<NodeSummaryReadable[] | undefined> {
+	private async getTestPages(): Promise<NodeSummaryReadable[]> {
 		const { data, error } = await tryExecute(this, DirectoryService.pages(
 			this._selectedCulture ? { query: { culture: this._selectedCulture } } : undefined
 		))
 		if (error) {
-			console.error(error);
-			this.pageState = PageState.Errored;
-			return undefined;
+			throw error;
 		}
 
-		if (data) {
-			this.testPages = data;
-		}
-
-		return data;
+		this.testPages = data ?? [];
+		return this.testPages;
 	}
 
 	private async getConfig(): Promise<AccessibilityReporterAppSettings | undefined> {
@@ -297,6 +293,12 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 		if (this.pageState === PageState.Errored) {
 			return html`
 				<ar-errored .onRunTests=${this.runTests.bind(this)}></ar-errored>
+			`;
+		}
+
+		if (this.pageState === PageState.NoPages) {
+			return html`
+				<ar-no-pages .onRunTests=${this.runTests.bind(this)} culture=${this._selectedCulture}></ar-no-pages>
 			`;
 		}
 

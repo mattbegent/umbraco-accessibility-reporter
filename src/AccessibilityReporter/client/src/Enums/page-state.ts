@@ -5,7 +5,8 @@ enum PageState {
 	HasResults,
 	Loading,
 	ManuallyRun,
-	Loaded
+	Loaded,
+	NoPages
 }
 
 export default PageState;

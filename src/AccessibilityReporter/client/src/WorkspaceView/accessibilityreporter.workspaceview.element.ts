@@ -227,13 +227,13 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning, this.config?.testsToRun ?? []);
 	}
 
-	private _getActiveCultureFromRoute(): string | null {
-		const path = window.location.pathname;
-		const viewIndex = path.lastIndexOf('/view/');
-		if (viewIndex === -1) return null;
-		const segments = path.substring(0, viewIndex).split('/');
-		const culture = segments[segments.length - 1];
-		return (culture && culture !== 'invariant') ? culture : null;
+	// The split view manager tracks the active culture per panel index for both split and
+	// non-split editing (index 0 is simply the primary panel when there's no split view), so it's
+	// the authoritative source - unlike re-parsing window.location.pathname, which silently fails
+	// to match on any deviation and falls back to the wrong (usually default) culture's URL.
+	private _getActiveCulture(): string | null {
+		const activeVariants = this._workspaceContext?.splitView.getActiveVariants();
+		return activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
 	}
 
 	private _getUrlForCulture(culture: string | null): string {
@@ -264,15 +264,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
 		}
 
-		const routeCulture = this._getActiveCultureFromRoute();
-		let activeCulture: string | null;
-		if (routeCulture && routeCulture.includes('_&_')) {
-			// Split view: resolve the culture for the current panel index
-			const activeVariants = this._workspaceContext?.splitView.getActiveVariants();
-			activeCulture = activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
-		} else {
-			activeCulture = routeCulture;
-		}
+		const activeCulture = this._getActiveCulture();
 		const pathToTest = this._getUrlForCulture(activeCulture);
 		this._testedCulture = activeCulture;
 		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();

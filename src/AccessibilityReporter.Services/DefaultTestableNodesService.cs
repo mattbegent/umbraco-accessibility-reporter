@@ -21,7 +21,7 @@ namespace AccessibilityReporter.Services
 			_settings = settings;
         }
 
-		public IEnumerable<TestableNode> All()
+		public IEnumerable<TestableNode> All(string? culture)
 		{
 			using (var contextReference = _contextFactory.EnsureUmbracoContext())
 			{
@@ -45,6 +45,7 @@ namespace AccessibilityReporter.Services
 
 					perRoot.Add(siteNodes.Where(DocumentTypeIsApplicable)
 						.Where(TemplateStateIsApplicable)
+						.Where(CultureIsApplicable)
 						.Select(content => new TestableNode(content, rootContent))
 						.ToList());
 				}
@@ -56,6 +57,9 @@ namespace AccessibilityReporter.Services
 
 				bool TemplateStateIsApplicable(IPublishedContent content)
 					=> _settings.IncludeIfNoTemplate || content.TemplateId.HasValue;
+
+				bool CultureIsApplicable(IPublishedContent content)
+					=> string.IsNullOrEmpty(culture) || content.IsPublished(culture);
 			}
 		}
 

@@ -2,6 +2,6 @@
 {
 	public interface ITestableNodesService
 	{
-		IEnumerable<TestableNode> All();
+		IEnumerable<TestableNode> All(string? culture);
 	}
 }

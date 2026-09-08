@@ -31,7 +31,7 @@ namespace AccessibilityReporter.Services
 
         public IEnumerable<NodeSummary> All(string? culture)
         {
-            var testableNodes = _testableNodesService.All();
+            var testableNodes = _testableNodesService.All(culture);
 
             foreach (var node in testableNodes)
             {

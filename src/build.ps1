@@ -6,7 +6,7 @@ $servicesProjectFile = "./AccessibilityReporter.Services/AccessibilityReporter.S
 $configuration = "Release"
 #$configuration = "Debug"
 $outputDirectory = "./build.out"
-$version = "4.4.0"
+$version = "4.4.1"
 
 ## Perhaps need to do a build of the client after updating the version in the source file
 $packageJsonPath = "./AccessibilityReporter/wwwroot/App_Plugins/AccessibilityReporter/umbraco-package.json"
