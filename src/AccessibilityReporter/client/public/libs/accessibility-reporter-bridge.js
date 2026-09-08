@@ -71,6 +71,18 @@
 		document.body.appendChild(axeScript);
 	}
 
+	function announcePresence() {
+		// Lets Accessibility Reporter know this page has the bridge installed without needing to
+		// wait for a full test cycle. '*' for the same reason as respond() above.
+		window.parent.postMessage({ source: 'accessibility-reporter-bridge', event: 'ready' }, '*');
+	}
+
+	// Repeat instead of a single fire-and-forget ping, so one late/dropped message can't fail
+	// presence detection. Capped in case a run-test command never arrives.
+	announcePresence();
+	var announceInterval = setInterval(announcePresence, 300);
+	setTimeout(function () { clearInterval(announceInterval); }, 10000);
+
 	// No event.origin check here - this script has no reliable way to know the backoffice's real
 	// origin in advance (see assetOrigin above), so instead it relies entirely on the window.name
 	// activation gate at the top of this file: only the Accessibility Reporter parent that created
@@ -78,11 +90,7 @@
 	window.addEventListener('message', function (event) {
 		var data = event.data;
 		if (!data || data.source !== 'accessibility-reporter' || data.command !== 'run-test') return;
+		clearInterval(announceInterval);
 		runTest(data.testsToRun || [], data.nonce);
 	});
-
-	// Announce presence immediately, unconditionally - lets Accessibility Reporter know this page
-	// has the bridge installed without needing to wait for a full test cycle. '*' for the same
-	// reason as respond() above.
-	window.parent.postMessage({ source: 'accessibility-reporter-bridge', event: 'ready' }, '*');
 }(window, document));
