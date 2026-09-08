@@ -233,7 +233,10 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	// to match on any deviation and falls back to the wrong (usually default) culture's URL.
 	private _getActiveCulture(): string | null {
 		const activeVariants = this._workspaceContext?.splitView.getActiveVariants();
-		return activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
+		const culture = activeVariants?.find(v => v.index === this._splitViewIndex)?.culture ?? null;
+		// Normalize the invariant variant to null, same as the old route-parsing logic did - it can
+		// otherwise surface the literal string "invariant" as a culture, e.g. in the results tag.
+		return culture && culture !== 'invariant' ? culture : null;
 	}
 
 	private _getUrlForCulture(culture: string | null): string {

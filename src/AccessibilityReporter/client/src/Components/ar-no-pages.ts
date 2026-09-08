@@ -10,6 +10,9 @@ export class ARNoPagesElement extends UmbElementMixin(LitElement) {
 	onRunTests = () => { };
 
 	@property()
+	onStartOver = () => { };
+
+	@property()
 	culture: string = '';
 
 	render() {
@@ -23,8 +26,9 @@ export class ARNoPagesElement extends UmbElementMixin(LitElement) {
                 <p>${this.culture
 					? html`We couldn't find any publicly accessible pages to test for the <strong>${this.culture}</strong> language variant.`
 					: html`We couldn't find any publicly accessible pages to test.`}</p>
-                <p>Check that this language variant has published content, then try again using the "Rerun Tests" button below.</p>
+                <p>Check that this language variant has published content, or choose a different language variant using the "Start over" button below.</p>
                 <uui-button look="primary" color="default" @click="${this.onRunTests}" label="Rerun accessibility tests" class="c-summary__button" style="margin-top: 20px;">Rerun tests</uui-button>
+                <uui-button look="secondary" color="default" @click="${this.onStartOver}" label="Change settings and start over" class="c-summary__button" style="margin-top: 20px;">Start over</uui-button>
 			</uui-box>
 		</uui-scroll-container>
 		`;

@@ -71,17 +71,6 @@
 		document.body.appendChild(axeScript);
 	}
 
-	// No event.origin check here - this script has no reliable way to know the backoffice's real
-	// origin in advance (see assetOrigin above), so instead it relies entirely on the window.name
-	// activation gate at the top of this file: only the Accessibility Reporter parent that created
-	// this exact iframe could have set that name before navigating it here.
-	window.addEventListener('message', function (event) {
-		var data = event.data;
-		if (!data || data.source !== 'accessibility-reporter' || data.command !== 'run-test') return;
-		clearInterval(announceInterval);
-		runTest(data.testsToRun || [], data.nonce);
-	});
-
 	function announcePresence() {
 		// Lets Accessibility Reporter know this page has the bridge installed without needing to
 		// wait for a full test cycle. '*' for the same reason as respond() above.
@@ -93,4 +82,15 @@
 	announcePresence();
 	var announceInterval = setInterval(announcePresence, 300);
 	setTimeout(function () { clearInterval(announceInterval); }, 10000);
+
+	// No event.origin check here - this script has no reliable way to know the backoffice's real
+	// origin in advance (see assetOrigin above), so instead it relies entirely on the window.name
+	// activation gate at the top of this file: only the Accessibility Reporter parent that created
+	// this exact iframe could have set that name before navigating it here.
+	window.addEventListener('message', function (event) {
+		var data = event.data;
+		if (!data || data.source !== 'accessibility-reporter' || data.command !== 'run-test') return;
+		clearInterval(announceInterval);
+		runTest(data.testsToRun || [], data.nonce);
+	});
 }(window, document));

@@ -21,6 +21,8 @@ namespace AccessibilityReporter.Services
 			_settings = settings;
         }
 
+		public IEnumerable<TestableNode> All() => All(null);
+
 		public IEnumerable<TestableNode> All(string? culture)
 		{
 			using (var contextReference = _contextFactory.EnsureUmbracoContext())

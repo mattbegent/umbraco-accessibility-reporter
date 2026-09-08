@@ -298,7 +298,11 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 
 		if (this.pageState === PageState.NoPages) {
 			return html`
-				<ar-no-pages .onRunTests=${this.runTests.bind(this)} culture=${this._selectedCulture}></ar-no-pages>
+				<ar-no-pages
+				.onRunTests=${this.runTests.bind(this)}
+				.onStartOver=${() => { this.pageState = PageState.PreTest; }}
+				culture=${this._selectedCulture}
+				></ar-no-pages>
 			`;
 		}
 
