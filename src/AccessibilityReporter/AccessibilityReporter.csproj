@@ -57,13 +57,15 @@
     <!-- Project References -->
     <ItemGroup>
         <ProjectReference Include="..\AccessibilityReporter.Core\AccessibilityReporter.Core.csproj" />
+        <ProjectReference Include="..\AccessibilityReporter.Database\AccessibilityReporter.Database.csproj" />
         <ProjectReference Include="..\AccessibilityReporter.Services\AccessibilityReporter.Services.csproj" />
     </ItemGroup>
 
     <!-- Nuget References -->
     <ItemGroup>
-        <PackageReference Include="Umbraco.Cms.Web.Website" Version="17.0.0" />
-        <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
+        <PackageReference Include="Umbraco.Cms.Core" Version="17.2.1" />
+        <PackageReference Include="Umbraco.Cms.Web.Website" Version="17.2.1" />
+        <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.2.1" />
     </ItemGroup>
 
 </Project>

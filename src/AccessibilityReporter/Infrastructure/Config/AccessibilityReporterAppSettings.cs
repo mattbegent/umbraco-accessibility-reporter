@@ -15,6 +15,10 @@ namespace AccessibilityReporter.Infrastructure.Config
 
 		public bool RunTestsAutomatically { get; set; } = true;
 
+		public int HistoryRetentionDays { get; set; } = 365;
+
+		public int MaxCacheAgeHours { get; set; } = 24;
+
 		public bool IncludeIfNoTemplate { get; set; } = false;
 
 		public int MaxPages { get; set; } = 50;

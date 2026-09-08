@@ -6,7 +6,7 @@ import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/back
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { UMB_WORKSPACE_SPLIT_VIEW_CONTEXT } from '@umbraco-cms/backoffice/workspace';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
-import { AccessibilityReporterAppSettings, ConfigService } from "../api";
+import { AccessibilityReporterAppSettings, ConfigService, TestRun, TestRunService } from "../api";
 import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
 import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
 import { generalStyles } from "../Styles/general";
@@ -17,6 +17,7 @@ import { ACCESSIBILITY_REPORTER_MODAL_DETAIL } from "../Modals/detail/accessibil
 import { utils } from "xlsx";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import '../Components/ar-score';
+import '../Components/ar-score-history';
 
 @customElement('accessibility-reporter-workspaceview')
 export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(LitElement) {
@@ -68,7 +69,34 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	@state()
 	private passesOpen: boolean = false;
 
+	@state()
+	private history: TestRun[];
+
+	@state()
+	private _historyPageSize = 5;
+
+	@state()
+	private _historyCurrentPage = 1;
+
+	@state()
+	private _historyPagination: { currentPage: number; totalPages: number } = { currentPage: 1, totalPages: 1 };
+
 	private _workspaceContext?: typeof UMB_DOCUMENT_WORKSPACE_CONTEXT.TYPE;
+
+	private _currentCulture: string | null = null;
+
+	// Sentinel (rather than null) so the first observer emission - even if the culture resolves to
+	// null/invariant - is still recognised as "different from what history was fetched for".
+	private _historyCulture: string | null | undefined = undefined;
+
+	private _historyReadyResolve!: () => void;
+
+	// init() awaits this instead of a one-off getHistory() call, so the autorun behaviour below still
+	// waits for an initial history fetch, but that fetch is now solely triggered by the culture
+	// observer - see _refreshHistoryForCulture - removing the race between the two.
+	private _historyReadyPromise: Promise<void> = new Promise((resolve) => {
+		this._historyReadyResolve = resolve;
+	});
 
 	private _modalManagerContext: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
@@ -137,10 +165,14 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.config.testBaseUrl = this.getFallbackBaseUrl();
 		}
 
-		if(this.config.runTestsAutomatically) {
+		await this._historyReadyPromise;
+
+		const contentId = this._workspaceContext?.getUnique() as string;
+		const usedCache = contentId ? await this._tryLoadCachedResult(contentId) : false;
+
+		if (!usedCache && this.config.runTestsAutomatically) {
 			this.runTests(false);
 		}
-
 	}
 
 	private getLocalHostname() {
@@ -190,6 +222,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 		this.pageName = this._workspaceContext.getName() as string;
 
+		this.observe(this._workspaceContext.splitView.activeVariantsInfo, (activeVariants) => {
+			this._currentCulture = activeVariants[0]?.culture ?? null;
+			this._refreshHistoryForCulture();
+		});
+
 		this.observe(this._workspaceContext.unique, async (unique) => {
 			if (unique) {
 				await this._fetchDocumentUrls(unique);
@@ -223,6 +260,111 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return data;
 	}
 
+	// Sole trigger for loading/reloading history - called from the activeVariantsInfo observer so it
+	// always runs with the culture that's actually active, instead of racing a fetch fired from init()
+	// against the async context resolution that sets _currentCulture in the first place. Also means
+	// switching the active language variant (e.g. in split view) now refreshes the History panel
+	// instead of leaving it showing whichever culture happened to be current on first load.
+	private async _refreshHistoryForCulture() {
+		if (this._currentCulture === this._historyCulture) {
+			return;
+		}
+		this._historyCulture = this._currentCulture;
+
+		const contentId = this._workspaceContext?.getUnique() as string;
+		this.history = await this.getHistory(contentId);
+		this._historyCurrentPage = 1;
+		this._paginateHistory();
+		this._historyReadyResolve();
+	}
+
+	// Mirrors the pagination pattern already used for the pages table in ar-has-results.ts.
+	private _paginateHistory() {
+		const totalPages = Math.ceil((this.history?.length ?? 0) / this._historyPageSize) || 1;
+		let currentPage = this._historyCurrentPage;
+		if (currentPage < 1) {
+			currentPage = 1;
+		} else if (currentPage > totalPages) {
+			currentPage = totalPages;
+		}
+		this._historyCurrentPage = currentPage;
+		this._historyPagination = { currentPage, totalPages };
+	}
+
+	private _getHistoryPage(): TestRun[] {
+		if (!this.history?.length) return [];
+		const start = (this._historyCurrentPage - 1) * this._historyPageSize;
+		return this.history.slice(start, start + this._historyPageSize);
+	}
+
+	private _changeHistoryPage(pageNumber: number) {
+		this._historyCurrentPage = pageNumber;
+		this._paginateHistory();
+	}
+
+	private exportHistory() {
+		if (!this.history?.length) {
+			return;
+		}
+
+		try {
+			const rows = this.history.map((run: TestRun) => ({
+				date: format(run.runCompleted, "yyyy-MM-dd HH:mm:ss"),
+				score: run.score,
+				passed: run.passedCount,
+				failed: run.failedCount,
+				incomplete: run.incompleteCount
+			}));
+
+			const worksheet = utils.json_to_sheet(rows);
+			utils.sheet_add_aoa(worksheet, [["Date", "Score", "Passed", "Failed", "Incomplete"]], { origin: "A1" });
+			worksheet["!cols"] = [{ width: 22 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 12 }];
+
+			const workbook = utils.book_new();
+			utils.book_append_sheet(workbook, worksheet, "History");
+
+			AccessibilityReporterService.downloadWorkbook(workbook,
+				AccessibilityReporterService.formatFileName(`accessibility-history-${this.pageName}-${format(new Date(), "yyyy-MM-dd")}`) + ".xlsx");
+		} catch (error) {
+			console.error(error);
+			this._notificationContext?.peek('danger', { data: { message: 'An error occurred exporting the history. Please try again later.' } });
+		}
+	}
+
+	private async getHistory(contentId: string): Promise<TestRun[] | []> {
+		const { data, error } = await tryExecute(this, TestRunService.runs({
+			path: {
+				contentId: contentId,
+				culture: this._currentCulture ?? ""
+			}
+		}));
+
+		if (error) {
+			console.error(error);
+			this.pageState = PageState.Errored;
+			return [];
+		}
+
+		return data ?? [];
+	}
+
+	private async saveTestRun(contentId: string, contentCulture: string, contentHash: string,  resultPayload: string) {
+		const { data, error } = await tryExecute(this, TestRunService.create({
+			path: {
+				contentId: contentId,
+				culture: contentCulture,
+				contentHash: contentHash
+			},
+			body: resultPayload
+		}));
+
+		if (error) {
+			console.error(error);
+		}
+
+		console.log(data);
+	}
+
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
 		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning, this.config?.testsToRun ?? []);
 	}
@@ -247,13 +389,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		return this._urls[0]?.url || "/";
 	}
 
-	private async runTests(showTestRunning: boolean): Promise<void> {
-
-		this.pageState = PageState.Loading;
-
-		// Ensure we have document URLs before running tests
+	// Shared by runTests() and _tryLoadCachedResult() so both resolve the same tested culture and
+	// URL - ensuring document URLs are fetched first, then accounting for split view panels.
+	private async _resolveTestTarget(): Promise<{ culture: string | null; url: string }> {
+		// Ensure we have document URLs before resolving a path
 		if (!this._urls || this._urls.length === 0) {
-			// Try to fetch URLs if we have a workspace context
 			if (this._workspaceContext?.getUnique()) {
 				try {
 					await this._fetchDocumentUrls(this._workspaceContext.getUnique()!);
@@ -274,8 +414,61 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			activeCulture = routeCulture;
 		}
 		const pathToTest = this._getUrlForCulture(activeCulture);
-		this._testedCulture = activeCulture;
-		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
+		const url = new URL(pathToTest, this.config?.testBaseUrl).toString();
+		return { culture: activeCulture, url };
+	}
+
+	// Skips a fresh live test when the last stored run already reflects the current content: its
+	// contentHash still matches, and it isn't older than config.maxCacheAgeHours (0 disables the
+	// age check, leaving the content hash as the sole staleness signal). Falls back to a live run
+	// in init() when the cache is missing or stale.
+	private async _tryLoadCachedResult(contentId: string): Promise<boolean> {
+		if (!this.history?.length) return false;
+
+		const lastRun = this.history[0];
+		let payload: any;
+		try {
+			payload = JSON.parse(lastRun.resultPayload ?? '{}');
+		} catch {
+			return false;
+		}
+
+		const currentContentHash = await this.#computeContentHash(contentId);
+		if (!payload.contentHash || payload.contentHash !== currentContentHash) {
+			return false;
+		}
+
+		const maxAgeHours = this.config?.maxCacheAgeHours ?? 0;
+		if (maxAgeHours > 0) {
+			const ageMs = Date.now() - new Date(lastRun.runCompleted).getTime();
+			if (ageMs > maxAgeHours * 60 * 60 * 1000) {
+				return false;
+			}
+		}
+
+		const { culture, url } = await this._resolveTestTarget();
+		this._testedCulture = culture;
+		this.testURL = url;
+		this._crossOriginHostname = null;
+
+		this.results = payload;
+		this.score = lastRun.score;
+		const timestamp = payload.timestamp ?? lastRun.runCompleted;
+		this.testTime = format(timestamp, "HH:mm:ss");
+		this.testDate = format(timestamp, "MMMM do yyyy");
+		this.pageState = PageState.Loaded;
+
+		return true;
+	}
+
+	private async runTests(showTestRunning: boolean): Promise<void> {
+
+		const isRerun = this.results != null;
+		this.pageState = PageState.Loading;
+
+		const { culture, url } = await this._resolveTestTarget();
+		this._testedCulture = culture;
+		this.testURL = url;
 		this._crossOriginHostname = null;
 
 		try {
@@ -288,6 +481,18 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			this.pageState = PageState.Loaded;
 			this.testTime = format(testResponse.timestamp, "HH:mm:ss");
 			this.testDate = format(testResponse.timestamp, "MMMM do yyyy");
+
+			const contentId = this._workspaceContext?.getUnique() as string;
+			const contentHash = await this.#computeContentHash(contentId, isRerun);
+			const lastRunHash = this.#getLastRunHash();
+			if (contentHash !== lastRunHash) {
+				const payload = { ...this.results, contentHash, culture: this._currentCulture };
+				await this.saveTestRun(contentId, this._currentCulture ?? "", contentHash, JSON.stringify(payload));
+				this._historyCulture = this._currentCulture;
+				this.history = await this.getHistory(contentId);
+				this._historyCurrentPage = 1;
+				this._paginateHistory();
+			}
 		} catch (error) {
 			if (this.isCrossOriginTest(this.testURL)) {
 				this._crossOriginHostname = new URL(this.testURL).hostname;
@@ -296,6 +501,45 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			console.error(error);
 		}
 
+	}
+
+	async #computeContentHash(contentId: string, includeTimestamp = false): Promise<string> {
+		const data = this._workspaceContext?.getData();
+		const values = [...(data?.values ?? [])].sort((a, b) => a.alias.localeCompare(b.alias));
+		const timestamp = includeTimestamp ? new Date().toISOString() : '';
+		const input = contentId + timestamp + JSON.stringify(values);
+		const encoded = new TextEncoder().encode(input);
+		const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+		return Array.from(new Uint8Array(hashBuffer))
+			.map(b => b.toString(16).padStart(2, '0'))
+			.join('');
+	}
+
+	#getLastRunHash(): string | undefined {
+		if (!this.history?.length) return undefined;
+		try {
+			// history is ordered newest-first (see TestRunSqlRepository.Runs), so the most recent run
+			// is index 0, not the last index - comparing against the last index compared against the
+			// OLDEST run instead, meaning re-running on unchanged content never actually deduped.
+			const lastPayload = JSON.parse(this.history[0].resultPayload ?? '{}');
+			return lastPayload.contentHash;
+		} catch {
+			return undefined;
+		}
+	}
+
+	#getTrend(current: number, previous: number | undefined, higherIsBetter: boolean): 'improved' | 'worsened' | 'same' | null {
+		if (previous === undefined) return null;
+		if (current === previous) return 'same';
+		const improved = higherIsBetter ? current > previous : current < previous;
+		return improved ? 'improved' : 'worsened';
+	}
+
+	#renderTrend(trend: 'improved' | 'worsened' | 'same' | null) {
+		if (trend === null) return null;
+		if (trend === 'improved') return html`<span class="c-trend c-trend--improved" aria-label="Improved">&uarr;</span>`;
+		if (trend === 'worsened') return html`<span class="c-trend c-trend--worsened" aria-label="Worsened">&darr;</span>`;
+		return html`<span class="c-trend c-trend--same" aria-label="No change">&rarr;</span>`;
 	}
 
 	private sortResponse(results: any) {
@@ -491,6 +735,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		}
 
 		if (this.pageState === PageState.Loaded) {
+			// history is newest-first - see the note in #getLastRunHash().
+			const lastRun = this.history?.length > 0 ? this.history[0] : undefined;
 			return html`
 			<div>
 				<uui-box style="margin-bottom: 20px;">
@@ -506,24 +752,30 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 					<div class="c-summary__container">
 						<div class="c-summary c-summary--issues">
-							<ar-score score="${this.score}"></ar-score>
+							<ar-score score="${this.score}">
+								${this.#renderTrend(this.#getTrend(this.score, lastRun?.score, true))}
+							</ar-score>
+
 						</div>
 						<div class="c-summary c-summary--issues">
 							<div class="c-summary__circle">
 								${this.results.violations.length}
 								<span class="c-summary__title">Failed</span>
+								${this.#renderTrend(this.#getTrend(this.results.violations.length, lastRun?.failedCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--incomplete">
 							<div class="c-summary__circle">
 								${this.results.incomplete.length}
 								<span class="c-summary__title">Incomplete</span>
+								${this.#renderTrend(this.#getTrend(this.results.incomplete.length, lastRun?.incompleteCount, false))}
 							</div>
 						</div>
 						<div class="c-summary c-summary--passed">
 							<div class="c-summary__circle">
 								${this.results.passes.length}
 								<span class="c-summary__title">Passed</span>
+								${this.#renderTrend(this.#getTrend(this.results.passes.length, lastRun?.passedCount, true))}
 							</div>
 						</div>
 					</div>
@@ -709,6 +961,51 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 					</div>
 				</uui-box>
 
+				${this.history.length > 0 ? html`
+					<uui-box style="margin-bottom: 20px;">
+						<div slot="headline" class="c-title__group">
+							<div class="c-circle">
+								<uui-icon name="icon-history" aria-hidden="true"></uui-icon>
+							</div>
+							<h2 class="c-title">History</h2>
+						</div>
+						<div class="c-history">
+							<div class="c-history__item">
+								<uui-table>
+									<uui-table-head>
+										<uui-table-head-cell>Date</uui-table-head-cell>
+										<uui-table-head-cell>Score</uui-table-head-cell>
+										<uui-table-head-cell>Passed</uui-table-head-cell>
+										<uui-table-head-cell>Failed</uui-table-head-cell>
+										<uui-table-head-cell>Incomplete</uui-table-head-cell>
+									</uui-table-head>
+									${this._getHistoryPage().map((run: TestRun) => html`
+									<uui-table-row>
+										<uui-table-cell>${format(run.runCompleted, "MMMM do yyyy HH:mm:ss")}</uui-table-cell>
+										<uui-table-cell>${run.score}</uui-table-cell>
+										<uui-table-cell>${run.passedCount}</uui-table-cell>
+										<uui-table-cell>${run.failedCount}</uui-table-cell>
+										<uui-table-cell>${run.incompleteCount}</uui-table-cell>
+									</uui-table-row>
+									`)}
+								</uui-table>
+								<umb-pagination
+									page-number="${this._historyPagination.currentPage}"
+									total-pages="${this._historyPagination.totalPages}"
+									on-next="${this._changeHistoryPage.bind(this)}"
+									on-prev="${this._changeHistoryPage.bind(this)}"
+									on-change="${this._changeHistoryPage.bind(this)}"
+									on-go-to-page="${this._changeHistoryPage.bind(this)}">
+								</umb-pagination>
+								<uui-button look="secondary" color="default" @click="${this.exportHistory}" label="Export history as an xlsx file" class="c-summary__button">Export history</uui-button>
+							</div>
+							<div class="c-history__item">
+								<ar-score-history .history="${this.history}"></ar-score-history>
+							</div>
+						</div>
+					</uui-box>
+				`: null}
+
 				<uui-box>
 					<div slot="headline" class="c-title__group">
 						<div class="c-circle">
@@ -754,6 +1051,15 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
         display: block;
         padding: 24px;
       }
+      .c-trend {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: bold;
+        margin-top: 4px;
+      }
+      .c-trend--improved { color: #3d8f3d; }
+      .c-trend--worsened { color: #c0392b; }
+      .c-trend--same { color: #888; }
     `,
 	];
 }

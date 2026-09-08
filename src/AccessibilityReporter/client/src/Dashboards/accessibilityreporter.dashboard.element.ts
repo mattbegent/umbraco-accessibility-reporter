@@ -3,7 +3,7 @@ import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from '@umbraco-cms/backoffice/current-user';
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
-import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummaryReadable } from '../api';
+import { AccessibilityReporterAppSettings, ConfigService, DirectoryService, NodeSummaryReadable, TestRunService } from '../api';
 import { UmbLanguageCollectionRepository } from '@umbraco-cms/backoffice/language';
 import type { UmbLanguageDetailModel } from '@umbraco-cms/backoffice/language';
 
@@ -134,6 +134,11 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			try {
 				this.currentTestUrl = page.url;
 				const currentResult = await this.getTestResult(page.url);
+				// Fire-and-forget: persist the raw (unreduced) result for history/trend purposes before
+				// reduceTestResult() strips out passes/incomplete below - those are needed server-side to
+				// compute passedCount/incompleteCount. Not awaited so a slow/failed history save can't
+				// hold up or fail the actual scan.
+				this.saveTestRun(page.guid, currentResult);
 				let resultFormatted = this.reduceTestResult(currentResult);
 				resultFormatted.score = AccessibilityReporterService.getPageScore(resultFormatted);
 				resultFormatted.page = page;
@@ -213,6 +218,29 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 
 	private async getTestResult(testUrl: string) {
 		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, true, this.config?.testsToRun ?? []);
+	}
+
+	private async saveTestRun(contentId: string, rawTestResult: any) {
+		try {
+			const culture = this._selectedCulture || '';
+			// Unlike the single-page workspace view, a full-site scan has no access to a document
+			// workspace's field values, so there's no meaningful "did the content change since last
+			// time" fingerprint to dedupe against here - every scan is a deliberate re-test, so always
+			// record a new run against a fresh, unique hash.
+			const contentHash = crypto.randomUUID();
+			const payload = { ...rawTestResult, contentHash, culture: this._selectedCulture || undefined };
+
+			const { error } = await tryExecute(this, TestRunService.create({
+				path: { contentId, culture, contentHash },
+				body: JSON.stringify(payload)
+			}));
+
+			if (error) {
+				console.error('Error saving test run history:', error);
+			}
+		} catch (error) {
+			console.error('Error saving test run history:', error);
+		}
 	}
 
 	private reduceTestResult(testResult: any) {

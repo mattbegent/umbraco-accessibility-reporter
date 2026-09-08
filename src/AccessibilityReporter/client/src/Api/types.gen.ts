@@ -7,12 +7,21 @@ export type AccessibilityReporterAppSettings = {
         [key: string]: string;
     };
     runTestsAutomatically: boolean;
+    maxCacheAgeHours: number;
     includeIfNoTemplate: boolean;
     maxPages: number;
     userGroups: Array<string>;
     testsToRun: Array<string>;
     excludedDocTypes: Array<string>;
 };
+
+export enum EventMessageTypeModel {
+    DEFAULT = 'Default',
+    INFO = 'Info',
+    ERROR = 'Error',
+    SUCCESS = 'Success',
+    WARNING = 'Warning'
+}
 
 export type NodeSummaryReadable = {
     readonly guid: string;
@@ -30,6 +39,22 @@ export type NodeSummaryWritable = {
     url: string;
     rootId: string;
     rootName: string;
+};
+
+export type NotificationHeaderModel = {
+    message: string;
+    category: string;
+    type: EventMessageTypeModel;
+};
+
+export type TestRun = {
+    contentId: string;
+    runCompleted: string;
+    score: number;
+	failedCount: number;
+	passedCount: number;
+	incompleteCount: number;
+    resultPayload: string;
 };
 
 export type CurrentData = {
@@ -79,6 +104,119 @@ export type PagesResponses = {
 };
 
 export type PagesResponse = PagesResponses[keyof PagesResponses];
+
+export type CreateData = {
+    body?: string;
+    path: {
+        contentId: string;
+		culture: string;
+		contentHash: string;
+    };
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/test-run/{contentId}/{culture}/{contentHash}';
+};
+
+export type CreateErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type CreateResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
+
+export type RunsData = {
+    body?: never;
+    path: {
+        contentId: string;
+		culture: string;
+    };
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/test-runs/{contentId}/{culture}';
+};
+
+export type RunsErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type RunsResponses = {
+    /**
+     * OK
+     */
+    200: Array<TestRun>;
+};
+
+export type RunsResponse = RunsResponses[keyof RunsResponses];
+
+export type SiteSummary = {
+    rootId: string;
+    rootName: string;
+};
+
+export type SiteTrendPoint = {
+    date: string;
+    averageScore: number;
+    pagesTested: number;
+    totalViolations: number;
+};
+
+export type SitesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/umbraco/accessibilityreporter/api/v1/site-history/sites';
+};
+
+export type SitesErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type SitesResponses = {
+    /**
+     * OK
+     */
+    200: Array<SiteSummary>;
+};
+
+export type SitesResponse = SitesResponses[keyof SitesResponses];
+
+export type TrendData = {
+    body?: never;
+    path: {
+        rootContentId: string;
+    };
+    query?: {
+        culture?: string;
+    };
+    url: '/umbraco/accessibilityreporter/api/v1/site-history/{rootContentId}/trend';
+};
+
+export type TrendErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+};
+
+export type TrendResponses = {
+    /**
+     * OK
+     */
+    200: Array<SiteTrendPoint>;
+};
+
+export type TrendResponse = TrendResponses[keyof TrendResponses];
 
 export type ClientOptions = {
     baseUrl: 'https://localhost:44312' | (string & {});

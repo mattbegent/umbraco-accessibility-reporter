@@ -313,4 +313,20 @@ export const generalStyles = css`
 		border-width: 0;
 	}
 
+	.c-history {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.c-history__item {
+		flex: 1;
+	}
+
+	@media (min-width: 768px) {
+		.c-history {
+			flex-direction: row;
+		}
+	}
+
   `;

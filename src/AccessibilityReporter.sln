@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33122.133
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11415.280 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AccessibilityReporter", "AccessibilityReporter\AccessibilityReporter.csproj", "{9FC7250D-D3A5-45A6-B9DC-54E633516033}"
 EndProject
@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		build.ps1 = build.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessibilityReporter.Website18", "AccessibilityReporter.Website18\AccessibilityReporter.Website18.csproj", "{799390ED-C1B3-4829-933A-43FEF839F35E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessibilityReporter.Database", "AccessibilityReporter.Database\AccessibilityReporter.Database.csproj", "{1A877589-2F2E-4423-B532-39285F45B850}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -76,18 +76,18 @@ Global
 		{2B40EFD1-780C-4E28-BDC6-BB0712F7DFE9}.Release|x64.Build.0 = Release|Any CPU
 		{2B40EFD1-780C-4E28-BDC6-BB0712F7DFE9}.Release|x86.ActiveCfg = Release|Any CPU
 		{2B40EFD1-780C-4E28-BDC6-BB0712F7DFE9}.Release|x86.Build.0 = Release|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Debug|x64.Build.0 = Debug|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Debug|x86.Build.0 = Debug|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Release|x64.ActiveCfg = Release|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Release|x64.Build.0 = Release|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Release|x86.ActiveCfg = Release|Any CPU
-		{799390ED-C1B3-4829-933A-43FEF839F35E}.Release|x86.Build.0 = Release|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Debug|x64.Build.0 = Debug|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Debug|x86.Build.0 = Debug|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Release|x64.ActiveCfg = Release|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Release|x64.Build.0 = Release|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Release|x86.ActiveCfg = Release|Any CPU
+		{1A877589-2F2E-4423-B532-39285F45B850}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
