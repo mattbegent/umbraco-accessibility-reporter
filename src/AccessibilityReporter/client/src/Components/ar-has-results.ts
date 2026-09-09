@@ -473,7 +473,14 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 			let selectedCulture = 'invariant';
 
-			if (availableCultures.length === 0) {
+			const testedCulture = this.results?.culture;
+			const testedCultureMatch = testedCulture
+				? availableCultures.find(culture => culture.toLowerCase() === testedCulture.toLowerCase())
+				: undefined;
+
+			if (testedCultureMatch) {
+				selectedCulture = testedCultureMatch;
+			} else if (availableCultures.length === 0) {
 				selectedCulture = 'invariant';
 			} else if (availableCultures.length === 1) {
 				selectedCulture = availableCultures[0];
