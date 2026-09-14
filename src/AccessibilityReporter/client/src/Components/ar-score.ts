@@ -42,6 +42,7 @@ export class ARScoreElement extends UmbElementMixin(LitElement) {
                 <div class="c-score__text">
                     <span class="c-score__text-number">${this.score}</span>
                     ${!this.hideScoreText ? html`<span class="c-score__text-title">Score</span>` : ``}
+					<slot></slot>
                 </div>
             </div>
 		`;
