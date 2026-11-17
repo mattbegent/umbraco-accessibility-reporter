@@ -151,7 +151,7 @@ Accessibility Reporter supports Umbraco installs with more than one root content
 For each page, Accessibility Reporter works out which URL to test like this:
 
 1. **Ask Umbraco for the page's URL** in the language being tested. In the dashboard, a page Umbraco can't give a URL to (no template, no domain, or not published in that language) is skipped.
-2. **If the URL includes a domain** (a domain is bound to the site in Umbraco), Umbraco's URL is used, with one exception. If the page also has a URL on the domain you're using for the backoffice, that URL is used instead, so the test stays on the backoffice's domain. The exception doesn't apply if `ApiUrl` or `TestBaseUrl` is set, or the site has a `SiteBaseUrls` entry, because setting any of these means you want to test somewhere else.
+2. **If the URL includes a domain** (a domain is bound to the site in Umbraco), Umbraco's URL is used, with one exception. If the page also has a URL on the domain you're using for the backoffice, that URL is used instead, so the test stays on the backoffice's domain. For single page tests, if Umbraco doesn't list one (for example because a custom URL provider changes the page's URL), the site root's backoffice-domain URL is used with the page's path. The exception doesn't apply if `ApiUrl` or `TestBaseUrl` is set, or the site has a `SiteBaseUrls` entry, because setting any of these means you want to test somewhere else.
 3. **If the URL has no domain** (no domain is bound to the site), the path is added to a base URL. The first one that's set is used:
     1. The site's `SiteBaseUrls` entry.
     2. `TestBaseUrl`.
