@@ -9,6 +9,7 @@ export type AccessibilityReporterAppSettings = {
     runTestsAutomatically: boolean;
     includeIfNoTemplate: boolean;
     maxPages: number;
+    testDelay: number;
     userGroups: Array<string>;
     testsToRun: Array<string>;
     excludedDocTypes: Array<string>;

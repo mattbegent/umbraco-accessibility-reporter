@@ -7,7 +7,7 @@ import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document
 import { UMB_WORKSPACE_SPLIT_VIEW_CONTEXT } from '@umbraco-cms/backoffice/workspace';
 import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { AccessibilityReporterAppSettings, ConfigService } from "../api";
-import { UmbDocumentUrlRepository } from "@umbraco-cms/backoffice/document";
+import { UmbDocumentUrlRepository, UmbDocumentTreeRepository, UMB_DOCUMENT_ENTITY_TYPE } from "@umbraco-cms/backoffice/document";
 import type { UmbDocumentUrlModel } from "@umbraco-cms/backoffice/document";
 import { generalStyles } from "../Styles/general";
 import AccessibilityReporterAPIService from "../Services/accessibility-reporter-api.service";
@@ -76,6 +76,11 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 
 	private _documentUrlRepository = new UmbDocumentUrlRepository(this);
 
+	// config.testBaseUrl is later replaced with a guessed fallback, so keep the configured value.
+	private _configuredTestBaseUrl: string = "";
+
+	private _preferBackofficeOrigin: boolean = true;
+
 	constructor() {
 		super();
 		this.pageState = PageState.ManuallyRun;
@@ -133,6 +138,8 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			return;
 		}
 
+		this._configuredTestBaseUrl = this.config.testBaseUrl ?? "";
+
 		if (!this.config?.testBaseUrl) {
 			this.config.testBaseUrl = this.getFallbackBaseUrl();
 		}
@@ -153,12 +160,62 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	// any multisite install where a site's domain differs from the backoffice's.
 	private getResolvedAbsoluteUrl(possibleUrls?: Array<UmbDocumentUrlModel>): string | null {
 		if (!possibleUrls) return null;
-		for (const possibleUrl of possibleUrls) {
-			if (possibleUrl.url && AccessibilityReporterService.isAbsoluteURL(possibleUrl.url)) {
-				return possibleUrl.url;
-			}
+		const absoluteUrls = possibleUrls
+			.map(possibleUrl => possibleUrl.url)
+			.filter((url): url is string => !!url && AccessibilityReporterService.isAbsoluteURL(url));
+		return (this._preferBackofficeOrigin ? absoluteUrls.find(url => this.isSameOriginAsBackoffice(url)) : undefined)
+			?? absoluteUrls[0] ?? null;
+	}
+
+	private isSameOriginAsBackoffice(url: string): boolean {
+		try {
+			return new URL(url, location.href).origin === location.origin;
+		} catch {
+			return false;
 		}
-		return null;
+	}
+
+	// A culture can have several hostnames (e.g. admin and www). Testing one that isn't the
+	// backoffice's own causes CORS errors, so use the backoffice's one if the page has it.
+	private pickBestUrl(candidates: Array<UmbDocumentUrlModel>): string | undefined {
+		const urls = candidates.map(candidate => candidate.url).filter((url): url is string => !!url);
+		if (!this._preferBackofficeOrigin) return urls[0];
+		return urls.find(url => this.isSameOriginAsBackoffice(url)) ?? urls[0];
+	}
+
+	// Same rule as NodeUrlService.ShouldPreferRequestOrigin on the server.
+	private _shouldPreferBackofficeOrigin(siteBaseUrl: string | null | undefined): boolean {
+		if (this.config?.apiUrl || this._configuredTestBaseUrl) return false;
+		// undefined means the site couldn't be identified, so keep Umbraco's URL.
+		return siteBaseUrl === null;
+	}
+
+	// Returns null if the site has no SiteBaseUrls entry, or undefined if the site root lookup fails.
+	private async _getSiteBaseUrl(): Promise<string | null | undefined> {
+		const siteBaseUrls = Object.entries(this.config?.siteBaseUrls ?? {})
+			.filter(([, baseUrl]) => !!baseUrl?.trim());
+		if (siteBaseUrls.length === 0) return null;
+
+		const rootKey = await this._getRootKey();
+		if (!rootKey) return undefined;
+		return siteBaseUrls.find(([key]) => key.toLowerCase() === rootKey.toLowerCase())?.[1].trim() ?? null;
+	}
+
+	private async _getRootKey(): Promise<string | null> {
+		const unique = this._workspaceContext?.getUnique();
+		if (!unique) return null;
+		try {
+			const treeRepository = new UmbDocumentTreeRepository(this);
+			const { data, error } = await treeRepository.requestTreeItemAncestors({
+				treeItem: { unique, entityType: UMB_DOCUMENT_ENTITY_TYPE }
+			});
+			if (error || !data) return null;
+			// Ancestors run from the root down, so the first one is the site root.
+			return data[0]?.unique ?? unique;
+		} catch (error) {
+			console.error('Failed to look up the site root for this document:', error);
+			return null;
+		}
 	}
 
 	private getFallbackBaseUrl() {
@@ -224,7 +281,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	}
 
 	private async getTestResult(testUrl: string, showTestRunning: boolean = true) {
-		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning, this.config?.testsToRun ?? []);
+		return this.config?.apiUrl ? AccessibilityReporterAPIService.getIssues(this.config, testUrl, this.currentUser?.languageIsoCode ?? "") : AccessibilityReporterService.runTest(this.shadowRoot, testUrl, showTestRunning, this.config?.testsToRun ?? [], this.config?.testDelay);
 	}
 
 	// The split view manager tracks the active culture per panel index for both split and
@@ -242,12 +299,13 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 	private _getUrlForCulture(culture: string | null): string {
 		if (!this._urls || this._urls.length === 0) return "/";
 		if (culture) {
-			const match = this._urls.find(u =>
+			const matches = this._urls.filter(u =>
 				u.culture?.toLowerCase() === culture.toLowerCase()
 			);
-			if (match?.url) return match.url;
+			const match = this.pickBestUrl(matches);
+			if (match) return match;
 		}
-		return this._urls[0]?.url || "/";
+		return this.pickBestUrl(this._urls) || "/";
 	}
 
 	private async runTests(showTestRunning: boolean): Promise<void> {
@@ -267,10 +325,14 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			}
 		}
 
+		const siteBaseUrl = await this._getSiteBaseUrl();
+		this._preferBackofficeOrigin = this._shouldPreferBackofficeOrigin(siteBaseUrl);
+
 		const activeCulture = this._getActiveCulture();
 		const pathToTest = this._getUrlForCulture(activeCulture);
 		this._testedCulture = activeCulture;
-		this.testURL = new URL(pathToTest, this.config?.testBaseUrl).toString();
+		// Only used for paths with no domain. SiteBaseUrls wins over TestBaseUrl, as on the server.
+		this.testURL = AccessibilityReporterService.joinBaseUrl(siteBaseUrl || this.config?.testBaseUrl, pathToTest);
 		this._crossOriginHostname = null;
 
 		try {

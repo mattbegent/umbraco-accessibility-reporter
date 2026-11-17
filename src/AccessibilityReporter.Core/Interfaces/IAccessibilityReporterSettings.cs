@@ -19,6 +19,11 @@
 
 		int MaxPages { get; set; }
 
+		/// <summary>
+		/// Milliseconds to wait after a page loads before testing, so entrance animations can finish.
+		/// </summary>
+		int TestDelay { get; set; }
+
 		HashSet<string> UserGroups { get; set; }
 
 		HashSet<string> TestsToRun { get; set; }

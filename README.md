@@ -40,6 +40,7 @@ You can run Accessibility Reporter without adding any configuration options, as 
 - **RunTestsAutomatically** (optional) - By default Accessibility Reporter runs as soon as you open up a content node. If you instead want Accessibility Reporter to run on demand via a button click, set this option to false.
 - **IncludeIfNoTemplate** (optional) - By default Accessibility Reporter does not run on content without templates. However, if you are using Umbraco in a headless way you will was to set this to true.
 - **MaxPages** (optional) - This sets the maximum number of pages that the dashboard will test against. The default is set to 50.
+- **TestDelay** (optional) - How long, in milliseconds, to wait after a page has loaded before running the tests. The default is 500. See "Pages with animations" below.
 
 ### Example options
 
@@ -65,7 +66,8 @@ You can run Accessibility Reporter without adding any configuration options, as 
             "excludedPage"
         ],
         "RunTestsAutomatically": false,
-        "MaxPages": 20
+        "MaxPages": 20,
+        "TestDelay": 1500
     }
 
 ### Defaults
@@ -98,8 +100,23 @@ All options are completely optional and if you don't set them, they default to t
         ],
         "RunTestsAutomatically": true,
         "IncludeIfNoTemplate": false,
-        "MaxPages": 50
+        "MaxPages": 50,
+        "TestDelay": 500
     }
+
+## Pages with animations
+
+Many sites fade or slide content in after the page loads. If the tests ran straight away, elements that are still part way through fading in would be measured while partly transparent, which reports colour contrast failures that aren't real (for example dark text measured as pale grey).
+
+To avoid this, Accessibility Reporter measures the settled page:
+
+1. It waits for the page's `load` event.
+2. It then waits for `TestDelay` milliseconds (default 500), which gives scripts time to start any entrance animations.
+3. It then waits for any running CSS animations, CSS transitions and Web Animations to finish (using `document.getAnimations()`), for up to 5 seconds. Animations that loop forever, such as spinners or carousels, are ignored.
+
+Real contrast failures are still reported, because the colours are measured once animations have finished. If some content on your site starts animating later than this (for example after a long delay), increase `TestDelay`. If your site has no entrance animations you can lower it, or set it to `0`, to make dashboard runs faster.
+
+The delay applies to tests run in the browser, including on sites that use the bridge script described in "Testing sites on a different domain". It does not apply when `ApiUrl` is set, because the external API controls when its own tests run.
 
 ## How to use with a headless setup
 
@@ -124,8 +141,28 @@ Accessibility Reporter supports Umbraco installs with more than one root content
 - If a selected language isn't supported by a particular site, that site's pages are skipped for that run rather than tested with a broken URL.
 - Dashboard results and exports show which site each page belongs to whenever more than one site is present in the results.
 - If your root nodes have domains bound to them in Umbraco, per-site URLs are resolved automatically - no configuration needed.
+- If more than one hostname is bound to the same language (for example an admin domain and the public `www` domain), pages are tested on the backoffice's own hostname where possible, to avoid cross-origin (CORS) errors. See "How the test URL is chosen" below.
+- Sites with no pages that can be tested (for example no templates, or no URLs for the selected language) are left out of the results and the dashboard's site filter.
 - If you run a headless multisite install with no domains bound to root nodes, use `SiteBaseUrls` (see Options above) to set a base URL per site instead of `TestBaseUrl`.
 - If a site's public domain is genuinely different to your Umbraco backoffice's own domain, in-browser testing can't cross that boundary directly for browser security reasons (the same restriction described in "How to use with a headless setup") - see "Testing sites on a different domain" below for how to make it work anyway.
+
+## How the test URL is chosen
+
+For each page, Accessibility Reporter works out which URL to test like this:
+
+1. **Ask Umbraco for the page's URL** in the language being tested. In the dashboard, a page Umbraco can't give a URL to (no template, no domain, or not published in that language) is skipped.
+2. **If the URL includes a domain** (a domain is bound to the site in Umbraco), Umbraco's URL is used, with one exception. If the page also has a URL on the domain you're using for the backoffice, that URL is used instead, so the test stays on the backoffice's domain. The exception doesn't apply if `ApiUrl` or `TestBaseUrl` is set, or the site has a `SiteBaseUrls` entry, because setting any of these means you want to test somewhere else.
+3. **If the URL has no domain** (no domain is bound to the site), the path is added to a base URL. The first one that's set is used:
+    1. The site's `SiteBaseUrls` entry.
+    2. `TestBaseUrl`.
+    3. For single page tests, the domain of one of the page's other URLs, if it has one.
+    4. The backoffice's own domain.
+
+Then the test runs in one of three ways:
+
+- **`ApiUrl` is set:** the URL is sent to your external API, which runs the test.
+- **The URL is on the same domain as the backoffice:** the page is loaded in a frame inside the backoffice and tested directly.
+- **The URL is on a different domain:** the page is tested only if it has the bridge script installed. See "Testing sites on a different domain" below.
 
 ## Testing sites on a different domain
 

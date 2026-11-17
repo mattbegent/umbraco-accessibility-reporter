@@ -6,6 +6,15 @@ import { write, WorkBook } from 'xlsx';
 export const AR_BRIDGE_PRESENCE_TIMEOUT_MS = 3000;
 export const AR_BRIDGE_RESULTS_TIMEOUT_MS = 15000;
 
+// Keep AR_MAX_ANIMATION_WAIT_MS in sync with MAX_ANIMATION_WAIT_MS in run-tests.js and the bridge script.
+export const AR_DEFAULT_TEST_DELAY_MS = 500;
+export const AR_MAX_ANIMATION_WAIT_MS = 5000;
+
+// Longest a test can wait for the page to settle, which test timeouts need to allow for.
+export function getSettleBudgetMs(testDelay?: number) {
+    return Math.max(0, testDelay ?? AR_DEFAULT_TEST_DELAY_MS) + AR_MAX_ANIMATION_WAIT_MS;
+}
+
 // Per-origin cache of whether accessibility-reporter-bridge.js has been seen there, so a bulk run
 // against many pages on a bridge-absent cross-origin site only pays the presence timeout once.
 // Only ever set to 'absent' after a full presence-timeout with zero messages received - a single
@@ -22,7 +31,7 @@ export default class AccessibilityReporterService {
 
     static impacts = ["minor", "moderate", "serious", "critical"];
 
-    static async runTest(rootElement: any, testUrl: string, showWhileRunning: boolean, testsToRun: string[]) {
+    static async runTest(rootElement: any, testUrl: string, showWhileRunning: boolean, testsToRun: string[], testDelay?: number) {
 
         return new Promise(async (resolve, reject) => {
 
@@ -91,7 +100,7 @@ export default class AccessibilityReporterService {
                     if (resultsTimer) return;
                     resultsTimer = setTimeout(() => {
                         settle(() => reject('Timed out waiting for accessibility-reporter-bridge test results.'));
-                    }, AR_BRIDGE_RESULTS_TIMEOUT_MS);
+                    }, AR_BRIDGE_RESULTS_TIMEOUT_MS + getSettleBudgetMs(testDelay));
                 }
 
                 const handleTestResultMessage = function (event: any) {
@@ -192,7 +201,7 @@ export default class AccessibilityReporterService {
                         }
 
                         testIframe?.contentWindow?.postMessage(
-                            { source: 'accessibility-reporter', command: 'run-test', testsToRun, nonce },
+                            { source: 'accessibility-reporter', command: 'run-test', testsToRun, nonce, testDelay: testDelay ?? AR_DEFAULT_TEST_DELAY_MS },
                             expectedOrigin
                         );
                     }
@@ -363,6 +372,21 @@ export default class AccessibilityReporterService {
 
     static isAbsoluteURL(urlString: string) {
         return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
+    }
+
+    // Adds a page path onto a base URL, keeping any path in the base (e.g. https://example.com/site-a),
+    // the same way NodeUrlService does on the server. Absolute page URLs are returned as they are.
+    static joinBaseUrl(baseUrl: string | undefined, pagePath: string) {
+        if (!baseUrl || AccessibilityReporterService.isAbsoluteURL(pagePath) || pagePath.startsWith('//')) {
+            return new URL(pagePath, baseUrl || location.href).toString();
+        }
+        const path = pagePath.startsWith('/') ? pagePath : '/' + pagePath;
+        return new URL(baseUrl.replace(/\/+$/, '') + path).toString();
+    }
+
+    // Umbraco returns "#" for content it can't route (no template/domain, or culture not published).
+    static isTestableUrl(url: string | null | undefined) {
+        return !!url && url.trim() !== '' && !url.startsWith('#');
     }
 
     static getPageScore(result: any) {

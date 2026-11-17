@@ -21,7 +21,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Copyright>Matt Begent</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReleaseNotes>Added multisite support and added another way of testing headless setups.</PackageReleaseNotes>
+        <PackageReleaseNotes>Waits for animations to finish before testing, tests on the backoffice domain when a page has several hostnames, hides sites with nothing to test, and updates axe-core to 4.14.1.</PackageReleaseNotes>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
