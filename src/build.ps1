@@ -6,23 +6,14 @@ $servicesProjectFile = "./AccessibilityReporter.Services/AccessibilityReporter.S
 $configuration = "Release"
 #$configuration = "Debug"
 $outputDirectory = "./build.out"
-$version = "4.4.2"
+$version = "4.5.0"
 
-## Perhaps need to do a build of the client after updating the version in the source file
+# Built copy of umbraco-package.json. Its version is set after the client build, which replaces it.
 $packageJsonPath = "./AccessibilityReporter/wwwroot/App_Plugins/AccessibilityReporter/umbraco-package.json"
 
 # Delete all files in the output directory
 if (Test-Path $outputDirectory) {
     Remove-Item "$outputDirectory/*"
-}
-
-# Update the version in umbraco.package.json
-if (Test-Path $packageJsonPath) {
-    $packageJson = Get-Content $packageJsonPath | ConvertFrom-Json
-    $packageJson.version = $version
-    $packageJson | ConvertTo-Json -Depth 32 | Set-Content $packageJsonPath
-} else {
-    Write-Output "The file $packageJsonPath does not exist."
 }
 
 # Build the client assets first to ensure static web assets are generated
@@ -41,6 +32,15 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 Set-Location "../.."
+
+# Update the version in umbraco.package.json
+if (Test-Path $packageJsonPath) {
+    $packageJson = Get-Content $packageJsonPath | ConvertFrom-Json
+    $packageJson.version = $version
+    $packageJson | ConvertTo-Json -Depth 32 | Set-Content $packageJsonPath
+} else {
+    Write-Output "The file $packageJsonPath does not exist."
+}
 
 # Build the main project first to generate static web assets manifest
 Write-Output "Building projects..."
