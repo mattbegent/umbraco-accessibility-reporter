@@ -230,7 +230,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 			const rootUrls = (data?.[0]?.urls ?? [])
 				.filter(u => !culture || !u.culture || u.culture.toLowerCase() === culture.toLowerCase())
 				.map(u => u.url)
-				.filter((u): u is string => !!u)
+				.filter((u): u is string => AccessibilityReporterService.isTestableUrl(u))
 				.map(u => new URL(u, location.href).toString());
 			const withSlash = (u: string) => u.endsWith('/') ? u : u + '/';
 			const pickedRoot = rootUrls
