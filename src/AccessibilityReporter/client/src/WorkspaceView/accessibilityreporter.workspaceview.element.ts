@@ -218,6 +218,33 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		}
 	}
 
+	// Umbraco leaves out a page's backoffice-domain URL when it can't route it (e.g. a custom URL
+	// provider gives the home page its parent's URL). If the site root has a URL on the backoffice
+	// domain, swap the picked URL's root for it, e.g. https://www.example.com/home/ -> /home/.
+	private async _rebaseOnBackofficeRoot(url: string, culture: string | null): Promise<string> {
+		if (!AccessibilityReporterService.isAbsoluteURL(url) || this.isSameOriginAsBackoffice(url)) return url;
+		const rootKey = await this._getRootKey();
+		if (!rootKey) return url;
+		try {
+			const { data } = await this._documentUrlRepository.requestItems([rootKey]);
+			const rootUrls = (data?.[0]?.urls ?? [])
+				.filter(u => !culture || !u.culture || u.culture.toLowerCase() === culture.toLowerCase())
+				.map(u => u.url)
+				.filter((u): u is string => AccessibilityReporterService.isTestableUrl(u))
+				.map(u => new URL(u, location.href).toString());
+			const withSlash = (u: string) => u.endsWith('/') ? u : u + '/';
+			const pickedRoot = rootUrls
+				.filter(u => !this.isSameOriginAsBackoffice(u) && withSlash(url).startsWith(withSlash(u)))
+				.sort((a, b) => b.length - a.length)[0];
+			const backofficeRoot = rootUrls.find(u => this.isSameOriginAsBackoffice(u));
+			if (!pickedRoot || !backofficeRoot) return url;
+			return new URL(url.substring(withSlash(pickedRoot).length), withSlash(backofficeRoot)).toString();
+		} catch (error) {
+			console.error('Failed to look up the site root URLs for this document:', error);
+			return url;
+		}
+	}
+
 	private getFallbackBaseUrl() {
 		const resolvedAbsoluteUrl = this.getResolvedAbsoluteUrl(this._urls);
 		if (resolvedAbsoluteUrl) {
@@ -329,7 +356,10 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		this._preferBackofficeOrigin = this._shouldPreferBackofficeOrigin(siteBaseUrl);
 
 		const activeCulture = this._getActiveCulture();
-		const pathToTest = this._getUrlForCulture(activeCulture);
+		let pathToTest = this._getUrlForCulture(activeCulture);
+		if (this._preferBackofficeOrigin) {
+			pathToTest = await this._rebaseOnBackofficeRoot(pathToTest, activeCulture);
+		}
 		this._testedCulture = activeCulture;
 		// Only used for paths with no domain. SiteBaseUrls wins over TestBaseUrl, as on the server.
 		this.testURL = AccessibilityReporterService.joinBaseUrl(siteBaseUrl || this.config?.testBaseUrl, pathToTest);
