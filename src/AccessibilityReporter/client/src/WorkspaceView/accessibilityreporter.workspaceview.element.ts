@@ -206,11 +206,12 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		if (!unique) return null;
 		try {
 			const treeRepository = new UmbDocumentTreeRepository(this);
-			const { data } = await treeRepository.requestTreeItemAncestors({
+			const { data, error } = await treeRepository.requestTreeItemAncestors({
 				treeItem: { unique, entityType: UMB_DOCUMENT_ENTITY_TYPE }
 			});
+			if (error || !data) return null;
 			// Ancestors run from the root down, so the first one is the site root.
-			return data?.[0]?.unique ?? unique;
+			return data[0]?.unique ?? unique;
 		} catch (error) {
 			console.error('Failed to look up the site root for this document:', error);
 			return null;
@@ -331,7 +332,7 @@ export class AccessibilityReporterWorkspaceViewElement extends UmbElementMixin(L
 		const pathToTest = this._getUrlForCulture(activeCulture);
 		this._testedCulture = activeCulture;
 		// Only used for paths with no domain. SiteBaseUrls wins over TestBaseUrl, as on the server.
-		this.testURL = new URL(pathToTest, siteBaseUrl || this.config?.testBaseUrl).toString();
+		this.testURL = AccessibilityReporterService.joinBaseUrl(siteBaseUrl || this.config?.testBaseUrl, pathToTest);
 		this._crossOriginHostname = null;
 
 		try {

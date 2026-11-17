@@ -135,8 +135,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 		const siteNames: string[] = [];
 		for (const result of testResults.pages) {
-			// Results saved by older versions can include "#" pages for sites with nothing to test.
-			if (result.page.rootName && AccessibilityReporterService.isTestableUrl(result.page.url) && !siteNames.includes(result.page.rootName)) {
+			if (result.page.rootName && !siteNames.includes(result.page.rootName)) {
 				siteNames.push(result.page.rootName);
 			}
 		}

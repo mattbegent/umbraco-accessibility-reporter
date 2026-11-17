@@ -374,6 +374,16 @@ export default class AccessibilityReporterService {
         return urlString.indexOf('http://') === 0 || urlString.indexOf('https://') === 0;
     }
 
+    // Adds a page path onto a base URL, keeping any path in the base (e.g. https://example.com/site-a),
+    // the same way NodeUrlService does on the server. Absolute page URLs are returned as they are.
+    static joinBaseUrl(baseUrl: string | undefined, pagePath: string) {
+        if (!baseUrl || AccessibilityReporterService.isAbsoluteURL(pagePath) || pagePath.startsWith('//')) {
+            return new URL(pagePath, baseUrl || location.href).toString();
+        }
+        const path = pagePath.startsWith('/') ? pagePath : '/' + pagePath;
+        return new URL(baseUrl.replace(/\/+$/, '') + path).toString();
+    }
+
     // Umbraco returns "#" for content it can't route (no template/domain, or culture not published).
     static isTestableUrl(url: string | null | undefined) {
         return !!url && url.trim() !== '' && !url.startsWith('#');

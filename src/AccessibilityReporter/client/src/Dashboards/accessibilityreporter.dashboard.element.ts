@@ -115,8 +115,11 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 	private loadDashboard() {
 
 		const dashboardResultsFromStorage = AccessibilityReporterService.getItemFromLocalStorage(this.DASHBOARD_STORAGE_KEY);
-		if (dashboardResultsFromStorage) {
-			this.results = dashboardResultsFromStorage;
+		// Results saved by older versions can include "#" pages, which tested the backoffice itself.
+		const savedPages = (dashboardResultsFromStorage?.pages ?? [])
+			.filter((result: IPageResult) => AccessibilityReporterService.isTestableUrl(result.page?.url));
+		if (dashboardResultsFromStorage && savedPages.length) {
+			this.results = { ...dashboardResultsFromStorage, pages: savedPages };
 			this.pageState = PageState.HasResults;
 
 			if (this.results &&
