@@ -19,6 +19,8 @@ namespace AccessibilityReporter.Infrastructure.Config
 
 		public int MaxPages { get; set; } = 50;
 
+		public int TestDelay { get; set; } = 500;
+
 		public HashSet<string> UserGroups { get; set; } = new HashSet<string>();
         
 		public HashSet<string> TestsToRun { get; set; } = new HashSet<string>();

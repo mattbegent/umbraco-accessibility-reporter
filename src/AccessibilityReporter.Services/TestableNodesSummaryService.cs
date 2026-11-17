@@ -38,11 +38,9 @@ namespace AccessibilityReporter.Services
                 var content = node.Content;
                 var url = _nodeUrlService.AbsoluteUrl(content, node.Root, culture);
 
-                // Umbraco's URL provider returns "#" when it can't resolve a URL, notably when the
-                // requested culture isn't a published variant for this content. In a multisite install
-                // different sites can support different culture sets, so skip nodes that don't support
-                // the requested culture rather than testing a broken "#" URL.
-                if (!string.IsNullOrEmpty(culture) && url == "#")
+                // Umbraco returns "#" for content it can't route (culture not published, no
+                // template or domain). Testing "#" would test the backoffice itself, so skip it.
+                if (!IsTestableUrl(url))
                 {
                     continue;
                 }
@@ -57,6 +55,11 @@ namespace AccessibilityReporter.Services
                     node.Root.Key,
                     PublishedContentNameResolver.GetName(node.Root, _variationContextAccessor, null));
             }
+        }
+
+        private static bool IsTestableUrl(string? url)
+        {
+            return !string.IsNullOrWhiteSpace(url) && !url.StartsWith('#');
         }
     }
 }

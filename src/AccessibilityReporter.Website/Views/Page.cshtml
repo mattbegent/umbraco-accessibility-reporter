@@ -66,6 +66,30 @@
 			border: 1px solid #ddd;
 			border-radius: 6px;
 			padding: 1.25rem;
+			background: #fff;
+		}
+
+		/* Cards fade in on load, to test that contrast is only measured once animations finish
+		   (mid-fade the #1b1b1b titles look pale grey and would falsely fail). */
+		.card h3 {
+			color: #1b1b1b;
+		}
+
+		.js-fade {
+			opacity: 0;
+			transition: opacity 3s linear;
+		}
+
+		.js-fade.is-visible {
+			opacity: 1;
+		}
+
+		.js-fade:nth-child(2) {
+			transition-delay: 0.3s;
+		}
+
+		.js-fade:nth-child(3) {
+			transition-delay: 0.6s;
 		}
 
 		form {
@@ -138,17 +162,17 @@
 		</article>
 
 		<div class="card-grid">
-			<div class="card">
+			<div class="card js-fade">
 				<h3>Feature One</h3>
 				<p>A short description of a feature or service offered on this site.</p>
 				<a href="#">Learn more</a>
 			</div>
-			<div class="card">
+			<div class="card js-fade">
 				<h3>Feature Two</h3>
 				<p>Another short description used to pad out the page content.</p>
 				<a href="#">Learn more</a>
 			</div>
-			<div class="card">
+			<div class="card js-fade">
 				<h3>Feature Three</h3>
 				<p>A final example card so the layout has more than one column.</p>
 				<a href="#">Learn more</a>
@@ -180,6 +204,16 @@
 			var end = Date.now() + 1500;
 			while (Date.now() < end) { /* busy-wait */ }
 		})();
+	</script>
+
+	<script>
+		// Start on DOMContentLoaded so the cards are still fading in when the load event fires.
+		document.addEventListener('DOMContentLoaded', function () {
+			document.querySelectorAll('.js-fade').forEach(function (el) {
+				void el.offsetWidth; // apply the starting opacity first, so the transition runs
+				el.classList.add('is-visible');
+			});
+		});
 	</script>
 
 	@Html.AccessibilityReporterScript()

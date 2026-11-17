@@ -56,7 +56,50 @@
 		window.parent.postMessage(message, '*');
 	}
 
-	function runTest(testsToRun, nonce) {
+	// Keep in sync with run-tests.js and AR_MAX_ANIMATION_WAIT_MS in accessibility-reporter.service.ts.
+	var MAX_ANIMATION_WAIT_MS = 5000;
+
+	function wait(ms) {
+		return new Promise(function (resolve) { setTimeout(resolve, Math.max(0, ms)); });
+	}
+
+	function whenLoaded() {
+		if (document.readyState === 'complete') return Promise.resolve();
+		return new Promise(function (resolve) { window.addEventListener('load', function () { resolve(); }); });
+	}
+
+	// Infinite animations (spinners, carousels) never finish, so they're ignored.
+	function getFiniteRunningAnimations() {
+		if (typeof document.getAnimations !== 'function') return [];
+		return document.getAnimations().filter(function (animation) {
+			if (animation.playState !== 'running' && animation.playState !== 'pending') return false;
+			var timing = animation.effect && animation.effect.getComputedTiming ? animation.effect.getComputedTiming() : null;
+			return !timing || timing.endTime !== Infinity;
+		});
+	}
+
+	function waitForAnimations(maxWait) {
+		var deadline = Date.now() + maxWait;
+		function check() {
+			var running = getFiniteRunningAnimations();
+			var remaining = deadline - Date.now();
+			if (!running.length || remaining <= 0) return Promise.resolve();
+			var finished = Promise.all(running.map(function (animation) {
+				return animation.finished.catch(function () { /* cancelled - fine */ });
+			}));
+			return Promise.race([finished, wait(remaining)]).then(function () { return wait(50); }).then(check);
+		}
+		return check();
+	}
+
+	// Measure final colours, not mid-fade ones, which cause false contrast failures.
+	function waitForPageToSettle(delay) {
+		return whenLoaded()
+			.then(function () { return wait(delay); })
+			.then(function () { return waitForAnimations(MAX_ANIMATION_WAIT_MS); });
+	}
+
+	function runTest(testsToRun, nonce, testDelay) {
 		var axeScript = document.createElement('script');
 		axeScript.src = assetOrigin + '/App_Plugins/AccessibilityReporter/libs/axe-core.min.js';
 		axeScript.onerror = function () {
@@ -64,7 +107,8 @@
 		};
 		axeScript.onload = function () {
 			/* global axe */
-			axe.run({ runOnly: { type: 'tag', values: testsToRun } })
+			waitForPageToSettle(typeof testDelay === 'number' ? testDelay : 500)
+				.then(function () { return axe.run({ runOnly: { type: 'tag', values: testsToRun } }); })
 				.then(function (results) { respond(results, nonce); })
 				.catch(function (error) { respond({ error: String(error) }, nonce); });
 		};
@@ -91,6 +135,6 @@
 		var data = event.data;
 		if (!data || data.source !== 'accessibility-reporter' || data.command !== 'run-test') return;
 		clearInterval(announceInterval);
-		runTest(data.testsToRun || [], data.nonce);
+		runTest(data.testsToRun || [], data.nonce, data.testDelay);
 	});
 }(window, document));
