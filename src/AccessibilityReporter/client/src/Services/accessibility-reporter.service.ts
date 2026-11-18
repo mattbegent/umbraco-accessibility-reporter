@@ -1,4 +1,7 @@
 import { write, WorkBook } from 'xlsx';
+import IResults from '../Interface/IResults';
+import IPageResult from '../Interface/IPageResult';
+import IIssueSummary from '../Interface/IIssueSummary';
 
 // How long to wait for an accessibility-reporter-bridge.js "ready" ping before assuming a
 // cross-origin page doesn't have the bridge installed, and (once presence is confirmed) how long
@@ -355,10 +358,141 @@ export default class AccessibilityReporterService {
     static saveToLocalStorage(key: string, value: object) {
         try {
             localStorage.setItem(key, JSON.stringify(value));
+            return true;
         } catch (error) {
             console.error(error);
+            return false;
+        }
+    }
+
+    static MAX_NODE_DETAILS_PER_VIOLATION = 10;
+    static MAX_NODE_HTML_LENGTH = 150;
+
+    // axe targets are an array of selectors (one per iframe), each of which can itself be an
+    // array when crossing shadow DOM boundaries.
+    static formatNodeTarget(target: unknown): string {
+        if (!Array.isArray(target)) {
+            return typeof target === 'string' ? target : '';
+        }
+        return target.map(part => Array.isArray(part) ? part.join(' >>> ') : String(part)).join(' | ');
+    }
+
+    static trimNodeHtml(nodeHtml: unknown): string {
+        if (typeof nodeHtml !== 'string') {
+            return '';
+        }
+        const collapsed = nodeHtml.replace(/\s+/g, ' ').trim();
+        return collapsed.length > AccessibilityReporterService.MAX_NODE_HTML_LENGTH
+            ? collapsed.slice(0, AccessibilityReporterService.MAX_NODE_HTML_LENGTH) + '…'
+            : collapsed;
+    }
+
+    static withoutNodeDetails(results: IResults): IResults {
+        return {
+            ...results,
+            pages: results.pages.map(pageResult => ({
+                ...pageResult,
+                violations: pageResult.violations.map(violation => ({
+                    ...violation,
+                    nodes: violation.nodes.map(node => ({ impact: node.impact }))
+                }))
+            }))
+        };
+    }
+
+    static getImpactRank(impact: string) {
+        return AccessibilityReporterService.impacts.indexOf(impact);
+    }
+
+    // Rolls every page's violations up into one entry per rule, highest impact and most
+    // widespread first.
+    static getIssueSummaries(pageResults: IPageResult[]): IIssueSummary[] {
+        const issues = new Map<string, IIssueSummary>();
+        const sharedElementsByIssue = new Map<string, Map<string, { target: string; html: string; pages: Set<string>; instances: number }>>();
+
+        for (const pageResult of pageResults) {
+            for (const violation of pageResult.violations) {
+                let issue = issues.get(violation.id);
+                if (!issue) {
+                    issue = {
+                        id: violation.id,
+                        title: violation.title || violation.id,
+                        description: violation.description || '',
+                        impact: violation.impact,
+                        tags: violation.tags || [],
+                        helpUrl: violation.helpUrl,
+                        instances: 0,
+                        pages: [],
+                        sharedElements: [],
+                        hasElementDetails: false
+                    };
+                    issues.set(violation.id, issue);
+                    sharedElementsByIssue.set(violation.id, new Map());
+                }
+
+                // A rule's impact can vary between pages, so report the worst seen.
+                if (AccessibilityReporterService.getImpactRank(violation.impact) > AccessibilityReporterService.getImpactRank(issue.impact)) {
+                    issue.impact = violation.impact;
+                }
+                if (!issue.helpUrl && violation.helpUrl) {
+                    issue.helpUrl = violation.helpUrl;
+                }
+
+                issue.instances += violation.nodes.length;
+                issue.pages.push({
+                    guid: pageResult.page.guid,
+                    name: pageResult.page.name,
+                    url: pageResult.page.url,
+                    rootName: pageResult.page.rootName,
+                    score: pageResult.score,
+                    instances: violation.nodes.length
+                });
+
+                const elements = sharedElementsByIssue.get(violation.id)!;
+                for (const node of violation.nodes) {
+                    if (!node.target) {
+                        continue;
+                    }
+                    issue.hasElementDetails = true;
+                    const key = `${node.target}\n${node.html ?? ''}`;
+                    let element = elements.get(key);
+                    if (!element) {
+                        element = { target: node.target, html: node.html ?? '', pages: new Set(), instances: 0 };
+                        elements.set(key, element);
+                    }
+                    element.pages.add(pageResult.page.guid);
+                    element.instances++;
+                }
+            }
         }
 
+        for (const issue of issues.values()) {
+            issue.pages.sort((a, b) => b.instances - a.instances || a.score - b.score);
+            issue.sharedElements = [...sharedElementsByIssue.get(issue.id)!.values()]
+                .filter(element => element.pages.size > 1)
+                .map(element => ({
+                    target: element.target,
+                    html: element.html,
+                    pageCount: element.pages.size,
+                    instances: element.instances
+                }))
+                .sort((a, b) => b.pageCount - a.pageCount || b.instances - a.instances);
+        }
+
+        return [...issues.values()].sort((a, b) =>
+            AccessibilityReporterService.getImpactRank(b.impact) - AccessibilityReporterService.getImpactRank(a.impact)
+            || b.pages.length - a.pages.length
+            || b.instances - a.instances);
+    }
+
+    // e.g. "Showing 11–20 of 45 issues", announced when a paginated table changes page.
+    static describeRange(firstIndex: number, shownCount: number, total: number, itemName: string) {
+        const format = AccessibilityReporterService.formatNumber;
+        return `Showing ${format(firstIndex + 1)}–${format(firstIndex + shownCount)} of ${format(total)} ${itemName}${total === 1 ? '' : 's'}`;
+    }
+
+    static formatRuleId(ruleId: string) {
+        return ruleId.replace(/-/g, ' ').replace(/(^\w{1})|(\s+\w{1})/g, (letter: string) => letter.toUpperCase());
     }
 
     static getItemFromLocalStorage(key: string) {

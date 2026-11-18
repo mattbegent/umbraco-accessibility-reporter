@@ -19,6 +19,12 @@ export class ARChartElement extends UmbElementMixin(LitElement) {
 	@property()
 	width: string;
 
+	// Called with the index of the bar or slice that was clicked.
+	@property({attribute: false})
+	onSelect?: (index: number) => void;
+
+	private chart?: Chart;
+
 	connectedCallback() {
 		super.connectedCallback();
 		setTimeout(()=> {
@@ -26,11 +32,28 @@ export class ARChartElement extends UmbElementMixin(LitElement) {
 		}, 100);
 	}
 
+	disconnectedCallback() {
+		super.disconnectedCallback();
+		this.chart?.destroy();
+		this.chart = undefined;
+	}
+
+	updated(changedProperties: Map<string, unknown>) {
+		super.updated(changedProperties);
+		// Redraw when the data changes (e.g. filtering by site), so clicks map to the right item.
+		if (changedProperties.has('data') && this.chart) {
+			this.initChart();
+		}
+	}
+
 	private initChart() {
 
-		if(!this.shadowRoot) {
+		if(!this.shadowRoot || !this.data) {
 			return;
 		}
+
+		this.chart?.destroy();
+		this.chart = undefined;
 
         const ctx = this.shadowRoot.querySelector('canvas') as HTMLCanvasElement;
         const labelFontStyles = {
@@ -117,7 +140,22 @@ export class ARChartElement extends UmbElementMixin(LitElement) {
 			};
 		}
 
-		new Chart(ctx, chartSettings);
+		if (this.onSelect) {
+			chartSettings.options = chartSettings.options ?? {};
+			chartSettings.options.onClick = (_event: unknown, elements: { index: number }[]) => {
+				if (elements.length) {
+					this.onSelect?.(elements[0].index);
+				}
+			};
+			chartSettings.options.onHover = (event: any, elements: unknown[]) => {
+				const target = event?.native?.target as HTMLElement | undefined;
+				if (target) {
+					target.style.cursor = elements.length ? 'pointer' : 'default';
+				}
+			};
+		}
+
+		this.chart = new Chart(ctx, chartSettings);
 
 	}
 
