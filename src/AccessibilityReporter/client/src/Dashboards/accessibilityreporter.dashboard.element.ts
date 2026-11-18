@@ -242,7 +242,8 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 					return {
 						impact: node.impact,
 						target: AccessibilityReporterService.formatNodeTarget(node.target),
-						html: AccessibilityReporterService.trimNodeHtml(node.html)
+						html: AccessibilityReporterService.trimNodeHtml(node.html),
+						htmlHash: AccessibilityReporterService.hashNodeHtml(node.html)
 					}
 				})
 			}

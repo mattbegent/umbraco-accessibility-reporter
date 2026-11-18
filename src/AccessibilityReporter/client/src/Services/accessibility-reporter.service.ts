@@ -377,6 +377,21 @@ export default class AccessibilityReporterService {
         return target.map(part => Array.isArray(part) ? part.join(' >>> ') : String(part)).join(' | ');
     }
 
+    // 32-bit FNV-1a hash of the whitespace-collapsed HTML. Small enough to store per element,
+    // and only used to tell elements apart, not for anything security related.
+    static hashNodeHtml(nodeHtml: unknown): string {
+        if (typeof nodeHtml !== 'string') {
+            return '';
+        }
+        const collapsed = nodeHtml.replace(/\s+/g, ' ').trim();
+        let hash = 0x811c9dc5;
+        for (let index = 0; index < collapsed.length; index++) {
+            hash ^= collapsed.charCodeAt(index);
+            hash = Math.imul(hash, 0x01000193);
+        }
+        return (hash >>> 0).toString(16).padStart(8, '0');
+    }
+
     static trimNodeHtml(nodeHtml: unknown): string {
         if (typeof nodeHtml !== 'string') {
             return '';
@@ -454,7 +469,8 @@ export default class AccessibilityReporterService {
                         continue;
                     }
                     issue.hasElementDetails = true;
-                    const key = `${node.target}\n${node.html ?? ''}`;
+                    // Results saved before htmlHash existed fall back to the trimmed HTML.
+                    const key = `${node.target}\n${node.htmlHash ?? node.html ?? ''}`;
                     let element = elements.get(key);
                     if (!element) {
                         element = { target: node.target, html: node.html ?? '', pages: new Set(), instances: 0 };

@@ -4,6 +4,9 @@ export interface IViolationNodePreview {
 	// violation, and missing from results saved by older versions.
 	target?: string;
 	html?: string;
+	// Fingerprint of the full, untrimmed HTML, so elements are only grouped as shared when
+	// their whole markup matches rather than just the trimmed preview.
+	htmlHash?: string;
 }
 
 interface IViolationPreview {
