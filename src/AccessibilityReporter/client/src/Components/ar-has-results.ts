@@ -14,8 +14,14 @@ import IResults from "../Interface/IResults";
 import { generalStyles } from "../Styles/general";
 import { UMB_NOTIFICATION_CONTEXT, UmbNotificationContext } from "@umbraco-cms/backoffice/notification";
 import { AccessibilityReporterAppSettings } from "../api";
-import { UmbDocumentDetailRepository } from "@umbraco-cms/backoffice/document";
 import { UMB_CURRENT_USER_CONTEXT, UmbCurrentUserModel } from "@umbraco-cms/backoffice/current-user";
+import { UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
+import type { UUIPaginationElement } from "@umbraco-cms/backoffice/external/uui";
+import { ACCESSIBILITY_REPORTER_MODAL_ISSUE } from "../Modals/issue/accessibilityreporter.issue.modal.token";
+import { generateWorkspaceUrl } from "../Services/workspace-url";
+import IIssueSummary from "../Interface/IIssueSummary";
+
+const ISSUES_PAGE_SIZE = 10;
 
 @customElement("ar-has-results")
 export class ARHasResultsElement extends UmbElementMixin(LitElement) {
@@ -98,7 +104,15 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 	@state()
 	private _filteredResultPages: any[] = [];
 
+	@state()
+	private issues: IIssueSummary[] = [];
+
+	@state()
+	private issuesPage = 1;
+
 	private _notificationContext?: UmbNotificationContext;
+
+	private _modalManagerContext?: typeof UMB_MODAL_MANAGER_CONTEXT.TYPE;
 
 	@state()
     private _currentUser?: UmbCurrentUserModel;
@@ -107,6 +121,9 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		super();
 		this.consumeContext(UMB_NOTIFICATION_CONTEXT, (_instance) => {
 			this._notificationContext = _instance;
+		});
+		this.consumeContext(UMB_MODAL_MANAGER_CONTEXT, (instance) => {
+			this._modalManagerContext = instance;
 		});
 		this.consumeContext(UMB_CURRENT_USER_CONTEXT, (instance) => {
 			if (!instance) {
@@ -212,6 +229,9 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		this.mostCommonErrors = this.getErrorsSortedByViolations(allErrors).slice(0, 6);
 
 		this.pagesTestResults = pagesTestResults.sort(this.sortPageTestResults);
+
+		this.issues = AccessibilityReporterService.getIssueSummaries(filteredPages);
+		this.issuesPage = 1;
 
 		this.displaySeverityChart(sortedByImpact);
 		this.topViolationsChart();
@@ -335,7 +355,7 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 	private topViolationsChart() {
 		this.topViolationsChartData = {
-			labels: this.mostCommonErrors.map((error: any) => error.id.replaceAll('-', ' ').replace(/(^\w{1})|(\s+\w{1})/g, (letter: string) => letter.toUpperCase())),
+			labels: this.mostCommonErrors.map((error: any) => AccessibilityReporterService.formatRuleId(error.id)),
 			datasets: [{
 				label: 'Violations',
 				data: this.mostCommonErrors.map((error: any) => error.errors),
@@ -455,74 +475,35 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 		}
 	}
 
-	private async generateWorkspaceUrl(pageGuid: string): Promise<string> {
-		const baseUrl = `/umbraco/section/content/workspace/document/edit/${pageGuid}`;
-
-		try {
-			const documentRepository = new UmbDocumentDetailRepository(this);
-			const { data: document } = await documentRepository.requestByUnique(pageGuid);
-
-			if (!document) {
-				return `${baseUrl}/invariant/view/accessibility-reporter`;
-			}
-
-			const availableVariants = document.variants || [];
-			const availableCultures = availableVariants
-				.map(variant => variant.culture)
-				.filter((culture): culture is string => Boolean(culture));
-
-			let selectedCulture = 'invariant';
-
-			const testedCulture = this.results?.culture;
-			const testedCultureMatch = testedCulture
-				? availableCultures.find(culture => culture.toLowerCase() === testedCulture.toLowerCase())
-				: undefined;
-
-			if (testedCultureMatch) {
-				selectedCulture = testedCultureMatch;
-			} else if (availableCultures.length === 0) {
-				selectedCulture = 'invariant';
-			} else if (availableCultures.length === 1) {
-				selectedCulture = availableCultures[0];
-			} else {
-				// Get user's culture from Umbraco user context
-				let userLanguage = 'en-US'; // Default to Umbraco default culture
-				if (this._currentUser) {
-					const currentUser = this._currentUser;
-					// Check if user has a language/culture preference
-					if (currentUser && typeof currentUser === 'object' && 'languageIsoCode' in currentUser) {
-						const userLangCode = (currentUser as any).languageIsoCode;
-						if (typeof userLangCode === 'string' && userLangCode) {
-							userLanguage = userLangCode;
-						}
-					}
-				}
-
-				const exactMatch = availableCultures.find(culture =>
-					culture && culture.toLowerCase() === userLanguage.toLowerCase()
-				);
-
-				if (exactMatch) {
-					selectedCulture = exactMatch;
-				} else {
-					const userLanguageCode = userLanguage.split('-')[0];
-					const languageMatch = availableCultures.find(culture =>
-						culture && culture.split('-')[0].toLowerCase() === userLanguageCode.toLowerCase()
-					);
-
-					selectedCulture = languageMatch || availableCultures[0] || 'invariant';
-				}
-			}
-
-			return `${baseUrl}/${selectedCulture}/view/accessibility-reporter`;
-
-		} catch (error) {
-			console.error('Error getting document details:', error);
-			return `${baseUrl}/invariant/view/accessibility-reporter`;
-		}
+	private generateWorkspaceUrl(pageGuid: string): Promise<string> {
+		return generateWorkspaceUrl(this, pageGuid, this.results?.culture, this.userLanguage);
 	}
 
+	private get userLanguage(): string | undefined {
+		return this._currentUser?.languageIsoCode ?? undefined;
+	}
 
+	private openIssue(issueId: string) {
+		const issue = this.issues.find(item => item.id === issueId);
+		if (!issue) {
+			return;
+		}
+		this._modalManagerContext?.open(this, ACCESSIBILITY_REPORTER_MODAL_ISSUE, {
+			data: {
+				issue: issue,
+				isMultisite: this.isMultisite,
+				culture: this.results?.culture,
+				userLanguage: this.userLanguage
+			}
+		});
+	}
+
+	private handleTopViolationSelected(index: number) {
+		const error = this.mostCommonErrors?.[index];
+		if (error) {
+			this.openIssue(error.id);
+		}
+	}
 
 	private exportResults() {
 
@@ -633,6 +614,78 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 
 	};
 
+	private renderIssuesTable() {
+		const totalPages = Math.ceil(this.issues.length / ISSUES_PAGE_SIZE);
+		const firstIndex = (this.issuesPage - 1) * ISSUES_PAGE_SIZE;
+		const issues = this.issues.slice(firstIndex, firstIndex + ISSUES_PAGE_SIZE);
+
+		return html`
+			<uui-box class="c-dashboard-grid__full-row">
+				<div slot="headline">
+					<h2 class="c-title">Issues</h2>
+				</div>
+				<p class="c-issues-intro">Every failed test, most severe and widespread first. Select an issue to see the pages it affects and any shared components causing it.</p>
+				<div class="c-table__container">
+					<uui-table aria-label="Issues">
+						<uui-table-head>
+							<uui-table-head-cell>Issue</uui-table-head-cell>
+							<uui-table-head-cell>Impact</uui-table-head-cell>
+							<uui-table-head-cell>Standard</uui-table-head-cell>
+							<uui-table-head-cell>Pages</uui-table-head-cell>
+							<uui-table-head-cell>Instances</uui-table-head-cell>
+							<uui-table-head-cell>Action</uui-table-head-cell>
+						</uui-table-head>
+						${issues.map(issue => html`
+							<uui-table-row>
+								<uui-table-cell>
+									<div>
+										<strong>${AccessibilityReporterService.formatRuleId(issue.id)}</strong>
+										<div class="c-issue__title">${issue.title}</div>
+										${issue.sharedElements.length ? html`
+											<uui-tag look="outline" color="default" class="c-issue__shared">Shared component on ${issue.sharedElements[0].pageCount} pages</uui-tag>
+										` : null}
+									</div>
+								</uui-table-cell>
+								<uui-table-cell>
+									<uui-tag color="${AccessibilityReporterService.impactToTag(issue.impact)}" look="primary">${AccessibilityReporterService.upperCaseFirstLetter(issue.impact || "")}</uui-tag>
+								</uui-table-cell>
+								<uui-table-cell>${this.formatWCAGLevel(issue.tags)}</uui-table-cell>
+								<uui-table-cell>${AccessibilityReporterService.formatNumber(issue.pages.length)}</uui-table-cell>
+								<uui-table-cell>${AccessibilityReporterService.formatNumber(issue.instances)}</uui-table-cell>
+								<uui-table-cell>
+									<button type="button" @click="${() => this.openIssue(issue.id)}" class="c-detail-button c-detail-button--active">
+										<span class="c-detail-button__group">
+											<uui-icon-registry-essential>
+												<uui-icon name="see"></uui-icon>
+											</uui-icon-registry-essential>
+											<span class="c-detail-button__text">View Details <span class="sr-only">for ${AccessibilityReporterService.formatRuleId(issue.id)}</span></span>
+										</span>
+									</button>
+								</uui-table-cell>
+							</uui-table-row>
+						`)}
+					</uui-table>
+				</div>
+				${totalPages > 1 ? html`
+					<p class="c-table-status" aria-live="polite">${AccessibilityReporterService.describeRange(firstIndex, issues.length, this.issues.length, 'issue')}</p>
+					<div class="c-pagination">
+						<uui-pagination
+							label="Issues"
+							.total=${totalPages}
+							.current=${this.issuesPage}
+							@change=${(event: Event) => { this.issuesPage = (event.target as UUIPaginationElement).current; }}>
+						</uui-pagination>
+					</div>
+				` : null}
+			</uui-box>
+		`;
+	}
+
+	private formatWCAGLevel(tags: string[]) {
+		const level = AccessibilityReporterService.getWCAGLevel(tags);
+		return level === 'Other' ? 'Other' : `WCAG ${level}`;
+	}
+
 	render() {
 		return html`
 		<uui-scroll-container>
@@ -738,7 +791,11 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 						<div slot="headline">
 							<h2 class="c-title">Top Violations</h2>
 						</div>
-						<ar-chart .data="${this.topViolationsChartData}" type="bar" width="600" height="300"></ar-chart>
+						<ar-chart
+							.data="${this.topViolationsChartData}"
+							.onSelect="${(index: number) => this.handleTopViolationSelected(index)}"
+							type="bar" width="600" height="300"></ar-chart>
+						<p class="c-chart-hint">Select a bar to see every page with that issue. All issues are also listed in the Issues table below.</p>
 					</uui-box>
 
 					<uui-box class="c-dashboard-grid__full-row" ng-if="pagesTestResultsCurrentPage.length">
@@ -776,15 +833,20 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 							</uui-table-row>`
 							)}
 						</uui-table>
-						<umb-pagination
-							page-number="${this.pagination.currentPage}"
-							total-pages="${this.pagination.totalPages}"
-							on-next="${this.changePage}"
-							on-prev="${this.changePage}"
-							on-change="${this.changePage}"
-							on-go-to-page="${this.changePage}">
-						</umb-pagination>
+${this.pagination?.totalPages > 1 ? html`
+							<p class="c-table-status" aria-live="polite">${AccessibilityReporterService.describeRange((this.pagination.currentPage - 1) * this.pageSize, this.pagesTestResultsCurrentPage.length, this.pagesTestResults.length, 'page')}</p>
+							<div class="c-pagination">
+								<uui-pagination
+									label="Pages sorted by lowest score"
+									.total=${this.pagination.totalPages}
+									.current=${this.pagination.currentPage}
+									@change=${(event: Event) => this.changePage((event.target as UUIPaginationElement).current)}>
+								</uui-pagination>
+							</div>
+						` : null}
 					</uui-box>
+
+					${this.issues.length ? this.renderIssuesTable() : null}
 
 				</div>
 			</uui-scroll-container>
@@ -817,6 +879,29 @@ export class ARHasResultsElement extends UmbElementMixin(LitElement) {
 			.c-site-filter__select:focus {
 				outline: 2px solid var(--uui-color-focus, #3544b1);
 				outline-offset: 2px;
+			}
+			.c-chart-hint {
+				font-size: 14px;
+				text-align: center;
+				margin: 1rem 0 0 0;
+			}
+			.c-issues-intro {
+				margin-top: 0;
+			}
+			.c-issue__title {
+				font-size: 14px;
+				margin-top: 2px;
+			}
+			.c-issue__shared {
+				margin-top: 6px;
+			}
+			.c-pagination {
+				display: flex;
+				justify-content: center;
+			}
+			.c-table-status {
+				font-size: 14px;
+				margin: 1rem 0 0.5rem 0;
 			}
 		`
 	];

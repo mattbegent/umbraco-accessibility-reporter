@@ -211,7 +211,10 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 			pages: testResults,
 			culture: this._selectedCulture || undefined
 		};
-		AccessibilityReporterService.saveToLocalStorage(this.DASHBOARD_STORAGE_KEY, this.results as object);
+		if (!AccessibilityReporterService.saveToLocalStorage(this.DASHBOARD_STORAGE_KEY, this.results as object)) {
+			// Most likely over the storage quota on a large site, so save without element details.
+			AccessibilityReporterService.saveToLocalStorage(this.DASHBOARD_STORAGE_KEY, AccessibilityReporterService.withoutNodeDetails(this.results));
+		}
 		this.pageState = PageState.HasResults;
 	}
 
@@ -229,9 +232,18 @@ export class AccessibilityReporterDashboardElement extends UmbElementMixin(LitEl
 				tags: violation.tags,
 				title: violation.help,
 				description: violation.description,
-				nodes: violation.nodes.map((node: any) => {
+				helpUrl: violation.helpUrl,
+				nodes: violation.nodes.map((node: any, nodeIndex: number) => {
+					// Element details let the dashboard spot the same element failing on many pages.
+					// Capped per violation to keep the saved results small enough for local storage.
+					if (nodeIndex >= AccessibilityReporterService.MAX_NODE_DETAILS_PER_VIOLATION) {
+						return { impact: node.impact };
+					}
 					return {
-						impact: node.impact
+						impact: node.impact,
+						target: AccessibilityReporterService.formatNodeTarget(node.target),
+						html: AccessibilityReporterService.trimNodeHtml(node.html),
+						htmlHash: AccessibilityReporterService.hashNodeHtml(node.html)
 					}
 				})
 			}

@@ -19,7 +19,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Copyright>Matt Begent</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReleaseNotes>Waits for animations to finish before testing, tests on the backoffice domain when a page has several hostnames, hides sites with nothing to test, and updates axe-core to 4.14.1.</PackageReleaseNotes>
+        <PackageReleaseNotes>Adds an Issues table and an issue sidebar to the dashboard listing every affected page, flags shared components that fail on several pages, makes Top Violations bars clickable, and fixes dashboard pagination.</PackageReleaseNotes>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
